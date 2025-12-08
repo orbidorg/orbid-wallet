@@ -173,7 +173,7 @@ export function ModalBackdrop({ children, onClose }: { children: ReactNode; onCl
             onClick={(e) => {
                 if (e.target === e.currentTarget && onClose) onClose();
             }}
-            className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm"
+            className="fixed inset-0 z-[60] flex items-end justify-center bg-black/80 backdrop-blur-sm"
         >
             {children}
         </motion.div>
