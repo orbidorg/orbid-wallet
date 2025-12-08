@@ -82,13 +82,46 @@ export function useTokenMarketData(symbol: string, period: ChartPeriod = '30d') 
                 const prices = chartData.prices || [];
                 const volumes = chartData.total_volumes || [];
 
-                // Sample data points based on period
-                const sampleRate = period === '1d' ? 1 : period === '7d' ? 2 : period === '30d' ? 4 : 12;
+                // CoinGecko returns:
+                // 1d: ~288 points (5 min intervals)
+                // 7d: ~672 points (~15 min intervals)
+                // 30d: ~720 points (1 hour intervals)
+                // 365d: ~365 points (1 day intervals)
+                // max: varies by coin age
+
+                // Target points per period:
+                // 1d: 24 points (1 per hour)
+                // 7d: 28 points (4 per day)
+                // 30d: 30 points (1 per day)
+                // 365d: 52 points (1 per week)
+                // max: 60 points (dynamic)
+
+                let targetPoints: number;
+                switch (period) {
+                    case '1d':
+                        targetPoints = 24; // hourly
+                        break;
+                    case '7d':
+                        targetPoints = 28; // 4 per day
+                        break;
+                    case '30d':
+                        targetPoints = 30; // daily
+                        break;
+                    case '365d':
+                        targetPoints = 52; // weekly
+                        break;
+                    case 'max':
+                        targetPoints = 60; // dynamic
+                        break;
+                    default:
+                        targetPoints = 30;
+                }
+
+                const sampleRate = Math.max(1, Math.floor(prices.length / targetPoints));
 
                 priceHistory = prices
                     .filter((_: number[], i: number) => i % sampleRate === 0)
                     .map(([timestamp, price]: [number, number], index: number) => {
-                        // Find matching volume (volumes array may have different length)
                         const volumeIndex = index * sampleRate;
                         const volume = volumes[volumeIndex]?.[1] || 0;
                         return {

@@ -18,7 +18,7 @@ interface AuthState {
 
 interface AuthContextType extends AuthState {
     loginWithWorldApp: () => Promise<void>;
-    completeEmailLink: (email: string) => void;
+    completeEmailLink: (email: string) => Promise<{ success: boolean; error?: string }>;
     logout: () => Promise<void>;
 }
 
@@ -152,9 +152,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, [isInWorldApp]);
 
     // Complete email linking - Step 2: After email verification
-    const completeEmailLink = useCallback((email: string) => {
+    // Returns { success: boolean, error?: string } to handle wallet_already_linked errors
+    const completeEmailLink = useCallback(async (email: string): Promise<{ success: boolean; error?: string }> => {
         const stored = localStorage.getItem(STORAGE_KEY);
         const parsedStored = stored ? JSON.parse(stored) : {};
+
+        // Call API to link email to wallet
+        const result = await createOrUpdateUser({
+            email,
+            walletAddress: state.walletAddress || undefined,
+            isVerifiedHuman: true
+        });
+
+        if (!result.success) {
+            // Handle wallet already linked to another email
+            if (result.error === 'wallet_already_linked') {
+                // Clear the pending wallet and show error
+                localStorage.removeItem(STORAGE_KEY);
+                setState(prev => ({
+                    ...prev,
+                    walletAddress: null,
+                    username: null,
+                    pendingEmailLink: false,
+                }));
+                return {
+                    success: false,
+                    error: `This World ID is already linked to another email (${result.linkedEmail || 'unknown'}). Please login with that email.`
+                };
+            }
+            return { success: false, error: result.error || 'Failed to link email' };
+        }
 
         // Update localStorage with email
         localStorage.setItem(STORAGE_KEY, JSON.stringify({
@@ -169,14 +196,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             pendingEmailLink: false,
         }));
 
-        // Track complete user with email + wallet
-        createOrUpdateUser({
-            email,
-            walletAddress: state.walletAddress || undefined,
-            isVerifiedHuman: true
-        }).then(result => result.success && setAnalyticsUser(result.userId || null));
-
+        setAnalyticsUser(result.userId || null);
         Analytics.verifyWorldId(true);
+
+        return { success: true };
     }, [state.walletAddress]);
 
     // Logout
