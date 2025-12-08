@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { MiniKit } from '@worldcoin/minikit-js';
+import { useMiniKit } from '@/components/Providers';
 import Analytics, { createOrUpdateUser, setAnalyticsUser } from './analytics';
 
 interface AuthState {
@@ -36,6 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isInWorldApp: false,
     });
     const [showEmailLogin, setShowEmailLogin] = useState(false);
+    const { isReady: miniKitReady, isInstalled: isInWorldApp } = useMiniKit();
 
     // Initialize auth state
     const initAuth = useCallback(async () => {
@@ -55,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     walletAddress: parsedStored?.walletAddress || null,
                     username: parsedStored?.username || null,
                     email: data.email,
-                    isInWorldApp: MiniKit.isInstalled(),
+                    isInWorldApp,
                 });
 
                 // Track user
@@ -77,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     walletAddress: parsedStored.walletAddress,
                     username: parsedStored.username || null,
                     email: null,
-                    isInWorldApp: MiniKit.isInstalled(),
+                    isInWorldApp,
                 });
 
                 // Track user
@@ -95,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 walletAddress: null,
                 username: null,
                 email: null,
-                isInWorldApp: MiniKit.isInstalled(),
+                isInWorldApp,
             });
         } catch (error) {
             console.error('Auth init error:', error);
@@ -108,15 +110,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 isInWorldApp: false,
             });
         }
-    }, []);
+    }, [miniKitReady, isInWorldApp]);
 
+    // Run initAuth when MiniKit is ready
     useEffect(() => {
-        initAuth();
-    }, [initAuth]);
+        if (miniKitReady) {
+            initAuth();
+        }
+    }, [miniKitReady, initAuth]);
 
     // Login with World App (MiniKit) - gets wallet directly
     const loginWithWorldApp = useCallback(async () => {
-        if (!MiniKit.isInstalled()) {
+        if (!isInWorldApp) {
             // Outside World App - show email login
             setShowEmailLogin(true);
             return;
@@ -169,28 +174,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Connect World ID to get wallet address (after email login)
     const connectWorldID = useCallback(async () => {
-        if (!MiniKit.isInstalled()) {
-            // Outside World App - generate mock for testing
-            const mockAddress = '0x' + Array.from({ length: 40 }, () =>
-                Math.floor(Math.random() * 16).toString(16)
-            ).join('');
-
-            const stored = localStorage.getItem(STORAGE_KEY);
-            const parsed = stored ? JSON.parse(stored) : {};
-            localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...parsed, walletAddress: mockAddress }));
-
-            setState(prev => ({
-                ...prev,
-                walletAddress: mockAddress,
-            }));
-
-            // Track
-            Analytics.verifyWorldId(true);
-            createOrUpdateUser({
-                email: state.email || undefined,
-                walletAddress: mockAddress,
-                isVerifiedHuman: true
-            }).then(id => setAnalyticsUser(id));
+        if (!isInWorldApp) {
+            // Outside World App - cannot connect
+            console.error('World App not detected. Cannot connect World ID.');
             return;
         }
 
