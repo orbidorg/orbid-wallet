@@ -43,13 +43,8 @@ export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
     ];
 
     return (
-        <motion.nav
-            initial={{ y: 100 }}
-            animate={{ y: 0 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-50 glass-strong safe-area-pb"
-        >
-            <div className="flex justify-around items-center max-w-md mx-auto px-2 py-1.5">
+        <nav className="fixed bottom-0 left-0 right-0 z-50 glass-strong safe-area-pb">
+            <div className="flex justify-around items-center max-w-md mx-auto px-2 py-2">
                 {tabs.map((tab) => (
                     <motion.button
                         key={tab.id}
@@ -82,6 +77,6 @@ export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
                     </motion.button>
                 ))}
             </div>
-        </motion.nav>
+        </nav>
     );
 }
