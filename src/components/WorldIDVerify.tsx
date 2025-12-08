@@ -45,7 +45,7 @@ export default function WorldIDVerify({
 
         try {
             const verifyPayload: VerifyCommandInput = {
-                action: 'orbid-wallet-verify',
+                action: 'verifyhuman',
                 verification_level: VerificationLevel.Orb,
             };
 
