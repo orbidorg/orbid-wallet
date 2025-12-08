@@ -100,6 +100,69 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ growth });
         }
 
+        // Device types distribution
+        if (stat === 'devices') {
+            const { data } = await supabaseAdmin
+                .from('analytics_users')
+                .select('device_type')
+                .not('device_type', 'is', null);
+
+            const deviceMap: Record<string, number> = {};
+            (data || []).forEach((row: { device_type: string }) => {
+                if (row.device_type) {
+                    deviceMap[row.device_type] = (deviceMap[row.device_type] || 0) + 1;
+                }
+            });
+
+            const devices = Object.entries(deviceMap)
+                .map(([device, count]) => ({ device, count }))
+                .sort((a, b) => b.count - a.count);
+
+            return NextResponse.json({ devices });
+        }
+
+        // Browsers distribution
+        if (stat === 'browsers') {
+            const { data } = await supabaseAdmin
+                .from('analytics_users')
+                .select('browser')
+                .not('browser', 'is', null);
+
+            const browserMap: Record<string, number> = {};
+            (data || []).forEach((row: { browser: string }) => {
+                if (row.browser) {
+                    browserMap[row.browser] = (browserMap[row.browser] || 0) + 1;
+                }
+            });
+
+            const browsers = Object.entries(browserMap)
+                .map(([browser, count]) => ({ browser, count }))
+                .sort((a, b) => b.count - a.count);
+
+            return NextResponse.json({ browsers });
+        }
+
+        // OS distribution
+        if (stat === 'os') {
+            const { data } = await supabaseAdmin
+                .from('analytics_users')
+                .select('os')
+                .not('os', 'is', null);
+
+            const osMap: Record<string, number> = {};
+            (data || []).forEach((row: { os: string }) => {
+                if (row.os) {
+                    osMap[row.os] = (osMap[row.os] || 0) + 1;
+                }
+            });
+
+            const osList = Object.entries(osMap)
+                .map(([os, count]) => ({ os, count }))
+                .sort((a, b) => b.count - a.count);
+
+            return NextResponse.json({ os: osList });
+        }
+
         return NextResponse.json({ ok: true });
     } catch (e) {
         console.error('Analytics GET error:', e);
