@@ -7,7 +7,7 @@ import { AnimatedButton, FadeIn } from './ui/Motion';
 interface EmailLinkingStepProps {
     username: string | null;
     walletAddress: string;
-    onComplete: (email: string) => void;
+    onComplete: (email: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 export default function EmailLinkingStep({ username, walletAddress, onComplete }: EmailLinkingStepProps) {
@@ -63,7 +63,13 @@ export default function EmailLinkingStep({ username, walletAddress, onComplete }
             });
 
             if (res.ok) {
-                onComplete(email);
+                // Email verified, now link to wallet
+                const result = await onComplete(email);
+                if (!result.success) {
+                    setError(result.error || 'Failed to complete registration');
+                    setStep('email');
+                    setCode('');
+                }
             } else {
                 const data = await res.json();
                 setError(data.error || 'Invalid code');
