@@ -238,7 +238,7 @@ export default function WalletApp() {
 
     // Authenticated with wallet - show wallet app
     return (
-        <div className="min-h-screen bg-black pb-16">
+        <div className="min-h-screen bg-black pb-24">
             {/* Header */}
             <motion.header
                 initial={{ y: -20, opacity: 0 }}
