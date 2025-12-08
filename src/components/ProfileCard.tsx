@@ -52,28 +52,35 @@ export default function ProfileCard({
                         <Identicon address={address} size={56} />
                     </motion.div>
                     <div className="flex-1 min-w-0">
-                        {username && (
-                            <motion.p
-                                initial={{ opacity: 0, y: -5 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="text-sm font-medium text-pink-400 mb-0.5"
-                            >
-                                @{username}
-                            </motion.p>
+                        {/* World ID Username with Verification Badge */}
+                        {username ? (
+                            <div className="flex items-center gap-2 mb-0.5">
+                                <span className="font-bold text-white text-lg">@{username}</span>
+                                <div className="flex items-center justify-center w-5 h-5 bg-emerald-500 rounded-full">
+                                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-2 mb-0.5">
+                                <span className="font-semibold text-white">{displayAddress}</span>
+                                <motion.div
+                                    animate={{ scale: [1, 1.2, 1] }}
+                                    transition={{ duration: 2, repeat: Infinity }}
+                                    className="w-1.5 h-1.5 bg-emerald-400 rounded-full"
+                                />
+                            </div>
                         )}
-                        <div className="flex items-center gap-2">
-                            <span className="font-semibold text-white">{displayAddress}</span>
-                            <motion.div
-                                animate={{ scale: [1, 1.2, 1] }}
-                                transition={{ duration: 2, repeat: Infinity }}
-                                className="w-1.5 h-1.5 bg-emerald-400 rounded-full"
-                            />
-                        </div>
+                        {/* Show address as secondary when username exists */}
+                        {username && (
+                            <p className="text-xs text-zinc-500 font-mono">{displayAddress}</p>
+                        )}
                         <motion.p
                             key={totalBalanceUSD}
                             initial={{ opacity: 0, y: 5 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="text-2xl font-bold text-white"
+                            className="text-2xl font-bold text-white mt-1"
                         >
                             ${totalBalanceUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </motion.p>
