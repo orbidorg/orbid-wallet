@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { WORLD_CHAIN_TOKENS } from '@/lib/tokens';
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
@@ -35,6 +35,13 @@ interface AlchemyTransfer {
     };
 }
 
+interface AlchemyResponse {
+    result?: {
+        transfers: AlchemyTransfer[];
+        pageKey?: string;
+    };
+}
+
 // Find token info by address
 function getTokenByAddress(address: string) {
     return WORLD_CHAIN_TOKENS.find(
@@ -66,26 +73,51 @@ export function useTransactionHistory(walletAddress: string | null) {
     const [isLoading, setIsLoading] = useState(true);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
 
-    const fetchTransactions = useCallback(async (pageNum: number, append: boolean = false) => {
+    // Store page keys for pagination
+    const pageKeysRef = useRef<{ sent?: string; received?: string }>({});
+    const allTransactionsRef = useRef<Transaction[]>([]);
+
+    const fetchTransactions = useCallback(async (isLoadMore: boolean = false) => {
         if (!walletAddress || !ALCHEMY_API_KEY) {
             setTransactions([]);
             setIsLoading(false);
             return;
         }
 
-        if (append) {
+        if (isLoadMore) {
             setIsLoadingMore(true);
         } else {
             setIsLoading(true);
+            // Reset on fresh load
+            pageKeysRef.current = {};
+            allTransactionsRef.current = [];
         }
         setError(null);
 
-        const maxCount = `0x${(TRANSACTIONS_PER_PAGE * pageNum).toString(16)}`;
-
         try {
+            // Build params with pageKey if available
+            const sentParams: Record<string, unknown> = {
+                fromAddress: walletAddress,
+                category: ['erc20', 'external'],
+                order: 'desc',
+                maxCount: `0x${TRANSACTIONS_PER_PAGE.toString(16)}`
+            };
+            const receivedParams: Record<string, unknown> = {
+                toAddress: walletAddress,
+                category: ['erc20', 'external'],
+                order: 'desc',
+                maxCount: `0x${TRANSACTIONS_PER_PAGE.toString(16)}`
+            };
+
+            if (isLoadMore && pageKeysRef.current.sent) {
+                sentParams.pageKey = pageKeysRef.current.sent;
+            }
+            if (isLoadMore && pageKeysRef.current.received) {
+                receivedParams.pageKey = pageKeysRef.current.received;
+            }
+
             // Fetch both incoming and outgoing transfers
             const [sentRes, receivedRes] = await Promise.all([
                 fetch(ALCHEMY_URL, {
@@ -95,12 +127,7 @@ export function useTransactionHistory(walletAddress: string | null) {
                         jsonrpc: '2.0',
                         id: 1,
                         method: 'alchemy_getAssetTransfers',
-                        params: [{
-                            fromAddress: walletAddress,
-                            category: ['erc20', 'external'],
-                            order: 'desc',
-                            maxCount
-                        }]
+                        params: [sentParams]
                     })
                 }),
                 fetch(ALCHEMY_URL, {
@@ -110,17 +137,12 @@ export function useTransactionHistory(walletAddress: string | null) {
                         jsonrpc: '2.0',
                         id: 2,
                         method: 'alchemy_getAssetTransfers',
-                        params: [{
-                            toAddress: walletAddress,
-                            category: ['erc20', 'external'],
-                            order: 'desc',
-                            maxCount
-                        }]
+                        params: [receivedParams]
                     })
                 })
             ]);
 
-            const [sentData, receivedData] = await Promise.all([
+            const [sentData, receivedData]: [AlchemyResponse, AlchemyResponse] = await Promise.all([
                 sentRes.json(),
                 receivedRes.json()
             ]);
@@ -128,7 +150,17 @@ export function useTransactionHistory(walletAddress: string | null) {
             const sentTransfers: AlchemyTransfer[] = sentData.result?.transfers || [];
             const receivedTransfers: AlchemyTransfer[] = receivedData.result?.transfers || [];
 
-            // Get block timestamps for unique blocks (limit to 15 for speed)
+            // Store page keys for next load
+            pageKeysRef.current = {
+                sent: sentData.result?.pageKey,
+                received: receivedData.result?.pageKey
+            };
+
+            // Check if there are more pages
+            const hasMorePages = !!(sentData.result?.pageKey || receivedData.result?.pageKey);
+            setHasMore(hasMorePages);
+
+            // Get block timestamps for unique blocks (limit for speed)
             const allBlocks = [...new Set([
                 ...sentTransfers.map(t => t.blockNum),
                 ...receivedTransfers.map(t => t.blockNum)
@@ -193,19 +225,26 @@ export function useTransactionHistory(walletAddress: string | null) {
                 };
             });
 
-            // Combine and sort by timestamp
-            const allTxs = [...sentTxs, ...receivedTxs]
-                .sort((a, b) => b.timestamp - a.timestamp)
-                // Remove duplicates by hash
-                .filter((tx, index, self) =>
+            // Combine new transactions
+            const newTxs = [...sentTxs, ...receivedTxs]
+                .sort((a, b) => b.timestamp - a.timestamp);
+
+            if (isLoadMore) {
+                // Append new transactions to existing ones
+                const existingHashes = new Set(allTransactionsRef.current.map(t => t.hash));
+                const uniqueNewTxs = newTxs.filter(tx => !existingHashes.has(tx.hash));
+                allTransactionsRef.current = [...allTransactionsRef.current, ...uniqueNewTxs];
+            } else {
+                // Fresh load - replace all
+                allTransactionsRef.current = newTxs.filter((tx, index, self) =>
                     index === self.findIndex(t => t.hash === tx.hash)
                 );
+            }
 
-            // Check if there might be more transactions
-            const totalFetched = sentTransfers.length + receivedTransfers.length;
-            setHasMore(totalFetched >= TRANSACTIONS_PER_PAGE * pageNum);
+            // Sort by timestamp (newest first) and update state
+            const sortedTxs = [...allTransactionsRef.current].sort((a, b) => b.timestamp - a.timestamp);
+            setTransactions(sortedTxs);
 
-            setTransactions(allTxs);
         } catch (err) {
             console.error('Failed to fetch transactions:', err);
             setError('Failed to load transactions');
@@ -216,14 +255,15 @@ export function useTransactionHistory(walletAddress: string | null) {
     }, [walletAddress]);
 
     const loadMore = useCallback(() => {
-        const nextPage = page + 1;
-        setPage(nextPage);
-        fetchTransactions(nextPage, true);
-    }, [page, fetchTransactions]);
+        fetchTransactions(true);
+    }, [fetchTransactions]);
+
+    const refetch = useCallback(() => {
+        fetchTransactions(false);
+    }, [fetchTransactions]);
 
     useEffect(() => {
-        setPage(1);
-        fetchTransactions(1, false);
+        fetchTransactions(false);
     }, [fetchTransactions]);
 
     return {
@@ -233,7 +273,7 @@ export function useTransactionHistory(walletAddress: string | null) {
         error,
         hasMore,
         loadMore,
-        refetch: () => fetchTransactions(page, false),
+        refetch,
         getRelativeTime
     };
 }

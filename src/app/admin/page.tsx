@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 interface DashboardStats {
     totalUsers: number;
@@ -13,35 +13,27 @@ interface DashboardStats {
 export default function AdminDashboard() {
     const [authenticated, setAuthenticated] = useState(false);
     const [password, setPassword] = useState('');
+    const passwordRef = useRef('');
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [loading, setLoading] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState('');
 
-    const authenticate = async () => {
-        setLoading(true);
-        setError('');
-        try {
-            const res = await fetch('/api/analytics?stat=overview', {
-                headers: { 'Authorization': `Bearer ${password}` }
-            });
-            if (res.ok) {
-                setAuthenticated(true);
-                await loadStats();
-            } else {
-                setError('Invalid password');
-            }
-        } catch {
-            setError('Connection error');
-        }
-        setLoading(false);
-    };
+    // Keep ref in sync with state
+    useEffect(() => {
+        passwordRef.current = password;
+    }, [password]);
 
-    const loadStats = async () => {
+    const loadStats = useCallback(async () => {
+        const pwd = passwordRef.current;
+        if (!pwd) return;
+
+        setRefreshing(true);
         try {
             const [overview, countries, growth] = await Promise.all([
-                fetch('/api/analytics?stat=overview', { headers: { 'Authorization': `Bearer ${password}` } }).then(r => r.json()),
-                fetch('/api/analytics?stat=countries', { headers: { 'Authorization': `Bearer ${password}` } }).then(r => r.json()),
-                fetch('/api/analytics?stat=growth', { headers: { 'Authorization': `Bearer ${password}` } }).then(r => r.json())
+                fetch('/api/analytics?stat=overview', { headers: { 'Authorization': `Bearer ${pwd}` } }).then(r => r.json()),
+                fetch('/api/analytics?stat=countries', { headers: { 'Authorization': `Bearer ${pwd}` } }).then(r => r.json()),
+                fetch('/api/analytics?stat=growth', { headers: { 'Authorization': `Bearer ${pwd}` } }).then(r => r.json())
             ]);
             setStats({
                 totalUsers: overview.totalUsers || 0,
@@ -52,7 +44,29 @@ export default function AdminDashboard() {
             });
         } catch {
             console.error('Failed to load stats');
+        } finally {
+            setRefreshing(false);
         }
+    }, []);
+
+    const authenticate = async () => {
+        setLoading(true);
+        setError('');
+        try {
+            const res = await fetch('/api/analytics?stat=overview', {
+                headers: { 'Authorization': `Bearer ${password}` }
+            });
+            if (res.ok) {
+                setAuthenticated(true);
+                passwordRef.current = password;
+                await loadStats();
+            } else {
+                setError('Invalid password');
+            }
+        } catch {
+            setError('Connection error');
+        }
+        setLoading(false);
     };
 
     // Login Screen
@@ -105,9 +119,11 @@ export default function AdminDashboard() {
                     </div>
                     <button
                         onClick={loadStats}
-                        className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg transition-colors"
+                        disabled={refreshing}
+                        className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
                     >
-                        ↻ Refresh
+                        <span className={refreshing ? 'animate-spin' : ''}>↻</span>
+                        {refreshing ? 'Loading...' : 'Refresh'}
                     </button>
                 </div>
 

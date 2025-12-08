@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MiniKit, VerifyCommandInput, VerificationLevel } from '@worldcoin/minikit-js';
 import { AnimatedButton, FadeIn } from './ui/Motion';
+import { createOrUpdateUser } from '@/lib/analytics';
 
 const VERIFIED_STORAGE_KEY = 'orbid_world_id_verified';
 
@@ -54,6 +55,14 @@ export default function WorldIDVerify({
             if (finalPayload.status === 'success') {
                 setIsVerified(true);
                 localStorage.setItem(VERIFIED_STORAGE_KEY, 'true');
+
+                // Update user as verified in Supabase
+                const stored = localStorage.getItem('orbid_auth');
+                const walletAddress = stored ? JSON.parse(stored)?.walletAddress : null;
+                if (walletAddress) {
+                    await createOrUpdateUser({ walletAddress, isVerifiedHuman: true });
+                }
+
                 onVerificationSuccess?.(finalPayload);
             } else {
                 throw new Error('Verification failed');
