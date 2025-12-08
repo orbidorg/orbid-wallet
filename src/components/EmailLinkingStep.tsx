@@ -89,7 +89,7 @@ export default function EmailLinkingStep({ username, walletAddress, onComplete }
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
-                    className="w-20 h-20 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-6"
+                    className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-4"
                 >
                     <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -97,7 +97,7 @@ export default function EmailLinkingStep({ username, walletAddress, onComplete }
                 </motion.div>
 
                 <FadeIn delay={0.2}>
-                    <h2 className="text-2xl font-bold text-white mb-2">
+                    <h2 className="text-xl font-bold text-white mb-1">
                         Welcome{username ? `, @${username}` : ''}! 👋
                     </h2>
                 </FadeIn>
@@ -134,7 +134,7 @@ export default function EmailLinkingStep({ username, walletAddress, onComplete }
 
                                 <AnimatedButton
                                     variant="gradient"
-                                    size="lg"
+                                    size="md"
                                     onClick={handleSendCode}
                                     disabled={loading || !email}
                                     fullWidth
@@ -182,7 +182,7 @@ export default function EmailLinkingStep({ username, walletAddress, onComplete }
 
                                 <AnimatedButton
                                     variant="gradient"
-                                    size="lg"
+                                    size="md"
                                     onClick={handleVerifyCode}
                                     disabled={loading || code.length !== 6}
                                     fullWidth

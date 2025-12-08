@@ -133,40 +133,37 @@ export default function WalletApp() {
 
         // World App users - show connect button
         return (
-            <div className="min-h-screen bg-black flex flex-col items-center justify-center p-8 relative">
+            <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 relative">
                 {/* Static gradient background */}
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-pink-500/10 rounded-full blur-[120px]" />
-                    <div className="absolute bottom-1/4 left-1/3 w-64 h-64 bg-purple-500/10 rounded-full blur-[100px]" />
+                    <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-72 h-72 bg-pink-500/10 rounded-full blur-[100px]" />
+                    <div className="absolute bottom-1/4 left-1/3 w-48 h-48 bg-purple-500/10 rounded-full blur-[80px]" />
                 </div>
 
-                <div className="relative max-w-sm w-full text-center">
-                    {/* Logo */}
-                    <div className="w-28 h-28 mx-auto mb-8">
-                        <Image src="/logo.svg" alt="OrbId" width={112} height={112} priority />
+                <div className="relative max-w-xs w-full text-center">
+                    {/* Logo - smaller for mobile */}
+                    <div className="w-20 h-20 mx-auto mb-6">
+                        <Image src="/logo.svg" alt="OrbId" width={80} height={80} priority />
                     </div>
 
-                    <h1 className="text-4xl font-display font-bold text-white mb-3 tracking-tight">
+                    <h1 className="text-2xl font-display font-bold text-white mb-2 tracking-tight">
                         OrbId Wallet
                     </h1>
-                    <p className="text-zinc-400 mb-10">Your gateway to World App</p>
+                    <p className="text-zinc-400 text-sm mb-8">Your gateway to World App</p>
 
-                    {/* Connect Button */}
-                    <AnimatedButton
-                        variant="gradient"
-                        size="lg"
+                    {/* Connect Button - smaller */}
+                    <button
                         onClick={loginWithWorldApp}
-                        fullWidth
-                        className="shadow-lg shadow-pink-500/20"
+                        className="w-full py-3 px-5 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-semibold rounded-xl shadow-lg shadow-pink-500/20 hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm"
                     >
-                        <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor">
+                        <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor">
                             <circle cx="12" cy="12" r="10" strokeWidth="2" />
                             <circle cx="12" cy="12" r="4" fill="currentColor" />
                         </svg>
                         Connect with World App
-                    </AnimatedButton>
+                    </button>
 
-                    <p className="mt-8 text-xs text-zinc-600">
+                    <p className="mt-6 text-xs text-zinc-600">
                         Powered by Worldcoin
                     </p>
                 </div>

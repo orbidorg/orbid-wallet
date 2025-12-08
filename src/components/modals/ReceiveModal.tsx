@@ -43,11 +43,13 @@ export default function ReceiveModal({ isOpen, onClose, walletAddress }: Receive
     };
 
     const shareAddress = async () => {
+        const shareText = `You can send me WLD or World Chain compatible tokens to my address with OrbId Wallet:\n\n${walletAddress}`;
+
         if (navigator.share) {
             try {
                 await navigator.share({
-                    title: 'My OrbId Wallet Address',
-                    text: `Send tokens to my World Chain address: ${walletAddress}`,
+                    title: 'OrbId Wallet Address',
+                    text: shareText,
                 });
             } catch (err) {
                 if ((err as Error).name !== 'AbortError') {
