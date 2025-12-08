@@ -160,11 +160,11 @@ export function useTransactionHistory(walletAddress: string | null) {
             const hasMorePages = !!(sentData.result?.pageKey || receivedData.result?.pageKey);
             setHasMore(hasMorePages);
 
-            // Get block timestamps for unique blocks (limit for speed)
+            // Get block timestamps for ALL unique blocks
             const allBlocks = [...new Set([
                 ...sentTransfers.map(t => t.blockNum),
                 ...receivedTransfers.map(t => t.blockNum)
-            ])].slice(0, 15);
+            ])];
 
             const blockTimestamps: Record<string, number> = {};
 

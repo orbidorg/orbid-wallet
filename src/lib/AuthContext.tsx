@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         email: data.email,
                         walletAddress: parsedStored?.walletAddress,
                         isVerifiedHuman: false
-                    }).then(id => setAnalyticsUser(id));
+                    }).then(result => result.success && setAnalyticsUser(result.userId || null));
                 }
                 return;
             }
@@ -86,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 createOrUpdateUser({
                     walletAddress: parsedStored.walletAddress,
                     isVerifiedHuman: false
-                }).then(id => setAnalyticsUser(id));
+                }).then(result => result.success && setAnalyticsUser(result.userId || null));
                 return;
             }
 
@@ -148,7 +148,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 createOrUpdateUser({
                     walletAddress: address,
                     isVerifiedHuman: true
-                }).then(id => setAnalyticsUser(id));
+                }).then(result => result.success && setAnalyticsUser(result.userId || null));
             }
         } catch (error) {
             console.error('World App login error:', error);
@@ -169,7 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Track
         Analytics.login('email');
-        createOrUpdateUser({ email }).then(id => setAnalyticsUser(id));
+        createOrUpdateUser({ email }).then(result => result.success && setAnalyticsUser(result.userId || null));
     }, []);
 
     // Connect World ID to get wallet address (after email login)
@@ -202,7 +202,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     email: state.email || undefined,
                     walletAddress: address,
                     isVerifiedHuman: true
-                }).then(id => setAnalyticsUser(id));
+                }).then(result => result.success && setAnalyticsUser(result.userId || null));
             }
         } catch (error) {
             console.error('Connect World ID error:', error);

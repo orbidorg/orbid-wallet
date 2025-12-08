@@ -9,6 +9,14 @@ export interface AnalyticsEvent {
     metadata?: Record<string, unknown>;
 }
 
+export interface UserSyncResult {
+    success: boolean;
+    userId?: string | null;
+    error?: 'wallet_already_linked' | 'email_already_linked' | 'server_error';
+    message?: string;
+    linkedEmail?: string;
+}
+
 let currentUserId: string | null = null;
 
 export function setAnalyticsUser(id: string | null) {
@@ -20,21 +28,34 @@ export async function createOrUpdateUser(data: {
     email?: string;
     walletAddress?: string;
     isVerifiedHuman?: boolean;
-}): Promise<string | null> {
+}): Promise<UserSyncResult> {
     try {
         const res = await fetch('/api/analytics/user', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
+
+        const json = await res.json();
+
         if (res.ok) {
-            const json = await res.json();
-            return json.userId || null;
+            return { success: true, userId: json.userId };
         }
-        return null;
+
+        // Handle conflict errors
+        if (res.status === 409) {
+            return {
+                success: false,
+                error: json.error,
+                message: json.message,
+                linkedEmail: json.linkedEmail
+            };
+        }
+
+        return { success: false, error: 'server_error' };
     } catch (e) {
         console.error('Analytics user error:', e);
-        return null;
+        return { success: false, error: 'server_error' };
     }
 }
 
