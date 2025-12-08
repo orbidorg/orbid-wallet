@@ -58,9 +58,16 @@ export default function WorldIDVerify({
 
                 // Update user as verified in Supabase
                 const stored = localStorage.getItem('orbid_auth');
+                console.log('[WorldIDVerify] orbid_auth from localStorage:', stored);
+
                 const walletAddress = stored ? JSON.parse(stored)?.walletAddress : null;
+                console.log('[WorldIDVerify] walletAddress extracted:', walletAddress);
+
                 if (walletAddress) {
-                    await createOrUpdateUser({ walletAddress, isVerifiedHuman: true });
+                    const result = await createOrUpdateUser({ walletAddress, isVerifiedHuman: true });
+                    console.log('[WorldIDVerify] createOrUpdateUser result:', result);
+                } else {
+                    console.warn('[WorldIDVerify] No wallet address found - cannot update verified status');
                 }
 
                 onVerificationSuccess?.(finalPayload);
