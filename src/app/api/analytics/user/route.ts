@@ -9,16 +9,92 @@ function maskEmail(email: string): string {
     return `${masked}@${domain}`;
 }
 
-// Helper to detect device type from user agent
-function getDeviceType(userAgent: string): string {
-    const ua = userAgent.toLowerCase();
-    if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) {
-        return 'mobile';
+// Parse user agent for device, browser, and OS info
+function parseUserAgent(ua: string): { deviceType: string; browser: string; os: string } {
+    const uaLower = ua.toLowerCase();
+
+    // Device type
+    let deviceType = 'desktop';
+    if (uaLower.includes('mobile') || uaLower.includes('android') || uaLower.includes('iphone')) {
+        deviceType = 'mobile';
+    } else if (uaLower.includes('tablet') || uaLower.includes('ipad')) {
+        deviceType = 'tablet';
     }
-    if (ua.includes('tablet') || ua.includes('ipad')) {
-        return 'tablet';
+
+    // Browser detection
+    let browser = 'Unknown';
+    if (uaLower.includes('worldapp')) {
+        browser = 'World App';
+    } else if (uaLower.includes('chrome') && !uaLower.includes('edg')) {
+        browser = 'Chrome';
+    } else if (uaLower.includes('firefox')) {
+        browser = 'Firefox';
+    } else if (uaLower.includes('safari') && !uaLower.includes('chrome')) {
+        browser = 'Safari';
+    } else if (uaLower.includes('edg')) {
+        browser = 'Edge';
+    } else if (uaLower.includes('opera') || uaLower.includes('opr')) {
+        browser = 'Opera';
     }
-    return 'desktop';
+
+    // OS detection
+    let os = 'Unknown';
+    if (uaLower.includes('android')) {
+        os = 'Android';
+    } else if (uaLower.includes('iphone') || uaLower.includes('ipad') || uaLower.includes('ios')) {
+        os = 'iOS';
+    } else if (uaLower.includes('windows')) {
+        os = 'Windows';
+    } else if (uaLower.includes('mac os') || uaLower.includes('macos')) {
+        os = 'macOS';
+    } else if (uaLower.includes('linux')) {
+        os = 'Linux';
+    }
+
+    return { deviceType, browser, os };
+}
+
+// Fetch geo data from IP
+async function getGeoData(ip: string): Promise<{
+    country: string;
+    countryCode: string;
+    region: string;
+    city: string;
+    timezone: string;
+}> {
+    const defaultGeo = { country: '', countryCode: '', region: '', city: '', timezone: '' };
+
+    // Skip local/private IPs
+    if (!ip || ip.startsWith('127.') || ip.startsWith('192.168.') || ip.startsWith('10.') || ip === '::1') {
+        console.log('[Analytics] Skipping geo lookup for local IP:', ip);
+        return defaultGeo;
+    }
+
+    try {
+        // Use ip-api.com (free, no key needed, 45 req/min limit)
+        const res = await fetch(`http://ip-api.com/json/${ip}?fields=status,country,countryCode,regionName,city,timezone`, {
+            signal: AbortSignal.timeout(5000)
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            console.log('[Analytics] Geo data for IP', ip, ':', data);
+
+            if (data.status === 'success') {
+                return {
+                    country: data.country || '',
+                    countryCode: data.countryCode || '',
+                    region: data.regionName || '',
+                    city: data.city || '',
+                    timezone: data.timezone || ''
+                };
+            }
+        }
+    } catch (e) {
+        console.error('[Analytics] Geo lookup failed:', e);
+    }
+
+    return defaultGeo;
 }
 
 // POST: Create or Update User
@@ -27,6 +103,8 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         const { email, walletAddress, isVerifiedHuman } = body;
 
+        console.log('[Analytics API] Received:', { email, walletAddress, isVerifiedHuman });
+
         // Need at least one identifier
         if (!walletAddress && !email) {
             return NextResponse.json({ error: 'No identifier provided' }, { status: 400 });
@@ -34,65 +112,72 @@ export async function POST(request: NextRequest) {
 
         const supabase = getSupabaseAdmin();
 
-        // Get request metadata for tracking
+        // Get request metadata
         const userAgent = request.headers.get('user-agent') || '';
-        const deviceType = getDeviceType(userAgent);
+        const { deviceType, browser, os } = parseUserAgent(userAgent);
+
+        // Get IP from various headers
         const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-            request.headers.get('x-real-ip') || '';
+            request.headers.get('x-real-ip') ||
+            request.headers.get('cf-connecting-ip') || '';
 
-        // Geo lookup
-        let geo = { country: '', countryCode: '' };
-        try {
-            if (ip && !ip.startsWith('127.') && !ip.startsWith('192.168.')) {
-                const geoRes = await fetch(`https://ipapi.co/${ip}/json/`, {
-                    signal: AbortSignal.timeout(3000)
-                });
-                if (geoRes.ok) {
-                    const geoData = await geoRes.json();
-                    if (!geoData.error) {
-                        geo = { country: geoData.country_name || '', countryCode: geoData.country_code || '' };
-                    }
-                }
-            }
-        } catch { }
+        console.log('[Analytics API] Request meta:', { ip, userAgent, deviceType, browser, os });
 
-        // CASE 1: walletAddress provided (World App login or connecting World ID)
+        // Get geo data
+        const geo = await getGeoData(ip);
+        console.log('[Analytics API] Geo result:', geo);
+
+        // Build update/insert data
+        const trackingData = {
+            user_agent: userAgent || null,
+            device_type: deviceType || null,
+            browser: browser || null,
+            os: os || null,
+            last_ip: ip || null,
+            ...(geo.country && { country: geo.country }),
+            ...(geo.countryCode && { country_code: geo.countryCode }),
+            ...(geo.region && { region: geo.region }),
+            ...(geo.city && { city: geo.city }),
+            ...(geo.timezone && { timezone: geo.timezone }),
+        };
+
+        // CASE 1: walletAddress provided
         if (walletAddress) {
-            // Check if wallet already exists
             const { data: existingByWallet } = await supabase
                 .from('analytics_users')
-                .select('id, email, total_logins')
+                .select('id, email, total_logins, is_verified_human')
                 .eq('wallet_address', walletAddress)
                 .maybeSingle();
 
             if (existingByWallet) {
-                // Wallet exists - check if email matches (if email provided)
+                // Check email conflict
                 if (email && existingByWallet.email && existingByWallet.email !== email) {
-                    // Different email trying to link to this wallet - REJECT
                     return NextResponse.json({
                         error: 'wallet_already_linked',
-                        message: 'This World ID is already linked to another email',
+                        message: 'This World ID is linked to another email',
                         linkedEmail: maskEmail(existingByWallet.email)
                     }, { status: 409 });
                 }
 
-                // Same email or no email conflict - update existing user
-                await supabase.from('analytics_users').update({
+                // Update existing user
+                const updateData = {
                     last_login_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
                     total_logins: (existingByWallet.total_logins || 0) + 1,
-                    ...(isVerifiedHuman !== undefined && { is_verified_human: isVerifiedHuman }),
-                    ...(email && !existingByWallet.email && { email }), // Set email if not already set
-                    // Update tracking info
-                    user_agent: userAgent,
-                    device_type: deviceType,
-                    last_ip: ip,
-                    ...(geo.country && { country: geo.country, country_code: geo.countryCode })
-                }).eq('id', existingByWallet.id);
+                    ...trackingData,
+                    ...(email && !existingByWallet.email && { email }),
+                    // Only update is_verified_human if explicitly set to true
+                    ...(isVerifiedHuman === true && { is_verified_human: true })
+                };
 
-                return NextResponse.json({ userId: existingByWallet.id });
+                console.log('[Analytics API] Updating user:', existingByWallet.id, updateData);
+
+                await supabase.from('analytics_users').update(updateData).eq('id', existingByWallet.id);
+
+                return NextResponse.json({ success: true, userId: existingByWallet.id });
             }
 
-            // Wallet doesn't exist - check if email exists (user adding wallet to email account)
+            // Check if email exists (linking wallet to email account)
             if (email) {
                 const { data: existingByEmail } = await supabase
                     .from('analytics_users')
@@ -102,46 +187,52 @@ export async function POST(request: NextRequest) {
 
                 if (existingByEmail) {
                     if (existingByEmail.wallet_address && existingByEmail.wallet_address !== walletAddress) {
-                        // This email already has a different wallet - REJECT
                         return NextResponse.json({
                             error: 'email_already_linked',
-                            message: 'This email is already linked to a different World ID'
+                            message: 'This email is linked to a different World ID'
                         }, { status: 409 });
                     }
 
-                    // Add wallet to existing email user
+                    // Add wallet to email user
                     await supabase.from('analytics_users').update({
                         wallet_address: walletAddress,
                         last_login_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString(),
                         total_logins: (existingByEmail.total_logins || 0) + 1,
-                        ...(isVerifiedHuman !== undefined && { is_verified_human: isVerifiedHuman }),
-                        user_agent: userAgent,
-                        device_type: deviceType,
-                        last_ip: ip,
-                        ...(geo.country && { country: geo.country, country_code: geo.countryCode })
+                        ...trackingData,
+                        ...(isVerifiedHuman === true && { is_verified_human: true })
                     }).eq('id', existingByEmail.id);
 
-                    return NextResponse.json({ userId: existingByEmail.id });
+                    return NextResponse.json({ success: true, userId: existingByEmail.id });
                 }
             }
 
             // Create new user with wallet
-            const { data: newUser } = await supabase.from('analytics_users').insert({
+            const insertData = {
                 email: email || null,
                 wallet_address: walletAddress,
-                is_verified_human: isVerifiedHuman || false,
-                country: geo.country || null,
-                country_code: geo.countryCode || null,
-                user_agent: userAgent,
-                device_type: deviceType,
-                last_ip: ip,
+                is_verified_human: isVerifiedHuman === true,
+                ...trackingData,
                 total_logins: 1
-            }).select('id').single();
+            };
 
-            return NextResponse.json({ userId: newUser?.id || null });
+            console.log('[Analytics API] Creating new user:', insertData);
+
+            const { data: newUser, error } = await supabase
+                .from('analytics_users')
+                .insert(insertData)
+                .select('id')
+                .single();
+
+            if (error) {
+                console.error('[Analytics API] Insert error:', error);
+                return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
+            }
+
+            return NextResponse.json({ success: true, userId: newUser?.id || null });
         }
 
-        // CASE 2: Only email provided (email login without World ID yet)
+        // CASE 2: Only email provided
         const { data: existingByEmail } = await supabase
             .from('analytics_users')
             .select('id, total_logins')
@@ -149,36 +240,38 @@ export async function POST(request: NextRequest) {
             .maybeSingle();
 
         if (existingByEmail) {
-            // Update existing email user
             await supabase.from('analytics_users').update({
                 last_login_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
                 total_logins: (existingByEmail.total_logins || 0) + 1,
-                user_agent: userAgent,
-                device_type: deviceType,
-                last_ip: ip,
-                ...(geo.country && { country: geo.country, country_code: geo.countryCode })
+                ...trackingData
             }).eq('id', existingByEmail.id);
 
-            return NextResponse.json({ userId: existingByEmail.id });
+            return NextResponse.json({ success: true, userId: existingByEmail.id });
         }
 
         // Create new email-only user
-        const { data: newUser } = await supabase.from('analytics_users').insert({
-            email,
-            wallet_address: null,
-            is_verified_human: false,
-            country: geo.country || null,
-            country_code: geo.countryCode || null,
-            user_agent: userAgent,
-            device_type: deviceType,
-            last_ip: ip,
-            total_logins: 1
-        }).select('id').single();
+        const { data: newUser, error } = await supabase
+            .from('analytics_users')
+            .insert({
+                email,
+                wallet_address: null,
+                is_verified_human: false,
+                ...trackingData,
+                total_logins: 1
+            })
+            .select('id')
+            .single();
 
-        return NextResponse.json({ userId: newUser?.id || null });
+        if (error) {
+            console.error('[Analytics API] Insert error:', error);
+            return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
+        }
+
+        return NextResponse.json({ success: true, userId: newUser?.id || null });
 
     } catch (e) {
-        console.error('User sync error:', e);
+        console.error('[Analytics API] Error:', e);
         return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }
