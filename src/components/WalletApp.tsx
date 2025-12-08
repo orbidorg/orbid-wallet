@@ -65,82 +65,50 @@ export default function WalletApp() {
         );
     }
 
-    // Not authenticated - show connect screen
+    // Not authenticated - show connect screen (optimized for mobile)
     if (!isAuthenticated) {
         return (
             <>
                 <div className="min-h-screen bg-black flex flex-col items-center justify-center p-8 relative">
-                    {/* Ambient glow */}
+                    {/* Static gradient background - no animation */}
                     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                        <motion.div
-                            animate={{ scale: [1, 1.1, 1], opacity: [0.1, 0.15, 0.1] }}
-                            transition={{ duration: 4, repeat: Infinity }}
-                            className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-pink-500/10 rounded-full blur-[120px]"
-                        />
-                        <motion.div
-                            animate={{ scale: [1, 1.15, 1], opacity: [0.1, 0.12, 0.1] }}
-                            transition={{ duration: 5, repeat: Infinity, delay: 0.5 }}
-                            className="absolute bottom-1/4 left-1/3 w-64 h-64 bg-purple-500/10 rounded-full blur-[100px]"
-                        />
+                        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-pink-500/10 rounded-full blur-[120px]" />
+                        <div className="absolute bottom-1/4 left-1/3 w-64 h-64 bg-purple-500/10 rounded-full blur-[100px]" />
                     </div>
 
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5 }}
-                        className="relative max-w-sm w-full text-center"
-                    >
-                        {/* Logo */}
-                        <motion.div
-                            initial={{ scale: 0, rotate: -180 }}
-                            animate={{ scale: 1, rotate: 0 }}
-                            transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
-                            className="w-28 h-28 mx-auto mb-8"
-                        >
+                    <div className="relative max-w-sm w-full text-center">
+                        {/* Logo - no animation */}
+                        <div className="w-28 h-28 mx-auto mb-8">
                             <Image src="/logo.svg" alt="OrbId" width={112} height={112} priority />
-                        </motion.div>
+                        </div>
 
-                        <FadeIn delay={0.2}>
-                            <h1 className="text-4xl font-display font-bold text-white mb-3 tracking-tight">
-                                OrbId Wallet
-                            </h1>
-                        </FadeIn>
-                        <FadeIn delay={0.25}>
-                            <p className="text-zinc-400 mb-10">Your gateway to World App</p>
-                        </FadeIn>
+                        <h1 className="text-4xl font-display font-bold text-white mb-3 tracking-tight">
+                            OrbId Wallet
+                        </h1>
+                        <p className="text-zinc-400 mb-10">Your gateway to World App</p>
 
                         {/* World App Button */}
-                        <FadeIn delay={0.3}>
-                            <AnimatedButton
-                                variant="gradient"
-                                size="lg"
-                                onClick={loginWithWorldApp}
-                                fullWidth
-                                className="shadow-lg shadow-pink-500/20 glow-pink mb-4"
-                            >
-                                Connect with World App
-                            </AnimatedButton>
-                        </FadeIn>
+                        <button
+                            onClick={loginWithWorldApp}
+                            className="w-full py-4 px-6 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-semibold rounded-2xl shadow-lg shadow-pink-500/20 hover:opacity-90 active:scale-[0.98] transition-all mb-4"
+                        >
+                            Connect with World App
+                        </button>
 
                         {/* Email Button */}
-                        <FadeIn delay={0.35}>
-                            <AnimatedButton
-                                variant="glass"
-                                size="lg"
-                                onClick={() => setShowEmailLogin(true)}
-                                fullWidth
-                            >
-                                Continue with Email
-                            </AnimatedButton>
-                        </FadeIn>
+                        <button
+                            onClick={() => setShowEmailLogin(true)}
+                            className="w-full py-4 px-6 glass text-white font-semibold rounded-2xl hover:bg-white/10 active:scale-[0.98] transition-all"
+                        >
+                            Continue with Email
+                        </button>
 
-                        <FadeIn delay={0.4}>
-                            <p className="mt-8 text-xs text-zinc-600">
-                                Powered by Worldcoin
-                            </p>
-                        </FadeIn>
-                    </motion.div>
+                        <p className="mt-8 text-xs text-zinc-600">
+                            Powered by Worldcoin
+                        </p>
+                    </div>
                 </div>
+
 
                 <EmailLoginModal
                     isOpen={showEmailLogin}
@@ -238,7 +206,7 @@ export default function WalletApp() {
 
     // Authenticated with wallet - show wallet app
     return (
-        <div className="min-h-screen bg-black pb-24">
+        <div className="min-h-screen bg-black pb-32">
             {/* Header */}
             <motion.header
                 initial={{ y: -20, opacity: 0 }}

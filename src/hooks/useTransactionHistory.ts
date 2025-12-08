@@ -88,7 +88,7 @@ export function useTransactionHistory(walletAddress: string | null) {
                             fromAddress: walletAddress,
                             category: ['erc20', 'external'],
                             order: 'desc',
-                            maxCount: '0x14' // 20 transactions
+                            maxCount: '0xA' // 10 transactions for faster loading
                         }]
                     })
                 }),
@@ -103,7 +103,7 @@ export function useTransactionHistory(walletAddress: string | null) {
                             toAddress: walletAddress,
                             category: ['erc20', 'external'],
                             order: 'desc',
-                            maxCount: '0x14' // 20 transactions
+                            maxCount: '0xA' // 10 transactions for faster loading
                         }]
                     })
                 })

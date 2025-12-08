@@ -190,60 +190,59 @@ export default function ActivityList({ walletAddress }: ActivityListProps) {
                 {isLoading ? (
                     <LoadingSkeleton />
                 ) : (
-                    <StaggerContainer className="divide-y divide-white/5">
+                    <div className="divide-y divide-white/5">
                         {transactions.map((tx) => (
-                            <StaggerItem key={tx.hash}>
-                                <Pressable
-                                    onClick={() => setSelectedTx(tx)}
-                                    className="w-full flex items-center justify-between px-4 py-3 text-left"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        {/* Icon */}
-                                        <div className={`w-9 h-9 rounded-full flex items-center justify-center ${tx.type === 'receive'
-                                            ? 'bg-emerald-500/10'
-                                            : tx.type === 'send'
-                                                ? 'bg-pink-500/10'
-                                                : 'bg-blue-500/10'
-                                            }`}>
-                                            {tx.type === 'receive' ? (
-                                                <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                                                </svg>
-                                            ) : tx.type === 'send' ? (
-                                                <svg className="w-4 h-4 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                                                </svg>
-                                            ) : (
-                                                <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                                                </svg>
-                                            )}
-                                        </div>
-
-                                        {/* Info */}
-                                        <div>
-                                            <p className="font-medium text-white text-sm capitalize">{tx.type}</p>
-                                            <p className="text-xs text-zinc-500">
-                                                {tx.type === 'receive'
-                                                    ? `From ${tx.from.slice(0, 6)}...${tx.from.slice(-4)}`
-                                                    : `To ${tx.to.slice(0, 6)}...${tx.to.slice(-4)}`
-                                                }
-                                            </p>
-                                        </div>
+                            <button
+                                key={tx.hash}
+                                onClick={() => setSelectedTx(tx)}
+                                className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/5 active:bg-white/10 transition-colors"
+                            >
+                                <div className="flex items-center gap-3">
+                                    {/* Icon */}
+                                    <div className={`w-9 h-9 rounded-full flex items-center justify-center ${tx.type === 'receive'
+                                        ? 'bg-emerald-500/10'
+                                        : tx.type === 'send'
+                                            ? 'bg-pink-500/10'
+                                            : 'bg-blue-500/10'
+                                        }`}>
+                                        {tx.type === 'receive' ? (
+                                            <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                            </svg>
+                                        ) : tx.type === 'send' ? (
+                                            <svg className="w-4 h-4 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                                            </svg>
+                                        ) : (
+                                            <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                            </svg>
+                                        )}
                                     </div>
 
-                                    {/* Amount & Time */}
-                                    <div className="text-right">
-                                        <p className={`font-medium text-sm ${tx.type === 'receive' ? 'text-emerald-400' : 'text-white'
-                                            }`}>
-                                            {tx.type === 'receive' ? '+' : '-'}{parseFloat(tx.tokenAmount || '0').toFixed(4)} {tx.tokenSymbol}
+                                    {/* Info */}
+                                    <div>
+                                        <p className="font-medium text-white text-sm capitalize">{tx.type}</p>
+                                        <p className="text-xs text-zinc-500">
+                                            {tx.type === 'receive'
+                                                ? `From ${tx.from.slice(0, 6)}...${tx.from.slice(-4)}`
+                                                : `To ${tx.to.slice(0, 6)}...${tx.to.slice(-4)}`
+                                            }
                                         </p>
-                                        <p className="text-xs text-zinc-500">{getRelativeTime(tx.timestamp)}</p>
                                     </div>
-                                </Pressable>
-                            </StaggerItem>
+                                </div>
+
+                                {/* Amount & Time */}
+                                <div className="text-right">
+                                    <p className={`font-medium text-sm ${tx.type === 'receive' ? 'text-emerald-400' : 'text-white'
+                                        }`}>
+                                        {tx.type === 'receive' ? '+' : '-'}{parseFloat(tx.tokenAmount || '0').toFixed(4)} {tx.tokenSymbol}
+                                    </p>
+                                    <p className="text-xs text-zinc-500">{getRelativeTime(tx.timestamp)}</p>
+                                </div>
+                            </button>
                         ))}
-                    </StaggerContainer>
+                    </div>
                 )}
             </div>
 
