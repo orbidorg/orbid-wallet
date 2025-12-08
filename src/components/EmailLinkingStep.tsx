@@ -27,6 +27,28 @@ export default function EmailLinkingStep({ username, walletAddress, onComplete }
         setError('');
 
         try {
+            // First, check if this wallet already has a linked email
+            const checkRes = await fetch('/api/analytics/user/check', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ walletAddress, email })
+            });
+
+            if (!checkRes.ok) {
+                const checkData = await checkRes.json();
+                if (checkData.error === 'wallet_already_linked') {
+                    setError(`This World ID is already linked to ${checkData.linkedEmail || 'another email'}. Please use that email to login.`);
+                    setLoading(false);
+                    return;
+                }
+                if (checkData.error === 'email_already_linked') {
+                    setError('This email is linked to a different World ID.');
+                    setLoading(false);
+                    return;
+                }
+            }
+
+            // If check passed, send the verification code
             const res = await fetch('/api/auth/send-code', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
