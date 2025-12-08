@@ -59,20 +59,31 @@ function getRelativeTime(timestamp: number): string {
     return new Date(timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
+const TRANSACTIONS_PER_PAGE = 10;
+
 export function useTransactionHistory(walletAddress: string | null) {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
 
-    const fetchTransactions = useCallback(async () => {
+    const fetchTransactions = useCallback(async (pageNum: number, append: boolean = false) => {
         if (!walletAddress || !ALCHEMY_API_KEY) {
             setTransactions([]);
             setIsLoading(false);
             return;
         }
 
-        setIsLoading(true);
+        if (append) {
+            setIsLoadingMore(true);
+        } else {
+            setIsLoading(true);
+        }
         setError(null);
+
+        const maxCount = `0x${(TRANSACTIONS_PER_PAGE * pageNum).toString(16)}`;
 
         try {
             // Fetch both incoming and outgoing transfers
@@ -88,7 +99,7 @@ export function useTransactionHistory(walletAddress: string | null) {
                             fromAddress: walletAddress,
                             category: ['erc20', 'external'],
                             order: 'desc',
-                            maxCount: '0xA' // 10 transactions for faster loading
+                            maxCount
                         }]
                     })
                 }),
@@ -103,7 +114,7 @@ export function useTransactionHistory(walletAddress: string | null) {
                             toAddress: walletAddress,
                             category: ['erc20', 'external'],
                             order: 'desc',
-                            maxCount: '0xA' // 10 transactions for faster loading
+                            maxCount
                         }]
                     })
                 })
@@ -117,35 +128,36 @@ export function useTransactionHistory(walletAddress: string | null) {
             const sentTransfers: AlchemyTransfer[] = sentData.result?.transfers || [];
             const receivedTransfers: AlchemyTransfer[] = receivedData.result?.transfers || [];
 
-            // Get block timestamps for all unique blocks
-            const allBlocks = new Set([
+            // Get block timestamps for unique blocks (limit to 15 for speed)
+            const allBlocks = [...new Set([
                 ...sentTransfers.map(t => t.blockNum),
                 ...receivedTransfers.map(t => t.blockNum)
-            ]);
+            ])].slice(0, 15);
 
             const blockTimestamps: Record<string, number> = {};
 
-            // Fetch timestamps in batches
-            for (const blockNum of allBlocks) {
-                try {
-                    const timestampRes = await fetch(ALCHEMY_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            jsonrpc: '2.0',
-                            id: 1,
-                            method: 'eth_getBlockByNumber',
-                            params: [blockNum, false]
-                        })
-                    });
-                    const blockData = await timestampRes.json();
-                    if (blockData.result?.timestamp) {
-                        blockTimestamps[blockNum] = parseInt(blockData.result.timestamp, 16) * 1000;
+            await Promise.all(
+                allBlocks.map(async (blockNum) => {
+                    try {
+                        const res = await fetch(ALCHEMY_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                jsonrpc: '2.0',
+                                id: 1,
+                                method: 'eth_getBlockByNumber',
+                                params: [blockNum, false]
+                            })
+                        });
+                        const data = await res.json();
+                        if (data.result?.timestamp) {
+                            blockTimestamps[blockNum] = parseInt(data.result.timestamp, 16) * 1000;
+                        }
+                    } catch {
+                        blockTimestamps[blockNum] = Date.now();
                     }
-                } catch {
-                    blockTimestamps[blockNum] = Date.now();
-                }
-            }
+                })
+            );
 
             // Process sent transactions
             const sentTxs: Transaction[] = sentTransfers.map(t => {
@@ -187,8 +199,11 @@ export function useTransactionHistory(walletAddress: string | null) {
                 // Remove duplicates by hash
                 .filter((tx, index, self) =>
                     index === self.findIndex(t => t.hash === tx.hash)
-                )
-                .slice(0, 30); // Limit to 30 transactions
+                );
+
+            // Check if there might be more transactions
+            const totalFetched = sentTransfers.length + receivedTransfers.length;
+            setHasMore(totalFetched >= TRANSACTIONS_PER_PAGE * pageNum);
 
             setTransactions(allTxs);
         } catch (err) {
@@ -196,12 +211,29 @@ export function useTransactionHistory(walletAddress: string | null) {
             setError('Failed to load transactions');
         } finally {
             setIsLoading(false);
+            setIsLoadingMore(false);
         }
     }, [walletAddress]);
 
+    const loadMore = useCallback(() => {
+        const nextPage = page + 1;
+        setPage(nextPage);
+        fetchTransactions(nextPage, true);
+    }, [page, fetchTransactions]);
+
     useEffect(() => {
-        fetchTransactions();
+        setPage(1);
+        fetchTransactions(1, false);
     }, [fetchTransactions]);
 
-    return { transactions, isLoading, error, refetch: fetchTransactions, getRelativeTime };
+    return {
+        transactions,
+        isLoading,
+        isLoadingMore,
+        error,
+        hasMore,
+        loadMore,
+        refetch: () => fetchTransactions(page, false),
+        getRelativeTime
+    };
 }

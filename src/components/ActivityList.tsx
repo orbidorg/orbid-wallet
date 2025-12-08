@@ -108,16 +108,18 @@ function TransactionDetailModal({
                             </div>
 
                             {/* View on Explorer Button */}
-                            <AnimatedButton
-                                variant="gradient"
-                                fullWidth
-                                onClick={() => window.open(explorerUrl, '_blank')}
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                </svg>
-                                View on WorldScan
-                            </AnimatedButton>
+                            <div className="pb-6">
+                                <AnimatedButton
+                                    variant="gradient"
+                                    fullWidth
+                                    onClick={() => window.open(explorerUrl, '_blank')}
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
+                                    View on WorldScan
+                                </AnimatedButton>
+                            </div>
                         </div>
                     </ModalContent>
                 </ModalBackdrop>
@@ -150,7 +152,7 @@ function LoadingSkeleton() {
 }
 
 export default function ActivityList({ walletAddress }: ActivityListProps) {
-    const { transactions, isLoading, getRelativeTime } = useTransactionHistory(walletAddress);
+    const { transactions, isLoading, isLoadingMore, hasMore, loadMore, getRelativeTime } = useTransactionHistory(walletAddress);
     const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
 
     // Empty state
@@ -243,6 +245,24 @@ export default function ActivityList({ walletAddress }: ActivityListProps) {
                             </button>
                         ))}
                     </div>
+                )}
+
+                {/* Load More Button */}
+                {!isLoading && transactions.length > 0 && hasMore && (
+                    <button
+                        onClick={loadMore}
+                        disabled={isLoadingMore}
+                        className="w-full py-3 text-center text-sm font-medium text-pink-400 hover:text-pink-300 hover:bg-white/5 transition-colors disabled:opacity-50"
+                    >
+                        {isLoadingMore ? (
+                            <span className="flex items-center justify-center gap-2">
+                                <span className="w-4 h-4 border-2 border-pink-400 border-t-transparent rounded-full animate-spin" />
+                                Loading...
+                            </span>
+                        ) : (
+                            'Load More'
+                        )}
+                    </button>
                 )}
             </div>
 
