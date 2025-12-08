@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
+import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 
 interface Ad {
     id: string;
@@ -34,20 +35,53 @@ const SAMPLE_ADS: Ad[] = [
     }
 ];
 
+const AUTOPLAY_INTERVAL = 10000; // 10 seconds
+const SWIPE_THRESHOLD = 50; // pixels to trigger swipe
+
 export default function AdCarousel() {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isMinimized, setIsMinimized] = useState(false);
+    const [direction, setDirection] = useState(0);
+    const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Auto-rotate ads every 6 seconds
-    useEffect(() => {
-        if (isMinimized) return;
-
-        const interval = setInterval(() => {
-            setCurrentIndex((prev) => (prev + 1) % SAMPLE_ADS.length);
-        }, 6000);
-
-        return () => clearInterval(interval);
+    const resetTimer = useCallback(() => {
+        if (timerRef.current) clearInterval(timerRef.current);
+        if (!isMinimized) {
+            timerRef.current = setInterval(() => {
+                setDirection(1);
+                setCurrentIndex((prev) => (prev + 1) % SAMPLE_ADS.length);
+            }, AUTOPLAY_INTERVAL);
+        }
     }, [isMinimized]);
+
+    useEffect(() => {
+        resetTimer();
+        return () => {
+            if (timerRef.current) clearInterval(timerRef.current);
+        };
+    }, [resetTimer]);
+
+    const goToSlide = (index: number) => {
+        setDirection(index > currentIndex ? 1 : -1);
+        setCurrentIndex(index);
+        resetTimer();
+    };
+
+    const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+        const { offset } = info;
+        if (Math.abs(offset.x) > SWIPE_THRESHOLD) {
+            if (offset.x > 0) {
+                // Swipe right - previous
+                setDirection(-1);
+                setCurrentIndex((prev) => (prev - 1 + SAMPLE_ADS.length) % SAMPLE_ADS.length);
+            } else {
+                // Swipe left - next
+                setDirection(1);
+                setCurrentIndex((prev) => (prev + 1) % SAMPLE_ADS.length);
+            }
+            resetTimer();
+        }
+    };
 
     const currentAd = SAMPLE_ADS[currentIndex];
 
@@ -97,70 +131,87 @@ export default function AdCarousel() {
         }
     };
 
+    const slideVariants = {
+        enter: (dir: number) => ({ x: dir > 0 ? 100 : -100, opacity: 0 }),
+        center: { x: 0, opacity: 1 },
+        exit: (dir: number) => ({ x: dir > 0 ? -100 : 100, opacity: 0 })
+    };
+
     return (
-        <div className="relative">
-            {/* Ad Container */}
-            <div
-                className={`glass rounded-xl overflow-hidden bg-gradient-to-r ${currentAd.gradient} bg-opacity-10 cursor-pointer transition-all hover:scale-[1.01]`}
-                onClick={() => currentAd.link && window.open(currentAd.link, '_blank')}
-            >
-                {/* Image header if available */}
-                {currentAd.image && (
-                    <div className="relative h-24 w-full">
-                        <Image src={currentAd.image} alt="" fill className="object-cover" />
-                    </div>
-                )}
-
-                <div className="p-3">
-                    <div className="flex items-start gap-3">
-                        {/* Icon */}
-                        {currentAd.icon && (
-                            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white flex-shrink-0">
-                                {renderIcon()}
-                            </div>
-                        )}
-
-                        {/* Content */}
-                        <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-white text-sm">{currentAd.title}</p>
-                            <p className="text-xs text-white/70 mt-0.5">{currentAd.description}</p>
-                            {currentAd.cta && (
-                                <span className="inline-block mt-2 px-3 py-1 text-xs font-medium bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors">
-                                    {currentAd.cta}
-                                </span>
-                            )}
+        <div className="relative overflow-hidden">
+            {/* Ad Container with swipe */}
+            <AnimatePresence mode="wait" custom={direction}>
+                <motion.div
+                    key={currentAd.id}
+                    custom={direction}
+                    variants={slideVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                    drag="x"
+                    dragConstraints={{ left: 0, right: 0 }}
+                    dragElastic={0.2}
+                    onDragEnd={handleDragEnd}
+                    className={`glass rounded-xl overflow-hidden bg-gradient-to-r ${currentAd.gradient} bg-opacity-10 cursor-grab active:cursor-grabbing min-h-[120px]`}
+                    onClick={() => currentAd.link && window.open(currentAd.link, '_blank')}
+                >
+                    {/* Image header if available */}
+                    {currentAd.image && (
+                        <div className="relative h-24 w-full">
+                            <Image src={currentAd.image} alt="" fill className="object-cover" />
                         </div>
+                    )}
 
-                        {/* Minimize button */}
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setIsMinimized(true);
-                            }}
-                            className="p-1.5 hover:bg-white/10 rounded-full transition-colors flex-shrink-0"
-                        >
-                            <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                            </svg>
-                        </button>
+                    <div className="p-4 h-full flex items-center">
+                        <div className="flex items-center gap-3 w-full">
+                            {/* Icon */}
+                            {currentAd.icon && (
+                                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white flex-shrink-0">
+                                    {renderIcon()}
+                                </div>
+                            )}
+
+                            {/* Content */}
+                            <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-white text-sm truncate">{currentAd.title}</p>
+                                <p className="text-xs text-white/70 mt-0.5 line-clamp-2">{currentAd.description}</p>
+                                {currentAd.cta && (
+                                    <span className="inline-block mt-2 px-3 py-1 text-xs font-medium bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors">
+                                        {currentAd.cta}
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Minimize button */}
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsMinimized(true);
+                                }}
+                                className="p-1.5 hover:bg-white/10 rounded-full transition-colors flex-shrink-0"
+                            >
+                                <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
-                </div>
+                </motion.div>
+            </AnimatePresence>
 
-                {/* Dots indicator */}
-                <div className="flex justify-center gap-1.5 pb-2">
-                    {SAMPLE_ADS.map((_, index) => (
-                        <button
-                            key={index}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setCurrentIndex(index);
-                            }}
-                            className={`w-1.5 h-1.5 rounded-full transition-all ${index === currentIndex ? 'bg-white w-3' : 'bg-white/30'
-                                }`}
-                        />
-                    ))}
-                </div>
+            {/* Dots indicator */}
+            <div className="flex justify-center gap-1.5 pt-2">
+                {SAMPLE_ADS.map((_, index) => (
+                    <button
+                        key={index}
+                        onClick={() => goToSlide(index)}
+                        className={`h-1.5 rounded-full transition-all ${index === currentIndex ? 'bg-white w-4' : 'bg-white/30 w-1.5'
+                            }`}
+                    />
+                ))}
             </div>
         </div>
     );
 }
+
