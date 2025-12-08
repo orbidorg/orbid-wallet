@@ -12,7 +12,7 @@ import SwapInterface from './SwapInterface';
 import ActivityList from './ActivityList';
 import WorldIDVerify from './WorldIDVerify';
 import ProfileCard from './ProfileCard';
-import EmailLoginModal from './modals/EmailLoginModal';
+import EmailLinkingStep from './EmailLinkingStep';
 import TokenDetailModal from './modals/TokenDetailModal';
 import SendModal from './modals/SendModal';
 import ReceiveModal from './modals/ReceiveModal';
@@ -20,6 +20,9 @@ import BuyModal from './modals/BuyModal';
 import SocialLinks from './SocialLinks';
 import SettingsModal from './modals/SettingsModal';
 import { AnimatedButton, FadeIn } from './ui/Motion';
+import { QRCodeSVG } from 'qrcode.react';
+
+const WORLD_APP_DEEP_LINK = 'https://worldcoin.org/mini-app?app_id=app_920c1c9a0cb3aaa68e626f54c09f3cf9';
 
 export default function WalletApp() {
     const {
@@ -27,13 +30,11 @@ export default function WalletApp() {
         isAuthenticated,
         walletAddress,
         username,
-        email,
+        isInWorldApp,
+        pendingEmailLink,
         loginWithWorldApp,
-        loginWithEmail,
-        connectWorldID,
+        completeEmailLink,
         logout,
-        showEmailLogin,
-        setShowEmailLogin,
     } = useAuth();
     const [activeTab, setActiveTab] = useState<TabType>('wallet');
     const [selectedToken, setSelectedToken] = useState<TokenBalance | null>(null);
@@ -50,8 +51,8 @@ export default function WalletApp() {
         return (
             <div className="min-h-screen bg-black flex items-center justify-center">
                 <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
                     className="flex flex-col items-center gap-4"
                 >
                     <motion.div
@@ -65,141 +66,110 @@ export default function WalletApp() {
         );
     }
 
-    // Not authenticated - show connect screen (optimized for mobile)
-    if (!isAuthenticated) {
+    // Email linking step - after World ID auth, before wallet access
+    if (pendingEmailLink && walletAddress) {
         return (
-            <>
+            <EmailLinkingStep
+                username={username}
+                walletAddress={walletAddress}
+                onComplete={completeEmailLink}
+            />
+        );
+    }
+
+    // Not authenticated - show connect screen
+    if (!isAuthenticated) {
+        // Browser users - show QR code to open in World App
+        if (!isInWorldApp) {
+            return (
                 <div className="min-h-screen bg-black flex flex-col items-center justify-center p-8 relative">
-                    {/* Static gradient background - no animation */}
+                    {/* Static gradient background */}
                     <div className="absolute inset-0 overflow-hidden pointer-events-none">
                         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-pink-500/10 rounded-full blur-[120px]" />
                         <div className="absolute bottom-1/4 left-1/3 w-64 h-64 bg-purple-500/10 rounded-full blur-[100px]" />
                     </div>
 
                     <div className="relative max-w-sm w-full text-center">
-                        {/* Logo - no animation */}
-                        <div className="w-28 h-28 mx-auto mb-8">
-                            <Image src="/logo.svg" alt="OrbId" width={112} height={112} priority />
+                        {/* Logo */}
+                        <div className="w-24 h-24 mx-auto mb-6">
+                            <Image src="/logo.svg" alt="OrbId" width={96} height={96} priority />
                         </div>
 
-                        <h1 className="text-4xl font-display font-bold text-white mb-3 tracking-tight">
+                        <h1 className="text-3xl font-display font-bold text-white mb-2 tracking-tight">
                             OrbId Wallet
                         </h1>
-                        <p className="text-zinc-400 mb-10">Your gateway to World App</p>
+                        <p className="text-zinc-400 mb-8">
+                            Open this app from World App
+                        </p>
 
-                        {/* World App Button */}
-                        <button
-                            onClick={loginWithWorldApp}
-                            className="w-full py-4 px-6 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-semibold rounded-2xl shadow-lg shadow-pink-500/20 hover:opacity-90 active:scale-[0.98] transition-all mb-4"
-                        >
-                            Connect with World App
-                        </button>
+                        {/* QR Code */}
+                        <div className="bg-white p-4 rounded-2xl mx-auto w-fit mb-6">
+                            <QRCodeSVG
+                                value={WORLD_APP_DEEP_LINK}
+                                size={180}
+                                level="M"
+                                includeMargin={false}
+                            />
+                        </div>
 
-                        {/* Email Button */}
-                        <button
-                            onClick={() => setShowEmailLogin(true)}
-                            className="w-full py-4 px-6 glass text-white font-semibold rounded-2xl hover:bg-white/10 active:scale-[0.98] transition-all"
+                        <p className="text-zinc-500 text-sm mb-4">
+                            Scan with your phone camera or World App
+                        </p>
+
+                        <a
+                            href={WORLD_APP_DEEP_LINK}
+                            className="inline-block w-full py-4 px-6 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-semibold rounded-2xl shadow-lg shadow-pink-500/20 hover:opacity-90 active:scale-[0.98] transition-all"
                         >
-                            Continue with Email
-                        </button>
+                            Open in World App
+                        </a>
 
                         <p className="mt-8 text-xs text-zinc-600">
                             Powered by Worldcoin
                         </p>
                     </div>
                 </div>
+            );
+        }
 
-
-                <EmailLoginModal
-                    isOpen={showEmailLogin}
-                    onClose={() => setShowEmailLogin(false)}
-                    onSuccess={loginWithEmail}
-                />
-            </>
-        );
-    }
-
-    // Authenticated but no wallet - show connect World ID
-    if (!walletAddress) {
+        // World App users - show connect button
         return (
-            <div className="min-h-screen bg-black flex flex-col items-center justify-center p-8">
-                {/* Ambient glow */}
+            <div className="min-h-screen bg-black flex flex-col items-center justify-center p-8 relative">
+                {/* Static gradient background */}
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <motion.div
-                        animate={{ scale: [1, 1.1, 1] }}
-                        transition={{ duration: 4, repeat: Infinity }}
-                        className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-pink-500/10 rounded-full blur-[120px]"
-                    />
+                    <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-pink-500/10 rounded-full blur-[120px]" />
+                    <div className="absolute bottom-1/4 left-1/3 w-64 h-64 bg-purple-500/10 rounded-full blur-[100px]" />
                 </div>
 
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                    className="relative max-w-sm w-full text-center"
-                >
-                    {/* Success check */}
-                    <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
-                        className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 flex items-center justify-center"
+                <div className="relative max-w-sm w-full text-center">
+                    {/* Logo */}
+                    <div className="w-28 h-28 mx-auto mb-8">
+                        <Image src="/logo.svg" alt="OrbId" width={112} height={112} priority />
+                    </div>
+
+                    <h1 className="text-4xl font-display font-bold text-white mb-3 tracking-tight">
+                        OrbId Wallet
+                    </h1>
+                    <p className="text-zinc-400 mb-10">Your gateway to World App</p>
+
+                    {/* Connect Button */}
+                    <AnimatedButton
+                        variant="gradient"
+                        size="lg"
+                        onClick={loginWithWorldApp}
+                        fullWidth
+                        className="shadow-lg shadow-pink-500/20"
                     >
-                        <motion.svg
-                            initial={{ pathLength: 0 }}
-                            animate={{ pathLength: 1 }}
-                            transition={{ delay: 0.3, duration: 0.4 }}
-                            className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                        >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </motion.svg>
-                    </motion.div>
+                        <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor">
+                            <circle cx="12" cy="12" r="10" strokeWidth="2" />
+                            <circle cx="12" cy="12" r="4" fill="currentColor" />
+                        </svg>
+                        Connect with World App
+                    </AnimatedButton>
 
-                    <FadeIn delay={0.2}>
-                        <h2 className="text-2xl font-bold text-white mb-2">
-                            Welcome! 👋
-                        </h2>
-                    </FadeIn>
-                    <FadeIn delay={0.25}>
-                        <p className="text-zinc-400 mb-2">
-                            Logged in as <span className="text-white font-medium">{email}</span>
-                        </p>
-                    </FadeIn>
-                    <FadeIn delay={0.3}>
-                        <p className="text-zinc-500 text-sm mb-8">
-                            Connect your World ID to access your wallet
-                        </p>
-                    </FadeIn>
-
-                    {/* Connect World ID Button */}
-                    <FadeIn delay={0.35}>
-                        <AnimatedButton
-                            variant="gradient"
-                            size="lg"
-                            onClick={connectWorldID}
-                            fullWidth
-                            className="shadow-lg shadow-pink-500/20 glow-pink"
-                        >
-                            <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor">
-                                <circle cx="12" cy="12" r="10" strokeWidth="2" />
-                                <circle cx="12" cy="12" r="4" fill="currentColor" />
-                            </svg>
-                            Connect World ID
-                        </AnimatedButton>
-                    </FadeIn>
-
-                    {/* Logout option */}
-                    <FadeIn delay={0.4}>
-                        <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={logout}
-                            className="mt-4 text-zinc-500 text-sm hover:text-zinc-300 transition-colors"
-                        >
-                            Use different account
-                        </motion.button>
-                    </FadeIn>
-                </motion.div>
+                    <p className="mt-8 text-xs text-zinc-600">
+                        Powered by Worldcoin
+                    </p>
+                </div>
             </div>
         );
     }
@@ -249,7 +219,7 @@ export default function WalletApp() {
                             className="flex flex-col gap-4"
                         >
                             <ProfileCard
-                                address={walletAddress}
+                                address={walletAddress!}
                                 username={username}
                                 totalBalanceUSD={totalValueUSD}
                                 wldBalance={wldBalance}
@@ -286,7 +256,7 @@ export default function WalletApp() {
                             exit={{ opacity: 0, x: 20 }}
                             transition={{ duration: 0.2 }}
                         >
-                            <ActivityList walletAddress={walletAddress} />
+                            <ActivityList walletAddress={walletAddress!} />
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -295,34 +265,28 @@ export default function WalletApp() {
             {/* Bottom Navigation */}
             <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
 
-            {/* Token Detail Modal */}
+            {/* Modals */}
             {selectedToken && (
                 <TokenDetailModal
                     tokenBalance={selectedToken}
-                    isOpen={!!selectedToken}
+                    isOpen={true}
                     onClose={() => setSelectedToken(null)}
-                    onSend={() => {
-                        setSelectedToken(null);
-                        setShowSendModal(true);
-                    }}
-                    onBuy={() => {
-                        setSelectedToken(null);
-                        setShowBuyModal(true);
-                    }}
+                    onSend={() => { setSelectedToken(null); setShowSendModal(true); }}
+                    onBuy={() => { setSelectedToken(null); setShowBuyModal(true); }}
                 />
             )}
 
             <SendModal
                 isOpen={showSendModal}
                 onClose={() => setShowSendModal(false)}
+                walletAddress={walletAddress!}
                 balances={balances}
-                walletAddress={walletAddress}
             />
 
             <ReceiveModal
                 isOpen={showReceiveModal}
                 onClose={() => setShowReceiveModal(false)}
-                walletAddress={walletAddress}
+                walletAddress={walletAddress!}
             />
 
             <BuyModal
