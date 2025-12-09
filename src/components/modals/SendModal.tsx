@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { MiniKit } from '@worldcoin/minikit-js';
 import type { TokenBalance } from '@/lib/types';
 import { useToast } from '@/lib/ToastContext';
+import { useI18n } from '@/lib/i18n';
 import { AnimatedButton, ModalBackdrop, ModalContent, FadeIn, Pressable, StaggerContainer, StaggerItem } from '../ui/Motion';
 
 interface SendModalProps {
@@ -16,6 +17,7 @@ interface SendModalProps {
 }
 
 export default function SendModal({ isOpen, onClose, balances }: SendModalProps) {
+    const { t } = useI18n();
     const { showToast } = useToast();
     const [step, setStep] = useState<'select' | 'form' | 'confirm' | 'loading' | 'success' | 'error'>('select');
     const [selectedToken, setSelectedToken] = useState<TokenBalance | null>(null);
@@ -32,16 +34,16 @@ export default function SendModal({ isOpen, onClose, balances }: SendModalProps)
     const handleContinue = () => {
         setError('');
         if (!recipient.startsWith('0x') || recipient.length !== 42) {
-            setError('Invalid wallet address');
+            setError(t.modals.invalidAddress);
             return;
         }
         const numAmount = parseFloat(amount);
         if (isNaN(numAmount) || numAmount <= 0) {
-            setError('Invalid amount');
+            setError(t.modals.invalidAmount);
             return;
         }
         if (numAmount > parseFloat(selectedToken?.balance || '0')) {
-            setError('Insufficient balance');
+            setError(t.modals.insufficientBalance);
             return;
         }
         setStep('confirm');
@@ -56,7 +58,7 @@ export default function SendModal({ isOpen, onClose, balances }: SendModalProps)
                 const mockHash = '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
                 setTxHash(mockHash);
                 setStep('success');
-                showToast({ type: 'success', title: 'Transaction Sent!', message: `${amount} ${selectedToken.token.symbol} sent successfully`, txHash: mockHash });
+                showToast({ type: 'success', title: t.modals.transactionSent, message: `${amount} ${selectedToken.token.symbol}`, txHash: mockHash });
                 return;
             }
 
@@ -76,17 +78,17 @@ export default function SendModal({ isOpen, onClose, balances }: SendModalProps)
                 const hash = finalPayload.transaction_id || '';
                 setTxHash(hash);
                 setStep('success');
-                showToast({ type: 'success', title: 'Transaction Confirmed!', message: `${amount} ${selectedToken.token.symbol} sent`, txHash: hash });
+                showToast({ type: 'success', title: t.modals.transactionSent, message: `${amount} ${selectedToken.token.symbol}`, txHash: hash });
             } else {
-                setError('Transaction failed or was rejected');
+                setError(t.modals.transactionRejected);
                 setStep('error');
-                showToast({ type: 'error', title: 'Transaction Failed', message: 'The transaction was rejected' });
+                showToast({ type: 'error', title: t.modals.transactionFailed, message: t.modals.transactionRejected });
             }
         } catch (err) {
             console.error('Transaction error:', err);
-            setError('Transaction failed. Please try again.');
+            setError(t.common.error);
             setStep('error');
-            showToast({ type: 'error', title: 'Transaction Error', message: 'Something went wrong' });
+            showToast({ type: 'error', title: t.modals.transactionFailed, message: t.common.error });
         }
     };
 
@@ -106,12 +108,12 @@ export default function SendModal({ isOpen, onClose, balances }: SendModalProps)
 
     const getTitle = () => {
         switch (step) {
-            case 'select': return 'Select Token';
-            case 'form': return 'Send';
-            case 'confirm': return 'Confirm';
-            case 'loading': return 'Processing';
-            case 'success': return 'Success';
-            case 'error': return 'Error';
+            case 'select': return t.modals.selectToken;
+            case 'form': return t.modals.send;
+            case 'confirm': return t.modals.confirm;
+            case 'loading': return t.modals.processing;
+            case 'success': return t.modals.success;
+            case 'error': return t.modals.error;
         }
     };
 
@@ -168,13 +170,13 @@ export default function SendModal({ isOpen, onClose, balances }: SendModalProps)
                                             </div>
                                             <div>
                                                 <p className="font-medium text-white">{selectedToken.token.symbol}</p>
-                                                <p className="text-xs text-zinc-500">Balance: {parseFloat(selectedToken.balance).toFixed(4)}</p>
+                                                <p className="text-xs text-zinc-500">{t.tokens.balance}: {parseFloat(selectedToken.balance).toFixed(4)}</p>
                                             </div>
-                                            <button onClick={() => setStep('select')} className="ml-auto text-xs text-pink-400 hover:text-pink-300">Change</button>
+                                            <button onClick={() => setStep('select')} className="ml-auto text-xs text-pink-400 hover:text-pink-300">{t.modals.change}</button>
                                         </div>
 
                                         <div>
-                                            <label className="text-xs text-zinc-500 mb-1.5 block">Recipient Address</label>
+                                            <label className="text-xs text-zinc-500 mb-1.5 block">{t.modals.recipientAddress}</label>
                                             <input
                                                 type="text"
                                                 value={recipient}
@@ -185,7 +187,7 @@ export default function SendModal({ isOpen, onClose, balances }: SendModalProps)
                                         </div>
 
                                         <div>
-                                            <label className="text-xs text-zinc-500 mb-1.5 block">Amount</label>
+                                            <label className="text-xs text-zinc-500 mb-1.5 block">{t.activity.amount}</label>
                                             <div className="relative">
                                                 <input
                                                     type="number"
@@ -194,7 +196,7 @@ export default function SendModal({ isOpen, onClose, balances }: SendModalProps)
                                                     placeholder="0.00"
                                                     className="w-full px-4 py-3 pr-16 rounded-xl bg-black/30 border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-pink-500/50 text-lg"
                                                 />
-                                                <button onClick={setMaxAmount} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-pink-400 hover:text-pink-300 font-medium">MAX</button>
+                                                <button onClick={setMaxAmount} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-pink-400 hover:text-pink-300 font-medium">{t.modals.max}</button>
                                             </div>
                                             <p className="text-xs text-zinc-500 mt-1.5">
                                                 ≈ ${(parseFloat(amount || '0') * (selectedToken.valueUSD / parseFloat(selectedToken.balance || '1'))).toFixed(2)} USD
@@ -210,7 +212,7 @@ export default function SendModal({ isOpen, onClose, balances }: SendModalProps)
                                         )}
 
                                         <AnimatedButton variant="gradient" onClick={handleContinue} disabled={!recipient || !amount} fullWidth className="disabled:opacity-50">
-                                            Continue
+                                            {t.modals.continue}
                                         </AnimatedButton>
                                     </motion.div>
                                 )}
@@ -229,23 +231,23 @@ export default function SendModal({ isOpen, onClose, balances }: SendModalProps)
                                         <FadeIn delay={0.1}>
                                             <div className="glass rounded-xl p-4 space-y-3">
                                                 <div className="flex justify-between">
-                                                    <span className="text-zinc-500 text-sm">To</span>
+                                                    <span className="text-zinc-500 text-sm">{t.activity.to}</span>
                                                     <span className="text-white text-sm font-mono">{recipient.slice(0, 8)}...{recipient.slice(-6)}</span>
                                                 </div>
                                                 <div className="flex justify-between">
-                                                    <span className="text-zinc-500 text-sm">Network</span>
-                                                    <span className="text-white text-sm">World Chain</span>
+                                                    <span className="text-zinc-500 text-sm">{t.activity.network}</span>
+                                                    <span className="text-white text-sm">{t.profile.worldChain}</span>
                                                 </div>
                                                 <div className="flex justify-between">
-                                                    <span className="text-zinc-500 text-sm">Fee</span>
-                                                    <span className="text-emerald-400 text-sm">Free</span>
+                                                    <span className="text-zinc-500 text-sm">{t.modals.fee}</span>
+                                                    <span className="text-emerald-400 text-sm">{t.modals.free}</span>
                                                 </div>
                                             </div>
                                         </FadeIn>
 
                                         <FadeIn delay={0.15} className="flex gap-3">
-                                            <AnimatedButton variant="glass" onClick={() => setStep('form')} fullWidth>Back</AnimatedButton>
-                                            <AnimatedButton variant="gradient" onClick={handleConfirm} fullWidth>Confirm</AnimatedButton>
+                                            <AnimatedButton variant="glass" onClick={() => setStep('form')} fullWidth>{t.common.back}</AnimatedButton>
+                                            <AnimatedButton variant="gradient" onClick={handleConfirm} fullWidth>{t.modals.confirm}</AnimatedButton>
                                         </FadeIn>
                                     </motion.div>
                                 )}
@@ -254,8 +256,8 @@ export default function SendModal({ isOpen, onClose, balances }: SendModalProps)
                                 {step === 'loading' && (
                                     <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center py-8">
                                         <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="w-16 h-16 mx-auto mb-6 border-4 border-pink-500 border-t-transparent rounded-full" />
-                                        <h3 className="text-lg font-bold text-white mb-2">Processing Transaction</h3>
-                                        <p className="text-zinc-500">Please confirm in World App...</p>
+                                        <h3 className="text-lg font-bold text-white mb-2">{t.modals.processing}</h3>
+                                        <p className="text-zinc-500">{t.modals.sending}</p>
                                     </motion.div>
                                 )}
 
@@ -267,14 +269,14 @@ export default function SendModal({ isOpen, onClose, balances }: SendModalProps)
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                             </svg>
                                         </motion.div>
-                                        <h3 className="text-xl font-bold text-white mb-2">Transaction Sent!</h3>
-                                        <p className="text-zinc-500 mb-4">Your transaction has been submitted</p>
+                                        <h3 className="text-xl font-bold text-white mb-2">{t.modals.transactionSent}</h3>
+                                        <p className="text-zinc-500 mb-4">{t.modals.success}</p>
                                         {txHash && (
                                             <a href={`https://worldscan.org/tx/${txHash}`} target="_blank" rel="noopener noreferrer" className="text-sm text-pink-400 hover:text-pink-300 mb-6 block">
-                                                View on WorldScan →
+                                                {t.activity.viewExplorer} →
                                             </a>
                                         )}
-                                        <AnimatedButton variant="gradient" onClick={handleClose} fullWidth>Done</AnimatedButton>
+                                        <AnimatedButton variant="gradient" onClick={handleClose} fullWidth>{t.modals.close}</AnimatedButton>
                                     </motion.div>
                                 )}
 
@@ -286,9 +288,9 @@ export default function SendModal({ isOpen, onClose, balances }: SendModalProps)
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                             </svg>
                                         </motion.div>
-                                        <h3 className="text-xl font-bold text-white mb-2">Transaction Failed</h3>
+                                        <h3 className="text-xl font-bold text-white mb-2">{t.modals.transactionFailed}</h3>
                                         <p className="text-zinc-500 mb-6">{error}</p>
-                                        <AnimatedButton variant="glass" onClick={() => setStep('form')} fullWidth>Try Again</AnimatedButton>
+                                        <AnimatedButton variant="glass" onClick={() => setStep('form')} fullWidth>{t.modals.tryAgain}</AnimatedButton>
                                     </motion.div>
                                 )}
                             </AnimatePresence>

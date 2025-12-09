@@ -43,6 +43,11 @@ export interface Translations {
         disconnect: string;
         verified: string;
         verifyIdentity: string;
+        wldBalance: string;
+        explorer: string;
+        worldChain: string;
+        chainId: string;
+        connected: string;
     };
     // Activity
     activity: {
@@ -55,6 +60,17 @@ export interface Translations {
         contract: string;
         pending: string;
         failed: string;
+        transactionDetails: string;
+        type: string;
+        from: string;
+        to: string;
+        amount: string;
+        date: string;
+        time: string;
+        hash: string;
+        network: string;
+        viewExplorer: string;
+        transactions: string;
     };
     // Tokens
     tokens: {
@@ -62,6 +78,9 @@ export interface Translations {
         receive: string;
         buy: string;
         noTokens: string;
+        balance: string;
+        price: string;
+        change24h: string;
     };
     // Modals
     modals: {
@@ -80,6 +99,19 @@ export interface Translations {
         sending: string;
         success: string;
         error: string;
+        selectToken: string;
+        recipientAddress: string;
+        change: string;
+        fee: string;
+        free: string;
+        processing: string;
+        transactionSent: string;
+        tryAgain: string;
+        invalidAddress: string;
+        invalidAmount: string;
+        insufficientBalance: string;
+        transactionFailed: string;
+        transactionRejected: string;
     };
     // Settings
     settings: {
@@ -104,6 +136,8 @@ export interface Translations {
         invalidCode: string;
         welcome: string;
         connectedWallet: string;
+        emailRequired: string;
+        changeEmail: string;
     };
     // Swap
     swap: {
@@ -111,6 +145,16 @@ export interface Translations {
         underDevelopment: string;
         description: string;
         followUpdates: string;
+        swapFrom: string;
+    };
+    // Ads
+    ads: {
+        showAnnouncements: string;
+        orbidLive: string;
+        orbidLiveDesc: string;
+        followX: string;
+        followXDesc: string;
+        followCta: string;
     };
     // Common
     common: {
@@ -118,6 +162,8 @@ export interface Translations {
         error: string;
         retry: string;
         back: string;
+        warning: string;
+        worldChainOnly: string;
     };
 }
 

@@ -2,6 +2,8 @@
  * Brevo Email Service for sending login codes
  */
 
+import { getEmailTranslations } from './emailTranslations';
+
 interface SendEmailOptions {
     to: string;
     subject: string;
@@ -50,10 +52,15 @@ export async function sendEmail({ to, subject, htmlContent }: SendEmailOptions):
     }
 }
 
-export async function sendLoginCode(email: string, code: string): Promise<boolean> {
+export async function sendLoginCode(email: string, code: string, lang: string = 'en'): Promise<boolean> {
+    const t = getEmailTranslations(lang);
+    const isRTL = lang === 'ar';
+    const dir = isRTL ? 'rtl' : 'ltr';
+    const textAlign = isRTL ? 'right' : 'center';
+
     const htmlContent = `
     <!DOCTYPE html>
-    <html>
+    <html dir="${dir}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -69,7 +76,7 @@ export async function sendLoginCode(email: string, code: string): Promise<boolea
                                 <table cellpadding="0" cellspacing="0">
                                     <tr>
                                         <td style="vertical-align: middle; padding-right: 12px;">
-                                            <img src="https://raw.githubusercontent.com/vanigesas/music-distribution-platform/4eaf129104284cddf5f4bab6cc16ffb905154341/public/logo.png" alt="OrbId" width="50" height="50" style="border-radius: 50%;" />
+                                            <img src="https://raw.githubusercontent.com/orbidorg/orbid-wallet/refs/heads/main/public/logo.png" alt="OrbId" width="50" height="50" style="border-radius: 50%;" />
                                         </td>
                                         <td style="vertical-align: middle;">
                                             <span style="color: #ffffff; font-size: 22px; font-weight: 700; letter-spacing: -0.5px;">OrbId Wallet</span>
@@ -81,18 +88,18 @@ export async function sendLoginCode(email: string, code: string): Promise<boolea
                         
                         <!-- Title -->
                         <tr>
-                            <td align="center" style="padding-bottom: 10px;">
+                            <td align="${textAlign}" style="padding-bottom: 10px;">
                                 <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;">
-                                    Your Login Code
+                                    ${t.title}
                                 </h1>
                             </td>
                         </tr>
                         
                         <!-- Subtitle -->
                         <tr>
-                            <td align="center" style="padding-bottom: 30px;">
+                            <td align="${textAlign}" style="padding-bottom: 30px;">
                                 <p style="margin: 0; color: #a1a1aa; font-size: 14px;">
-                                    Enter this code to sign in to OrbId Wallet
+                                    ${t.subtitle}
                                 </p>
                             </td>
                         </tr>
@@ -110,18 +117,18 @@ export async function sendLoginCode(email: string, code: string): Promise<boolea
                         
                         <!-- Expiry notice -->
                         <tr>
-                            <td align="center" style="padding-bottom: 40px;">
+                            <td align="${textAlign}" style="padding-bottom: 40px;">
                                 <p style="margin: 0; color: #71717a; font-size: 12px;">
-                                    This code expires in 10 minutes
+                                    ${t.expiresIn}
                                 </p>
                             </td>
                         </tr>
                         
                         <!-- Footer -->
                         <tr>
-                            <td align="center">
+                            <td align="${textAlign}">
                                 <p style="margin: 0; color: #52525b; font-size: 11px;">
-                                    If you didn't request this code, you can safely ignore this email.
+                                    ${t.ignoreNotice}
                                 </p>
                             </td>
                         </tr>
@@ -135,7 +142,7 @@ export async function sendLoginCode(email: string, code: string): Promise<boolea
 
     return sendEmail({
         to: email,
-        subject: `${code} is your OrbId Wallet login code`,
+        subject: `${code} ${t.subject}`,
         htmlContent,
     });
 }

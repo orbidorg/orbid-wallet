@@ -3,42 +3,43 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
+import { useI18n } from '@/lib/i18n';
 
 interface Ad {
     id: string;
-    title: string;
-    description: string;
+    titleKey: 'orbidLive' | 'followX';
+    descKey: 'orbidLiveDesc' | 'followXDesc';
     icon?: 'rocket' | 'gift' | 'star' | 'bell' | 'x';
     image?: string;
     gradient: string;
     link?: string;
-    cta?: string;
+    ctaKey?: 'followCta';
 }
 
 const SAMPLE_ADS: Ad[] = [
     {
         id: '1',
-        title: 'OrbId Wallet is Live! 🚀',
-        description: 'Experience the future of Web3 on World App',
+        titleKey: 'orbidLive',
+        descKey: 'orbidLiveDesc',
         icon: 'rocket',
         gradient: 'from-pink-500 to-purple-600'
-        // No link - just informational
     },
     {
         id: '2',
-        title: 'Follow us on X',
-        description: 'Stay up to date with all the news and upcoming launches',
+        titleKey: 'followX',
+        descKey: 'followXDesc',
         icon: 'x',
         gradient: 'from-zinc-700 to-zinc-900',
         link: 'https://x.com/OrbIdLabs',
-        cta: 'Follow @OrbIdLabs'
+        ctaKey: 'followCta'
     }
 ];
 
-const AUTOPLAY_INTERVAL = 10000; // 10 seconds
-const SWIPE_THRESHOLD = 50; // pixels to trigger swipe
+const AUTOPLAY_INTERVAL = 10000;
+const SWIPE_THRESHOLD = 50;
 
 export default function AdCarousel() {
+    const { t } = useI18n();
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isMinimized, setIsMinimized] = useState(false);
     const [direction, setDirection] = useState(0);
@@ -71,11 +72,9 @@ export default function AdCarousel() {
         const { offset } = info;
         if (Math.abs(offset.x) > SWIPE_THRESHOLD) {
             if (offset.x > 0) {
-                // Swipe right - previous
                 setDirection(-1);
                 setCurrentIndex((prev) => (prev - 1 + SAMPLE_ADS.length) % SAMPLE_ADS.length);
             } else {
-                // Swipe left - next
                 setDirection(1);
                 setCurrentIndex((prev) => (prev + 1) % SAMPLE_ADS.length);
             }
@@ -85,7 +84,6 @@ export default function AdCarousel() {
 
     const currentAd = SAMPLE_ADS[currentIndex];
 
-    // Minimized state
     if (isMinimized) {
         return (
             <button
@@ -95,7 +93,7 @@ export default function AdCarousel() {
                 <svg className="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
-                <span className="text-xs text-zinc-500">Show announcements</span>
+                <span className="text-xs text-zinc-500">{t.ads.showAnnouncements}</span>
             </button>
         );
     }
@@ -139,7 +137,6 @@ export default function AdCarousel() {
 
     return (
         <div className="relative overflow-hidden">
-            {/* Ad Container with swipe */}
             <AnimatePresence mode="wait" custom={direction}>
                 <motion.div
                     key={currentAd.id}
@@ -156,34 +153,29 @@ export default function AdCarousel() {
                     className={`glass rounded-xl overflow-hidden bg-gradient-to-r ${currentAd.gradient} bg-opacity-10 cursor-grab active:cursor-grabbing min-h-[120px]`}
                     onClick={() => currentAd.link && window.open(currentAd.link, '_blank')}
                 >
-                    {/* Image header if available */}
-                    {currentAd.image && (
-                        <div className="relative h-24 w-full">
-                            <Image src={currentAd.image} alt="" fill className="object-cover" />
-                        </div>
-                    )}
-
+                    {/* Content */}
                     <div className="p-4 h-full flex items-center">
                         <div className="flex items-center gap-3 w-full">
-                            {/* Icon */}
                             {currentAd.icon && (
                                 <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white flex-shrink-0">
                                     {renderIcon()}
                                 </div>
                             )}
 
-                            {/* Content */}
                             <div className="flex-1 min-w-0">
-                                <p className="font-semibold text-white text-sm truncate">{currentAd.title}</p>
-                                <p className="text-xs text-white/70 mt-0.5 line-clamp-2">{currentAd.description}</p>
-                                {currentAd.cta && (
+                                <p className="font-semibold text-white text-sm truncate">
+                                    {t.ads[currentAd.titleKey]} 🚀
+                                </p>
+                                <p className="text-xs text-white/70 mt-0.5 line-clamp-2">
+                                    {t.ads[currentAd.descKey]}
+                                </p>
+                                {currentAd.ctaKey && (
                                     <span className="inline-block mt-2 px-3 py-1 text-xs font-medium bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors">
-                                        {currentAd.cta}
+                                        {t.ads[currentAd.ctaKey]}
                                     </span>
                                 )}
                             </div>
 
-                            {/* Minimize button */}
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
@@ -214,4 +206,3 @@ export default function AdCarousel() {
         </div>
     );
 }
-

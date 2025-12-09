@@ -9,7 +9,7 @@ function generateCode(): string {
 
 export async function POST(request: NextRequest) {
     try {
-        const { email } = await request.json();
+        const { email, lang } = await request.json();
 
         if (!email || !email.includes('@')) {
             return NextResponse.json(
@@ -31,8 +31,8 @@ export async function POST(request: NextRequest) {
         const code = generateCode();
         await sessionStore.set(`login_code:${email}`, code, 600);
 
-        // Send email
-        const sent = await sendLoginCode(email, code);
+        // Send email with language preference
+        const sent = await sendLoginCode(email, code, lang || 'en');
 
         if (!sent) {
             await sessionStore.delete(`login_code:${email}`);

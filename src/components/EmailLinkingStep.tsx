@@ -12,7 +12,7 @@ interface EmailLinkingStepProps {
 }
 
 export default function EmailLinkingStep({ username, walletAddress, onComplete }: EmailLinkingStepProps) {
-    const { t } = useI18n();
+    const { t, lang } = useI18n();
     const [email, setEmail] = useState('');
     const [code, setCode] = useState('');
     const [step, setStep] = useState<'email' | 'verify'>('email');
@@ -50,11 +50,11 @@ export default function EmailLinkingStep({ username, walletAddress, onComplete }
                 }
             }
 
-            // If check passed, send the verification code
+            // If check passed, send the verification code with current language
             const res = await fetch('/api/auth/send-code', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email })
+                body: JSON.stringify({ email, lang })
             });
 
             if (res.ok) {

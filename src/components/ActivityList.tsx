@@ -20,10 +20,28 @@ function TransactionDetailModal({
     isOpen: boolean;
     onClose: () => void;
 }) {
+    const { t } = useI18n();
     const explorerUrl = transaction ? `https://worldscan.org/tx/${transaction.hash}` : '';
     const fromShort = transaction ? `${transaction.from.slice(0, 8)}...${transaction.from.slice(-6)}` : '';
     const toShort = transaction ? `${transaction.to.slice(0, 8)}...${transaction.to.slice(-6)}` : '';
     const date = transaction ? new Date(transaction.timestamp) : new Date();
+
+    const getTypeLabel = (type: string) => {
+        switch (type) {
+            case 'receive': return t.activity.received;
+            case 'send': return t.activity.sent;
+            case 'swap': return t.activity.swapped;
+            default: return t.activity.contract;
+        }
+    };
+
+    const getStatusLabel = (status: string) => {
+        switch (status) {
+            case 'pending': return t.activity.pending;
+            case 'failed': return t.activity.failed;
+            default: return status.charAt(0).toUpperCase() + status.slice(1);
+        }
+    };
 
     return (
         <AnimatePresence>
@@ -32,7 +50,7 @@ function TransactionDetailModal({
                     <ModalContent>
                         {/* Header */}
                         <div className="sticky top-0 glass-strong px-4 py-3 flex items-center justify-between border-b border-white/5">
-                            <h2 className="text-lg font-bold text-white">Transaction Details</h2>
+                            <h2 className="text-lg font-bold text-white">{t.activity.transactionDetails}</h2>
                             <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10 transition-colors">
                                 <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -66,42 +84,42 @@ function TransactionDetailModal({
                                         ? 'bg-yellow-500/10 text-yellow-400'
                                         : 'bg-red-500/10 text-red-400'
                                     }`}>
-                                    {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
+                                    {getStatusLabel(transaction.status)}
                                 </span>
                             </div>
 
                             {/* Details */}
                             <div className="glass rounded-xl p-4 space-y-3">
                                 <div className="flex justify-between">
-                                    <span className="text-zinc-500 text-sm">Type</span>
-                                    <span className="text-white text-sm capitalize">{transaction.type}</span>
+                                    <span className="text-zinc-500 text-sm">{t.activity.type}</span>
+                                    <span className="text-white text-sm">{getTypeLabel(transaction.type)}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-zinc-500 text-sm">Date</span>
+                                    <span className="text-zinc-500 text-sm">{t.activity.date}</span>
                                     <span className="text-white text-sm">
                                         {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-zinc-500 text-sm">Time</span>
+                                    <span className="text-zinc-500 text-sm">{t.activity.time}</span>
                                     <span className="text-white text-sm">
                                         {date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-zinc-500 text-sm">From</span>
+                                    <span className="text-zinc-500 text-sm">{t.activity.from}</span>
                                     <span className="text-white text-sm font-mono">{fromShort}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-zinc-500 text-sm">To</span>
+                                    <span className="text-zinc-500 text-sm">{t.activity.to}</span>
                                     <span className="text-white text-sm font-mono">{toShort}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-zinc-500 text-sm">Network</span>
-                                    <span className="text-white text-sm">World Chain</span>
+                                    <span className="text-zinc-500 text-sm">{t.activity.network}</span>
+                                    <span className="text-white text-sm">{t.profile.worldChain}</span>
                                 </div>
                                 <div className="flex justify-between items-start">
-                                    <span className="text-zinc-500 text-sm">Transaction Hash</span>
+                                    <span className="text-zinc-500 text-sm">{t.activity.hash}</span>
                                     <span className="text-white text-xs font-mono text-right break-all max-w-[180px]">
                                         {transaction.hash.slice(0, 20)}...
                                     </span>
@@ -118,7 +136,7 @@ function TransactionDetailModal({
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                     </svg>
-                                    View on WorldScan
+                                    {t.activity.viewExplorer}
                                 </AnimatedButton>
                             </div>
                         </div>
@@ -157,6 +175,15 @@ export default function ActivityList({ walletAddress }: ActivityListProps) {
     const { transactions, isLoading, isLoadingMore, hasMore, loadMore, getRelativeTime } = useTransactionHistory(walletAddress);
     const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
 
+    const getTypeLabel = (type: string) => {
+        switch (type) {
+            case 'receive': return t.activity.received;
+            case 'send': return t.activity.sent;
+            case 'swap': return t.activity.swapped;
+            default: return t.activity.contract;
+        }
+    };
+
     // Empty state
     if (!isLoading && transactions.length === 0) {
         return (
@@ -188,7 +215,7 @@ export default function ActivityList({ walletAddress }: ActivityListProps) {
             <div className="glass rounded-2xl overflow-hidden">
                 <div className="px-4 py-2.5 border-b border-white/5 flex items-center justify-between">
                     <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider">{t.activity.title}</h3>
-                    <span className="text-xs text-zinc-600">{transactions.length} transactions</span>
+                    <span className="text-xs text-zinc-600">{transactions.length} {t.activity.transactions}</span>
                 </div>
 
                 {isLoading ? (
@@ -226,11 +253,11 @@ export default function ActivityList({ walletAddress }: ActivityListProps) {
 
                                     {/* Info */}
                                     <div>
-                                        <p className="font-medium text-white text-sm capitalize">{tx.type}</p>
+                                        <p className="font-medium text-white text-sm">{getTypeLabel(tx.type)}</p>
                                         <p className="text-xs text-zinc-500">
                                             {tx.type === 'receive'
-                                                ? `From ${tx.from.slice(0, 6)}...${tx.from.slice(-4)}`
-                                                : `To ${tx.to.slice(0, 6)}...${tx.to.slice(-4)}`
+                                                ? `${t.activity.from} ${tx.from.slice(0, 6)}...${tx.from.slice(-4)}`
+                                                : `${t.activity.to} ${tx.to.slice(0, 6)}...${tx.to.slice(-4)}`
                                             }
                                         </p>
                                     </div>
@@ -259,7 +286,7 @@ export default function ActivityList({ walletAddress }: ActivityListProps) {
                         {isLoadingMore ? (
                             <span className="flex items-center justify-center gap-2">
                                 <span className="w-4 h-4 border-2 border-pink-400 border-t-transparent rounded-full animate-spin" />
-                                Loading...
+                                {t.common.loading}
                             </span>
                         ) : (
                             t.activity.loadMore
