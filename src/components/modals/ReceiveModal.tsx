@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import QRCode from 'qrcode';
 import { AnimatedButton, ModalBackdrop, ModalContent, FadeIn } from '../ui/Motion';
+import { useI18n } from '@/lib/i18n';
 
 interface ReceiveModalProps {
     isOpen: boolean;
@@ -12,6 +13,7 @@ interface ReceiveModalProps {
 }
 
 export default function ReceiveModal({ isOpen, onClose, walletAddress }: ReceiveModalProps) {
+    const { t } = useI18n();
     const [copied, setCopied] = useState(false);
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -70,7 +72,7 @@ export default function ReceiveModal({ isOpen, onClose, walletAddress }: Receive
                     <ModalContent>
                         {/* Header */}
                         <div className="px-5 py-4 flex items-center justify-between border-b border-white/5">
-                            <h2 className="text-lg font-bold text-white">Receive</h2>
+                            <h2 className="text-lg font-bold text-white">{t.modals.receive}</h2>
                             <button
                                 onClick={onClose}
                                 className="p-2 -mr-2 rounded-full hover:bg-white/10 active:scale-95 transition-all"
@@ -105,7 +107,7 @@ export default function ReceiveModal({ isOpen, onClose, walletAddress }: Receive
                             <FadeIn delay={0.25}>
                                 <p className="text-base font-mono text-white mb-1">{shortAddress}</p>
                                 <p className="text-xs text-zinc-500 text-center mb-6">
-                                    Scan QR code or copy address to receive tokens
+                                    {t.modals.scanQR}
                                 </p>
                             </FadeIn>
 
@@ -122,14 +124,14 @@ export default function ReceiveModal({ isOpen, onClose, walletAddress }: Receive
                                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                                 </svg>
-                                                Copied!
+                                                {t.profile.addressCopied}
                                             </>
                                         ) : (
                                             <>
                                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                                 </svg>
-                                                Copy
+                                                {t.profile.copyAddress}
                                             </>
                                         )}
                                     </AnimatedButton>
@@ -141,7 +143,7 @@ export default function ReceiveModal({ isOpen, onClose, walletAddress }: Receive
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                                         </svg>
-                                        Share
+                                        {t.modals.share}
                                     </AnimatedButton>
                                 </div>
                             </FadeIn>

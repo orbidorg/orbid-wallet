@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTransactionHistory, Transaction } from '@/hooks/useTransactionHistory';
 import { AnimatedButton, ModalBackdrop, ModalContent, FadeIn, StaggerContainer, StaggerItem, Pressable } from './ui/Motion';
+import { useI18n } from '@/lib/i18n';
 
 interface ActivityListProps {
     walletAddress: string;
@@ -152,6 +153,7 @@ function LoadingSkeleton() {
 }
 
 export default function ActivityList({ walletAddress }: ActivityListProps) {
+    const { t } = useI18n();
     const { transactions, isLoading, isLoadingMore, hasMore, loadMore, getRelativeTime } = useTransactionHistory(walletAddress);
     const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
 
@@ -174,8 +176,8 @@ export default function ActivityList({ walletAddress }: ActivityListProps) {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                         </svg>
                     </motion.div>
-                    <h3 className="text-white font-semibold mb-2">No Transactions Yet</h3>
-                    <p className="text-zinc-500 text-sm">Your transaction history will appear here</p>
+                    <h3 className="text-white font-semibold mb-2">{t.activity.noActivity}</h3>
+                    <p className="text-zinc-500 text-sm">{t.activity.title}</p>
                 </motion.div>
             </FadeIn>
         );
@@ -185,7 +187,7 @@ export default function ActivityList({ walletAddress }: ActivityListProps) {
         <>
             <div className="glass rounded-2xl overflow-hidden">
                 <div className="px-4 py-2.5 border-b border-white/5 flex items-center justify-between">
-                    <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Recent Activity</h3>
+                    <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider">{t.activity.title}</h3>
                     <span className="text-xs text-zinc-600">{transactions.length} transactions</span>
                 </div>
 
@@ -260,7 +262,7 @@ export default function ActivityList({ walletAddress }: ActivityListProps) {
                                 Loading...
                             </span>
                         ) : (
-                            'Load More'
+                            t.activity.loadMore
                         )}
                     </button>
                 )}

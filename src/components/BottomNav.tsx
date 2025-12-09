@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import type { TabType } from '@/lib/types';
+import { useI18n } from '@/lib/i18n';
 
 interface BottomNavProps {
     activeTab: TabType;
@@ -9,10 +10,12 @@ interface BottomNavProps {
 }
 
 export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
+    const { t } = useI18n();
+
     const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
         {
             id: 'wallet',
-            label: 'Wallet',
+            label: t.nav.wallet,
             icon: (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
@@ -22,7 +25,7 @@ export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
         },
         {
             id: 'swap',
-            label: 'Swap',
+            label: t.nav.swap,
             icon: (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
@@ -32,7 +35,7 @@ export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
         },
         {
             id: 'activity',
-            label: 'Activity',
+            label: t.nav.activity,
             icon: (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}

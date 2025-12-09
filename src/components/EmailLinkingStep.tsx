@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { AnimatedButton, FadeIn } from './ui/Motion';
+import { useI18n } from '@/lib/i18n';
 
 interface EmailLinkingStepProps {
     username: string | null;
@@ -11,6 +12,7 @@ interface EmailLinkingStepProps {
 }
 
 export default function EmailLinkingStep({ username, walletAddress, onComplete }: EmailLinkingStepProps) {
+    const { t } = useI18n();
     const [email, setEmail] = useState('');
     const [code, setCode] = useState('');
     const [step, setStep] = useState<'email' | 'verify'>('email');
@@ -126,12 +128,12 @@ export default function EmailLinkingStep({ username, walletAddress, onComplete }
 
                 <FadeIn delay={0.2}>
                     <h2 className="text-xl font-bold text-white mb-1">
-                        Welcome{username ? `, @${username}` : ''}! 👋
+                        {t.email.welcome}{username ? `, @${username}` : ''}! 👋
                     </h2>
                 </FadeIn>
 
                 <FadeIn delay={0.25}>
-                    <p className="text-zinc-500 text-sm mb-1">Connected wallet</p>
+                    <p className="text-zinc-500 text-sm mb-1">{t.email.connectedWallet}</p>
                     <p className="text-zinc-300 font-mono text-sm mb-6">{shortAddress}</p>
                 </FadeIn>
 
@@ -139,7 +141,7 @@ export default function EmailLinkingStep({ username, walletAddress, onComplete }
                     <FadeIn delay={0.3}>
                         <div className="bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6">
                             <h3 className="text-lg font-semibold text-white mb-2">
-                                Link your email
+                                {t.email.linkEmail}
                             </h3>
                             <p className="text-zinc-400 text-sm mb-6">
                                 Required for authentication and notifications
@@ -176,7 +178,7 @@ export default function EmailLinkingStep({ username, walletAddress, onComplete }
                                             Sending...
                                         </span>
                                     ) : (
-                                        'Send Verification Code'
+                                        t.email.sendCode
                                     )}
                                 </AnimatedButton>
                             </div>
@@ -186,10 +188,10 @@ export default function EmailLinkingStep({ username, walletAddress, onComplete }
                     <FadeIn delay={0.1}>
                         <div className="bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6">
                             <h3 className="text-lg font-semibold text-white mb-2">
-                                Enter verification code
+                                {t.email.enterCode}
                             </h3>
                             <p className="text-zinc-400 text-sm mb-6">
-                                We sent a 6-digit code to <span className="text-white">{email}</span>
+                                {t.email.codeSent}: <span className="text-white">{email}</span>
                             </p>
 
                             <div className="space-y-4">
@@ -215,7 +217,7 @@ export default function EmailLinkingStep({ username, walletAddress, onComplete }
                                     disabled={loading || code.length !== 6}
                                     fullWidth
                                 >
-                                    {loading ? 'Verifying...' : 'Verify & Continue'}
+                                    {loading ? t.common.loading : t.email.verifyCode}
                                 </AnimatedButton>
 
                                 <button

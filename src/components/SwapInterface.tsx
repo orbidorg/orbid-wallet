@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FadeIn } from './ui/Motion';
+import { useI18n } from '@/lib/i18n';
 
 const Icons = [
     <svg key="switch" className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -27,6 +28,7 @@ const Icons = [
 ];
 
 export default function SwapInterface() {
+    const { t } = useI18n();
     const [currentIcon, setCurrentIcon] = useState(0);
 
     useEffect(() => {
@@ -50,7 +52,7 @@ export default function SwapInterface() {
                         animate={{ y: 0 }}
                         className="text-2xl font-bold text-white mb-3"
                     >
-                        Coming Soon! 🚀
+                        {t.swap.comingSoon} 🚀
                     </motion.h2>
                     <motion.p
                         initial={{ opacity: 0 }}
@@ -58,7 +60,7 @@ export default function SwapInterface() {
                         transition={{ delay: 0.1 }}
                         className="text-zinc-400 text-lg mb-2"
                     >
-                        You will soon be able to swap from
+                        {t.swap.description}
                     </motion.p>
                     <motion.p
                         initial={{ scale: 0.8, opacity: 0 }}

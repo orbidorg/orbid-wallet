@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Identicon from './Identicon';
 import { AnimatedButton, FadeIn } from './ui/Motion';
+import { useI18n } from '@/lib/i18n';
 
 interface ProfileCardProps {
     address: string;
@@ -20,6 +21,7 @@ export default function ProfileCard({
     wldBalance,
     onDisconnect
 }: ProfileCardProps) {
+    const { t } = useI18n();
     const [isExpanded, setIsExpanded] = useState(false);
     const [copied, setCopied] = useState(false);
 
@@ -141,7 +143,7 @@ export default function ProfileCard({
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                             </svg>
                                         )}
-                                        <span className="text-sm">{copied ? 'Copied!' : 'Copy'}</span>
+                                        <span className="text-sm">{copied ? t.profile.addressCopied : t.profile.copyAddress}</span>
                                     </AnimatedButton>
 
                                     <motion.a
@@ -164,7 +166,7 @@ export default function ProfileCard({
                                         type="button"
                                         onClick={onDisconnect}
                                         className="shrink-0 flex items-center justify-center gap-1.5 p-2.5 glass rounded-xl text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                                        title="Disconnect"
+                                        title={t.profile.disconnect}
                                     >
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

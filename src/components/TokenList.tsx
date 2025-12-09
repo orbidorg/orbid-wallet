@@ -6,6 +6,7 @@ import type { TokenBalance } from '@/lib/types';
 import Image from 'next/image';
 import AdCarousel from './AdCarousel';
 import { Pressable, StaggerContainer, StaggerItem, FadeIn } from './ui/Motion';
+import { useI18n } from '@/lib/i18n';
 
 interface TokenListProps {
     balances: TokenBalance[];
@@ -17,6 +18,7 @@ interface TokenListProps {
 }
 
 export default function TokenList({ balances, isLoading, onTokenClick, onSend, onReceive, onBuy }: TokenListProps) {
+    const { t } = useI18n();
     const sortedBalances = useMemo(() =>
         [...balances].sort((a, b) => {
             if (a.token.symbol === 'WLD') return -1;
@@ -65,7 +67,7 @@ export default function TokenList({ balances, isLoading, onTokenClick, onSend, o
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11l5-5m0 0l5 5m-5-5v12" />
                             </svg>
                         </motion.div>
-                        <span className="text-xs text-zinc-400 group-hover:text-zinc-300">Send</span>
+                        <span className="text-xs text-zinc-400 group-hover:text-zinc-300">{t.tokens.send}</span>
                     </motion.button>
                     <motion.button
                         whileHover={{ scale: 1.03 }}
@@ -81,7 +83,7 @@ export default function TokenList({ balances, isLoading, onTokenClick, onSend, o
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 13l-5 5m0 0l-5-5m5 5V6" />
                             </svg>
                         </motion.div>
-                        <span className="text-xs text-zinc-400 group-hover:text-zinc-300">Receive</span>
+                        <span className="text-xs text-zinc-400 group-hover:text-zinc-300">{t.tokens.receive}</span>
                     </motion.button>
                     <motion.button
                         whileHover={{ scale: 1.03 }}
@@ -97,7 +99,7 @@ export default function TokenList({ balances, isLoading, onTokenClick, onSend, o
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                             </svg>
                         </motion.div>
-                        <span className="text-xs text-zinc-400 group-hover:text-zinc-300">Buy</span>
+                        <span className="text-xs text-zinc-400 group-hover:text-zinc-300">{t.tokens.buy}</span>
                     </motion.button>
                 </div>
             </FadeIn>
