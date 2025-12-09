@@ -122,8 +122,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         try {
+            // Use timestamp + random to ensure unique nonce each time
+            // This forces World App to prompt for new authorization
+            const nonce = `${Date.now()}-${crypto.randomUUID()}`;
+
             const { finalPayload } = await MiniKit.commandsAsync.walletAuth({
-                nonce: crypto.randomUUID(),
+                nonce,
+                statement: 'Connect to OrbId Wallet',
             });
 
             if (finalPayload.status === 'success') {

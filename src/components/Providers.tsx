@@ -5,6 +5,7 @@ import { useState, useEffect, type ReactNode, createContext, useContext } from '
 import { MiniKit } from '@worldcoin/minikit-js';
 import { AuthProvider } from '@/lib/AuthContext';
 import { ToastProvider } from '@/lib/ToastContext';
+import { I18nProvider } from '@/lib/i18n';
 
 const APP_ID = process.env.NEXT_PUBLIC_WLD_APP_ID || 'app_920c1c9a0cb3aaa68e626f54c09f3cf9';
 
@@ -53,11 +54,13 @@ export default function Providers({ children }: { children: ReactNode }) {
     return (
         <MiniKitContext.Provider value={miniKitState}>
             <QueryClientProvider client={queryClient}>
-                <AuthProvider>
-                    <ToastProvider>
-                        {children}
-                    </ToastProvider>
-                </AuthProvider>
+                <I18nProvider>
+                    <AuthProvider>
+                        <ToastProvider>
+                            {children}
+                        </ToastProvider>
+                    </AuthProvider>
+                </I18nProvider>
             </QueryClientProvider>
         </MiniKitContext.Provider>
     );
