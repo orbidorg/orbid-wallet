@@ -74,6 +74,7 @@ export interface Translations {
     };
     // Tokens
     tokens: {
+        title: string;
         send: string;
         receive: string;
         buy: string;

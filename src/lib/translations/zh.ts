@@ -43,6 +43,7 @@ export const zh: Translations = {
         transactions: '交易记录',
     },
     tokens: {
+        title: '代币',
         send: '发送',
         receive: '接收',
         buy: '购买',

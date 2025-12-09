@@ -43,6 +43,7 @@ export const en: Translations = {
         transactions: 'Transactions',
     },
     tokens: {
+        title: 'Tokens',
         send: 'Send',
         receive: 'Receive',
         buy: 'Buy',

@@ -43,6 +43,7 @@ export const fr: Translations = {
         transactions: 'Transactions',
     },
     tokens: {
+        title: 'Jetons',
         send: 'Envoyer',
         receive: 'Recevoir',
         buy: 'Acheter',
