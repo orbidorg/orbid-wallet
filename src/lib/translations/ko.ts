@@ -119,7 +119,7 @@ export const ko: Translations = {
         orbidLiveDesc: '안전한 World Chain 지갑이 준비되었습니다',
         followX: 'X에서 팔로우하세요',
         followXDesc: '최신 뉴스를 확인하세요',
-        followCta: '@OrbIdSwap 팔로우',
+        followCta: '@OrbIdLabs 팔로우',
     },
     common: {
         loading: '로딩 중...',

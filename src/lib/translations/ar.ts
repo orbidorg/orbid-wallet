@@ -119,7 +119,7 @@ export const ar: Translations = {
         orbidLiveDesc: 'محفظة World Chain الآمنة الخاصة بك جاهزة',
         followX: 'تابعنا على X',
         followXDesc: 'ابق على اطلاع بآخر الأخبار',
-        followCta: 'تابع @OrbIdSwap',
+        followCta: 'تابع @OrbIdLabs',
     },
     common: {
         loading: 'جارٍ التحميل...',
