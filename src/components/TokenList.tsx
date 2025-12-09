@@ -113,7 +113,7 @@ export default function TokenList({ balances, isLoading, onTokenClick, onSend, o
             <FadeIn delay={0.15}>
                 <div className="glass rounded-2xl overflow-hidden">
                     <div className="px-4 py-2.5 border-b border-white/5">
-                        <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider">{t.activity.transactions}</h3>
+                        <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider">{t.tokens.title}</h3>
                     </div>
                     {isLoading ? (
                         <LoadingSkeleton />

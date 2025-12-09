@@ -43,6 +43,7 @@ export const ko: Translations = {
         transactions: '거래 내역',
     },
     tokens: {
+        title: '토큰',
         send: '보내기',
         receive: '받기',
         buy: '구매',

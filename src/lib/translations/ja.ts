@@ -43,6 +43,7 @@ export const ja: Translations = {
         transactions: '取引履歴',
     },
     tokens: {
+        title: 'トークン',
         send: '送金',
         receive: '受取',
         buy: '購入',

@@ -43,6 +43,7 @@ export const ar: Translations = {
         transactions: 'المعاملات',
     },
     tokens: {
+        title: 'الرموز',
         send: 'إرسال',
         receive: 'استلام',
         buy: 'شراء',

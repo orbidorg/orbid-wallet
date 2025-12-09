@@ -43,6 +43,7 @@ export const hi: Translations = {
         transactions: 'लेनदेन',
     },
     tokens: {
+        title: 'टोकन',
         send: 'भेजें',
         receive: 'प्राप्त करें',
         buy: 'खरीदें',
