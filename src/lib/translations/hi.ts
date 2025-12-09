@@ -119,7 +119,7 @@ export const hi: Translations = {
         orbidLiveDesc: 'आपका सुरक्षित World Chain वॉलेट तैयार है',
         followX: 'X पर हमें फॉलो करें',
         followXDesc: 'नवीनतम समाचारों से अपडेट रहें',
-        followCta: '@OrbIdSwap को फॉलो करें',
+        followCta: '@OrbIdLabs को फॉलो करें',
     },
     common: {
         loading: 'लोड हो रहा है...',

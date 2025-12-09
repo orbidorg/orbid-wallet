@@ -119,7 +119,7 @@ export const ja: Translations = {
         orbidLiveDesc: '安全なWorld Chainウォレットの準備ができました',
         followX: 'Xでフォロー',
         followXDesc: '最新ニュースをチェック',
-        followCta: '@OrbIdSwapをフォロー',
+        followCta: '@OrbIdLabsをフォロー',
     },
     common: {
         loading: '読み込み中...',

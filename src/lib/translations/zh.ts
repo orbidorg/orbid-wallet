@@ -119,7 +119,7 @@ export const zh: Translations = {
         orbidLiveDesc: '您的安全World Chain钱包已就绪',
         followX: '在X上关注我们',
         followXDesc: '获取最新消息',
-        followCta: '关注 @OrbIdSwap',
+        followCta: '关注 @OrbIdLabs',
     },
     common: {
         loading: '加载中...',
