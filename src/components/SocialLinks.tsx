@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { FadeIn } from './ui/Motion';
+import { useI18n } from '@/lib/i18n';
 
 interface SocialLink {
     name: string;
@@ -31,6 +32,8 @@ const socialLinks: SocialLink[] = [
 ];
 
 export default function SocialLinks() {
+    const { t } = useI18n();
+
     return (
         <FadeIn delay={0.1}>
             <motion.div
@@ -38,7 +41,7 @@ export default function SocialLinks() {
                 animate={{ opacity: 1, y: 0 }}
                 className="glass rounded-2xl p-4"
             >
-                <p className="text-xs text-zinc-500 text-center mb-3">Follow us</p>
+                <p className="text-xs text-zinc-500 text-center mb-3">{t.social.followUs}</p>
                 <div className="flex justify-center gap-4">
                     {socialLinks.map((link, index) => (
                         <motion.a
@@ -52,7 +55,7 @@ export default function SocialLinks() {
                             target="_blank"
                             rel="noopener noreferrer"
                             className={`p-3 rounded-xl glass text-zinc-400 hover:text-white hover:bg-white/10 transition-colors ${link.url === '#' ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            title={link.url === '#' ? `${link.name} - Coming soon` : link.name}
+                            title={link.url === '#' ? `${link.name} - ${t.social.comingSoon}` : link.name}
                             onClick={(e) => link.url === '#' && e.preventDefault()}
                         >
                             {link.icon}

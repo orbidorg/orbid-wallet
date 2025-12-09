@@ -164,6 +164,127 @@ export interface Translations {
         back: string;
         warning: string;
         worldChainOnly: string;
+        backToSettings: string;
+        done: string;
+    };
+    // About Modal
+    about: {
+        title: string;
+        version: string;
+        missionTitle: string;
+        missionText: string;
+        featuresTitle: string;
+        featureSendReceive: string;
+        featureSendReceiveDesc: string;
+        featurePortfolio: string;
+        featurePortfolioDesc: string;
+        featureWorldId: string;
+        featureWorldIdDesc: string;
+        featureZeroFees: string;
+        featureZeroFeesDesc: string;
+        builtWith: string;
+        teamTitle: string;
+        founderRole: string;
+        teamName: string;
+        developedBy: string;
+        madeIn: string;
+    };
+    // Help Modal
+    help: {
+        title: string;
+        faqTitle: string;
+        faq1Q: string;
+        faq1A: string;
+        faq2Q: string;
+        faq2A: string;
+        faq3Q: string;
+        faq3A: string;
+        contactTitle: string;
+        selectTopic: string;
+        topicGeneral: string;
+        topicGeneralDesc: string;
+        topicTransactions: string;
+        topicTransactionsDesc: string;
+        topicAccount: string;
+        topicAccountDesc: string;
+        topicSecurity: string;
+        topicSecurityDesc: string;
+        topicOther: string;
+        topicOtherDesc: string;
+        supportRequest: string;
+        yourEmail: string;
+        howCanWeHelp: string;
+        describePlaceholder: string;
+        sendMessage: string;
+        messageSent: string;
+        responseTime: string;
+    };
+    // Wallet/Login Screen
+    wallet: {
+        openFromWorldApp: string;
+        scanWithPhone: string;
+        openInWorldApp: string;
+        poweredBy: string;
+        gateway: string;
+        connectWithWorldApp: string;
+    };
+    // World ID Verification
+    worldId: {
+        title: string;
+        description: string;
+        verifying: string;
+        verifyButton: string;
+        verifiedTitle: string;
+        verifiedDesc: string;
+        alreadyVerified: string;
+        openInWorldAppError: string;
+        verificationFailed: string;
+    };
+    // Buy Modal
+    buy: {
+        title: string;
+        comingSoon: string;
+        description: string;
+        whatscoming: string;
+        cardPayments: string;
+        bankTransfers: string;
+        instantPurchases: string;
+        gotIt: string;
+    };
+    // Token Detail Modal
+    tokenDetail: {
+        yourBalance: string;
+        marketStats: string;
+        marketCap: string;
+        volume24h: string;
+        high24h: string;
+        fdv: string;
+        noChartData: string;
+        noMarketData: string;
+        now: string;
+        ago24h: string;
+        ago7d: string;
+        ago30d: string;
+        ago1y: string;
+        start: string;
+    };
+    // Social
+    social: {
+        followUs: string;
+        comingSoon: string;
+    };
+    // Validation errors
+    validation: {
+        invalidEmail: string;
+        walletAlreadyLinked: string;
+        emailAlreadyLinked: string;
+        connectionError: string;
+        enter6DigitCode: string;
+        failedToComplete: string;
+    };
+    // Receive Modal specific
+    receive: {
+        worldChainWarning: string;
     };
 }
 

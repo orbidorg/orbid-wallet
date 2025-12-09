@@ -21,7 +21,7 @@ export default function EmailLinkingStep({ username, walletAddress, onComplete }
 
     const handleSendCode = async () => {
         if (!email || !email.includes('@')) {
-            setError('Please enter a valid email');
+            setError(t.validation.invalidEmail);
             return;
         }
 
@@ -39,12 +39,12 @@ export default function EmailLinkingStep({ username, walletAddress, onComplete }
             if (!checkRes.ok) {
                 const checkData = await checkRes.json();
                 if (checkData.error === 'wallet_already_linked') {
-                    setError(`This World ID is already linked to ${checkData.linkedEmail || 'another email'}. Please use that email to login.`);
+                    setError(t.validation.walletAlreadyLinked);
                     setLoading(false);
                     return;
                 }
                 if (checkData.error === 'email_already_linked') {
-                    setError('This email is linked to a different World ID.');
+                    setError(t.validation.emailAlreadyLinked);
                     setLoading(false);
                     return;
                 }
@@ -64,7 +64,7 @@ export default function EmailLinkingStep({ username, walletAddress, onComplete }
                 setError(data.error || 'Failed to send code');
             }
         } catch {
-            setError('Connection error. Please try again.');
+            setError(t.validation.connectionError);
         } finally {
             setLoading(false);
         }
@@ -72,7 +72,7 @@ export default function EmailLinkingStep({ username, walletAddress, onComplete }
 
     const handleVerifyCode = async () => {
         if (!code || code.length < 6) {
-            setError('Please enter the 6-digit code');
+            setError(t.validation.enter6DigitCode);
             return;
         }
 
@@ -90,7 +90,7 @@ export default function EmailLinkingStep({ username, walletAddress, onComplete }
                 // Email verified, now link to wallet
                 const result = await onComplete(email);
                 if (!result.success) {
-                    setError(result.error || 'Failed to complete registration');
+                    setError(result.error || t.validation.failedToComplete);
                     setStep('email');
                     setCode('');
                 }
@@ -99,7 +99,7 @@ export default function EmailLinkingStep({ username, walletAddress, onComplete }
                 setError(data.error || 'Invalid code');
             }
         } catch {
-            setError('Connection error. Please try again.');
+            setError(t.validation.connectionError);
         } finally {
             setLoading(false);
         }

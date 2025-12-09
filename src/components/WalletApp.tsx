@@ -21,6 +21,7 @@ import SocialLinks from './SocialLinks';
 import SettingsModal from './modals/SettingsModal';
 import { AnimatedButton, FadeIn } from './ui/Motion';
 import { QRCodeSVG } from 'qrcode.react';
+import { useI18n } from '@/lib/i18n';
 
 const WORLD_APP_DEEP_LINK = 'https://worldcoin.org/mini-app?app_id=app_920c1c9a0cb3aaa68e626f54c09f3cf9';
 
@@ -36,6 +37,7 @@ export default function WalletApp() {
         completeEmailLink,
         logout,
     } = useAuth();
+    const { t } = useI18n();
     const [activeTab, setActiveTab] = useState<TabType>('wallet');
     const [selectedToken, setSelectedToken] = useState<TokenBalance | null>(null);
     const [showSendModal, setShowSendModal] = useState(false);
@@ -60,7 +62,7 @@ export default function WalletApp() {
                         transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                         className="w-12 h-12 border-2 border-pink-500 border-t-transparent rounded-full"
                     />
-                    <p className="text-zinc-500 text-sm">Loading...</p>
+                    <p className="text-zinc-500 text-sm">{t.common.loading}</p>
                 </motion.div>
             </div>
         );
@@ -99,7 +101,7 @@ export default function WalletApp() {
                             OrbId Wallet
                         </h1>
                         <p className="text-zinc-400 mb-8">
-                            Open this app from World App
+                            {t.wallet.openFromWorldApp}
                         </p>
 
                         {/* QR Code */}
@@ -113,18 +115,18 @@ export default function WalletApp() {
                         </div>
 
                         <p className="text-zinc-500 text-sm mb-4">
-                            Scan with your phone camera or World App
+                            {t.wallet.scanWithPhone}
                         </p>
 
                         <a
                             href={WORLD_APP_DEEP_LINK}
                             className="inline-block w-full py-4 px-6 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-semibold rounded-2xl shadow-lg shadow-pink-500/20 hover:opacity-90 active:scale-[0.98] transition-all"
                         >
-                            Open in World App
+                            {t.wallet.openInWorldApp}
                         </a>
 
                         <p className="mt-8 text-xs text-zinc-600">
-                            Powered by Worldcoin
+                            {t.wallet.poweredBy}
                         </p>
                     </div>
                 </div>
@@ -149,7 +151,7 @@ export default function WalletApp() {
                     <h1 className="text-2xl font-display font-bold text-white mb-2 tracking-tight">
                         OrbId Wallet
                     </h1>
-                    <p className="text-zinc-400 text-sm mb-8">Your gateway to World App</p>
+                    <p className="text-zinc-400 text-sm mb-8">{t.wallet.gateway}</p>
 
                     {/* Connect Button - smaller */}
                     <button
@@ -160,11 +162,11 @@ export default function WalletApp() {
                             <circle cx="12" cy="12" r="10" strokeWidth="2" />
                             <circle cx="12" cy="12" r="4" fill="currentColor" />
                         </svg>
-                        Connect with World App
+                        {t.wallet.connectWithWorldApp}
                     </button>
 
                     <p className="mt-6 text-xs text-zinc-600">
-                        Powered by Worldcoin
+                        {t.wallet.poweredBy}
                     </p>
                 </div>
             </div>

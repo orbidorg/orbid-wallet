@@ -4,6 +4,7 @@ import { useMemo, useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import type { TokenBalance } from '@/lib/types';
 import { useTokenMarketData, ChartPeriod, PricePoint } from '@/hooks/useTokenMarketData';
+import { useI18n } from '@/lib/i18n';
 
 interface TokenDetailModalProps {
     tokenBalance: TokenBalance;
@@ -42,6 +43,7 @@ const PERIOD_LABELS: Record<ChartPeriod, string> = {
 };
 
 export default function TokenDetailModal({ tokenBalance, isOpen, onClose, onSend, onBuy }: TokenDetailModalProps) {
+    const { t } = useI18n();
     const { token, balance, valueUSD, change24h } = tokenBalance;
     const [chartPeriod, setChartPeriod] = useState<ChartPeriod>('30d');
     const [hoveredPoint, setHoveredPoint] = useState<PricePoint | null>(null);
@@ -121,6 +123,17 @@ export default function TokenDetailModal({ tokenBalance, isOpen, onClose, onSend
     const handleMouseLeave = () => {
         setHoveredPoint(null);
         setHoverX(null);
+    };
+
+    const getChartStartLabel = (period: ChartPeriod): string => {
+        switch (period) {
+            case '1d': return t.tokenDetail.ago24h;
+            case '7d': return t.tokenDetail.ago7d;
+            case '30d': return t.tokenDetail.ago30d;
+            case '365d': return t.tokenDetail.ago1y;
+            case 'max': return t.tokenDetail.start;
+            default: return t.tokenDetail.start;
+        }
     };
 
     if (!isOpen) return null;
@@ -287,16 +300,16 @@ export default function TokenDetailModal({ tokenBalance, isOpen, onClose, onSend
                                 )}
                             </svg>
                             <div className="flex justify-between mt-2 text-[10px] text-zinc-500">
-                                <span>{chartPeriod === '1d' ? '24h ago' : chartPeriod === '7d' ? '7d ago' : chartPeriod === '30d' ? '30d ago' : chartPeriod === '365d' ? '1y ago' : 'Start'}</span>
+                                <span>{getChartStartLabel(chartPeriod)}</span>
                                 <span className={`font-medium ${priceChange >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                                     {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(2)}%
                                 </span>
-                                <span>Now</span>
+                                <span>{t.tokenDetail.now}</span>
                             </div>
                         </div>
                     ) : (
                         <div className="glass rounded-xl p-6 text-center">
-                            <p className="text-zinc-500 text-sm">No chart data available</p>
+                            <p className="text-zinc-500 text-sm">{t.tokenDetail.noChartData}</p>
                         </div>
                     )}
                 </div>
@@ -304,7 +317,7 @@ export default function TokenDetailModal({ tokenBalance, isOpen, onClose, onSend
                 {/* Your Balance */}
                 <div className="px-4 pb-4">
                     <div className="glass rounded-xl p-4">
-                        <p className="text-xs text-zinc-500 mb-2">Your Balance</p>
+                        <p className="text-xs text-zinc-500 mb-2">{t.tokenDetail.yourBalance}</p>
                         <div className="flex items-center justify-between">
                             <span className="text-xl font-bold text-white">{balance} {token.symbol}</span>
                             <span className="text-lg text-zinc-400">${valueUSD.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
@@ -314,31 +327,31 @@ export default function TokenDetailModal({ tokenBalance, isOpen, onClose, onSend
 
                 {/* Market Stats */}
                 <div className="px-4 pb-4">
-                    <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-3">Market Stats</h3>
+                    <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-3">{t.tokenDetail.marketStats}</h3>
                     {isLoading && !marketData ? (
                         <StatsSkeleton />
                     ) : marketData && marketData.marketCap > 0 ? (
                         <div className="grid grid-cols-2 gap-3">
                             <div className="glass rounded-xl p-3">
-                                <p className="text-[10px] text-zinc-500 mb-1">Market Cap</p>
+                                <p className="text-[10px] text-zinc-500 mb-1">{t.tokenDetail.marketCap}</p>
                                 <p className="text-sm font-semibold text-white">{formatNumber(marketData.marketCap)}</p>
                             </div>
                             <div className="glass rounded-xl p-3">
-                                <p className="text-[10px] text-zinc-500 mb-1">Volume 24h</p>
+                                <p className="text-[10px] text-zinc-500 mb-1">{t.tokenDetail.volume24h}</p>
                                 <p className="text-sm font-semibold text-white">{formatNumber(marketData.volume24h)}</p>
                             </div>
                             <div className="glass rounded-xl p-3">
-                                <p className="text-[10px] text-zinc-500 mb-1">24h High</p>
+                                <p className="text-[10px] text-zinc-500 mb-1">{t.tokenDetail.high24h}</p>
                                 <p className="text-sm font-semibold text-white">${marketData.high24h.toLocaleString('en-US', { maximumFractionDigits: 4 })}</p>
                             </div>
                             <div className="glass rounded-xl p-3">
-                                <p className="text-[10px] text-zinc-500 mb-1">FDV</p>
+                                <p className="text-[10px] text-zinc-500 mb-1">{t.tokenDetail.fdv}</p>
                                 <p className="text-sm font-semibold text-white">{formatNumber(marketData.fdv)}</p>
                             </div>
                         </div>
                     ) : (
                         <div className="glass rounded-xl p-4 text-center">
-                            <p className="text-zinc-500 text-sm">Market data not available</p>
+                            <p className="text-zinc-500 text-sm">{t.tokenDetail.noMarketData}</p>
                         </div>
                     )}
                 </div>
@@ -370,13 +383,13 @@ export default function TokenDetailModal({ tokenBalance, isOpen, onClose, onSend
                             onClick={onBuy}
                             className="flex-1 py-3 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-semibold rounded-xl hover:from-pink-400 hover:to-purple-500 transition-all"
                         >
-                            Buy
+                            {t.tokens.buy}
                         </button>
                         <button
                             onClick={onSend}
                             className="flex-1 py-3 glass text-white font-semibold rounded-xl hover:bg-white/10 transition-all"
                         >
-                            Send
+                            {t.tokens.send}
                         </button>
                     </div>
                 </div>

@@ -136,7 +136,7 @@ export default function SwapInterface() {
                     transition={{ duration: 1.5, repeat: Infinity }}
                     className="w-2.5 h-2.5 bg-amber-400 rounded-full"
                 />
-                <span className="text-sm text-zinc-300 font-medium">Under Development</span>
+                <span className="text-sm text-zinc-300 font-medium">{t.swap.underDevelopment}</span>
             </motion.div>
         </motion.div>
     );

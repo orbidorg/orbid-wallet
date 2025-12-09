@@ -2,6 +2,7 @@
 
 import { AnimatePresence } from 'framer-motion';
 import { AnimatedButton, ModalBackdrop, ModalContent, FadeIn, Pulse } from '../ui/Motion';
+import { useI18n } from '@/lib/i18n';
 
 interface BuyModalProps {
     isOpen: boolean;
@@ -9,6 +10,8 @@ interface BuyModalProps {
 }
 
 export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
+    const { t } = useI18n();
+
     return (
         <AnimatePresence>
             {isOpen && (
@@ -16,7 +19,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                     <ModalContent>
                         {/* Header */}
                         <div className="px-5 py-4 flex items-center justify-between border-b border-white/5">
-                            <h2 className="text-lg font-bold text-white">Buy Crypto</h2>
+                            <h2 className="text-lg font-bold text-white">{t.buy.title}</h2>
                             <button
                                 onClick={onClose}
                                 className="p-2 -mr-2 rounded-full hover:bg-white/10 active:scale-95 transition-all"
@@ -43,16 +46,16 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
 
                             {/* Message */}
                             <FadeIn delay={0.15}>
-                                <h3 className="text-xl font-bold text-white mb-2">Coming Soon!</h3>
+                                <h3 className="text-xl font-bold text-white mb-2">{t.buy.comingSoon}</h3>
                                 <p className="text-zinc-400 text-center text-sm mb-6 leading-relaxed px-2">
-                                    Soon you will be able to buy crypto directly from your <span className="text-pink-400 font-semibold">OrbId Wallet</span>.
+                                    {t.buy.description}
                                 </p>
                             </FadeIn>
 
                             {/* Features Preview */}
                             <FadeIn delay={0.2} className="w-full">
                                 <div className="glass rounded-xl p-4 mb-5 w-full">
-                                    <p className="text-xs text-zinc-500 mb-3 uppercase tracking-wider">What&apos;s coming</p>
+                                    <p className="text-xs text-zinc-500 mb-3 uppercase tracking-wider">{t.buy.whatscoming}</p>
                                     <div className="space-y-3">
                                         <div className="flex items-center gap-3">
                                             <div className="w-9 h-9 rounded-full bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
@@ -60,7 +63,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                                                 </svg>
                                             </div>
-                                            <span className="text-sm text-zinc-300">Credit & debit card payments</span>
+                                            <span className="text-sm text-zinc-300">{t.buy.cardPayments}</span>
                                         </div>
                                         <div className="flex items-center gap-3">
                                             <div className="w-9 h-9 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0">
@@ -68,7 +71,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
                                                 </svg>
                                             </div>
-                                            <span className="text-sm text-zinc-300">Bank transfers</span>
+                                            <span className="text-sm text-zinc-300">{t.buy.bankTransfers}</span>
                                         </div>
                                         <div className="flex items-center gap-3">
                                             <div className="w-9 h-9 rounded-full bg-pink-500/10 flex items-center justify-center flex-shrink-0">
@@ -76,7 +79,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                                                 </svg>
                                             </div>
-                                            <span className="text-sm text-zinc-300">Instant purchases on World Chain</span>
+                                            <span className="text-sm text-zinc-300">{t.buy.instantPurchases}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -89,7 +92,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                                     onClick={onClose}
                                     fullWidth
                                 >
-                                    Got it!
+                                    {t.buy.gotIt}
                                 </AnimatedButton>
                             </FadeIn>
                         </div>

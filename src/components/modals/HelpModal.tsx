@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AnimatedButton, ModalBackdrop, ModalContent, FadeIn, Pressable } from '../ui/Motion';
 import { useToast } from '@/lib/ToastContext';
+import { useI18n } from '@/lib/i18n';
 
 interface HelpModalProps {
     isOpen: boolean;
@@ -13,27 +14,28 @@ interface HelpModalProps {
 type Topic = 'general' | 'transactions' | 'account' | 'security' | 'other';
 type View = 'topics' | 'form' | 'success';
 
-const topics: { id: Topic; label: string; icon: string; desc: string }[] = [
-    { id: 'general', label: 'General Questions', icon: '❓', desc: 'How to use OrbId Wallet' },
-    { id: 'transactions', label: 'Transactions', icon: '💸', desc: 'Send, receive, or pending txs' },
-    { id: 'account', label: 'Account Issues', icon: '👤', desc: 'Login, verification, or access' },
-    { id: 'security', label: 'Security', icon: '🔐', desc: 'Safety and privacy concerns' },
-    { id: 'other', label: 'Other', icon: '📝', desc: 'Anything else' },
-];
-
-const faqs = [
-    { q: 'How do I receive crypto?', a: 'Tap "Receive" and share your wallet address or QR code.' },
-    { q: 'Are transactions free?', a: 'Yes! Transactions on World Chain are free for verified humans.' },
-    { q: 'How do I verify with World ID?', a: 'Tap the verification card on the wallet tab to start.' },
-];
-
 export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
     const { showToast } = useToast();
+    const { t } = useI18n();
     const [view, setView] = useState<View>('topics');
     const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
     const [email, setEmail] = useState('');
     const [message, setMessage] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const topics: { id: Topic; labelKey: keyof typeof t.help; icon: string; descKey: keyof typeof t.help }[] = [
+        { id: 'general', labelKey: 'topicGeneral', icon: '❓', descKey: 'topicGeneralDesc' },
+        { id: 'transactions', labelKey: 'topicTransactions', icon: '💸', descKey: 'topicTransactionsDesc' },
+        { id: 'account', labelKey: 'topicAccount', icon: '👤', descKey: 'topicAccountDesc' },
+        { id: 'security', labelKey: 'topicSecurity', icon: '🔐', descKey: 'topicSecurityDesc' },
+        { id: 'other', labelKey: 'topicOther', icon: '📝', descKey: 'topicOtherDesc' },
+    ];
+
+    const faqs = [
+        { qKey: 'faq1Q' as const, aKey: 'faq1A' as const },
+        { qKey: 'faq2Q' as const, aKey: 'faq2A' as const },
+        { qKey: 'faq3Q' as const, aKey: 'faq3A' as const },
+    ];
 
     const handleSelectTopic = (topic: Topic) => {
         setSelectedTopic(topic);
@@ -51,8 +53,8 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
         setIsSubmitting(false);
         showToast({
             type: 'success',
-            title: 'Message Sent!',
-            message: 'We\'ll get back to you within 24 hours.'
+            title: t.help.messageSent,
+            message: t.help.responseTime
         });
     };
 
@@ -62,6 +64,16 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
         setEmail('');
         setMessage('');
         onClose();
+    };
+
+    const getSelectedTopicLabel = () => {
+        const topic = topics.find(t => t.id === selectedTopic);
+        return topic ? t.help[topic.labelKey] : '';
+    };
+
+    const getSelectedTopicIcon = () => {
+        const topic = topics.find(t => t.id === selectedTopic);
+        return topic?.icon || '';
     };
 
     return (
@@ -86,7 +98,7 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
                                         </svg>
                                     </motion.button>
                                 )}
-                                <h2 className="text-lg font-bold text-white">Help & Support</h2>
+                                <h2 className="text-lg font-bold text-white">{t.help.title}</h2>
                             </div>
                             <motion.button
                                 whileHover={{ scale: 1.1, rotate: 90 }}
@@ -114,18 +126,18 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
                                         {/* FAQs */}
                                         <FadeIn>
                                             <div>
-                                                <h3 className="text-white font-semibold mb-3">Frequently Asked</h3>
+                                                <h3 className="text-white font-semibold mb-3">{t.help.faqTitle}</h3>
                                                 <div className="space-y-2">
                                                     {faqs.map((faq, index) => (
                                                         <motion.div
-                                                            key={faq.q}
+                                                            key={faq.qKey}
                                                             initial={{ opacity: 0, y: 10 }}
                                                             animate={{ opacity: 1, y: 0 }}
                                                             transition={{ delay: index * 0.05 }}
                                                             className="glass rounded-xl p-3"
                                                         >
-                                                            <p className="text-white text-sm font-medium mb-1">{faq.q}</p>
-                                                            <p className="text-zinc-500 text-xs">{faq.a}</p>
+                                                            <p className="text-white text-sm font-medium mb-1">{t.help[faq.qKey]}</p>
+                                                            <p className="text-zinc-500 text-xs">{t.help[faq.aKey]}</p>
                                                         </motion.div>
                                                     ))}
                                                 </div>
@@ -135,8 +147,8 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
                                         {/* Contact Topics */}
                                         <FadeIn delay={0.15}>
                                             <div>
-                                                <h3 className="text-white font-semibold mb-3">Contact Us</h3>
-                                                <p className="text-zinc-500 text-sm mb-3">Select a topic to get help:</p>
+                                                <h3 className="text-white font-semibold mb-3">{t.help.contactTitle}</h3>
+                                                <p className="text-zinc-500 text-sm mb-3">{t.help.selectTopic}</p>
                                                 <div className="space-y-2">
                                                     {topics.map((topic, index) => (
                                                         <motion.div
@@ -151,8 +163,8 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
                                                             >
                                                                 <span className="text-2xl">{topic.icon}</span>
                                                                 <div className="flex-1">
-                                                                    <p className="text-white font-medium text-sm">{topic.label}</p>
-                                                                    <p className="text-zinc-500 text-xs">{topic.desc}</p>
+                                                                    <p className="text-white font-medium text-sm">{t.help[topic.labelKey]}</p>
+                                                                    <p className="text-zinc-500 text-xs">{t.help[topic.descKey]}</p>
                                                                 </div>
                                                                 <svg className="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -170,7 +182,7 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                                                 </svg>
-                                                Back to Settings
+                                                {t.common.backToSettings}
                                             </AnimatedButton>
                                         </FadeIn>
                                     </motion.div>
@@ -188,17 +200,17 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
                                     >
                                         <FadeIn>
                                             <div className="glass rounded-xl p-3 flex items-center gap-3">
-                                                <span className="text-2xl">{topics.find(t => t.id === selectedTopic)?.icon}</span>
+                                                <span className="text-2xl">{getSelectedTopicIcon()}</span>
                                                 <div>
-                                                    <p className="text-white font-medium text-sm">{topics.find(t => t.id === selectedTopic)?.label}</p>
-                                                    <p className="text-zinc-500 text-xs">Support Request</p>
+                                                    <p className="text-white font-medium text-sm">{getSelectedTopicLabel()}</p>
+                                                    <p className="text-zinc-500 text-xs">{t.help.supportRequest}</p>
                                                 </div>
                                             </div>
                                         </FadeIn>
 
                                         <FadeIn delay={0.05}>
                                             <div>
-                                                <label className="text-xs text-zinc-500 mb-1.5 block">Your Email</label>
+                                                <label className="text-xs text-zinc-500 mb-1.5 block">{t.help.yourEmail}</label>
                                                 <input
                                                     type="email"
                                                     value={email}
@@ -212,11 +224,11 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
 
                                         <FadeIn delay={0.1}>
                                             <div>
-                                                <label className="text-xs text-zinc-500 mb-1.5 block">How can we help?</label>
+                                                <label className="text-xs text-zinc-500 mb-1.5 block">{t.help.howCanWeHelp}</label>
                                                 <textarea
                                                     value={message}
                                                     onChange={(e) => setMessage(e.target.value)}
-                                                    placeholder="Describe your issue or question..."
+                                                    placeholder={t.help.describePlaceholder}
                                                     required
                                                     rows={4}
                                                     className="w-full px-4 py-3 rounded-xl bg-black/30 border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-pink-500/50 resize-none transition-colors"
@@ -239,10 +251,10 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
                                                             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                                                             className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
                                                         />
-                                                        Sending...
+                                                        {t.modals.sending}
                                                     </>
                                                 ) : (
-                                                    'Send Message'
+                                                    t.help.sendMessage
                                                 )}
                                             </AnimatedButton>
                                         </FadeIn>
@@ -268,10 +280,10 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                             </svg>
                                         </motion.div>
-                                        <h3 className="text-xl font-bold text-white mb-2">Message Sent!</h3>
-                                        <p className="text-zinc-500 mb-6">We'll get back to you within 24 hours.</p>
+                                        <h3 className="text-xl font-bold text-white mb-2">{t.help.messageSent}</h3>
+                                        <p className="text-zinc-500 mb-6">{t.help.responseTime}</p>
                                         <AnimatedButton variant="glass" fullWidth onClick={handleClose}>
-                                            Done
+                                            {t.common.done}
                                         </AnimatedButton>
                                     </motion.div>
                                 )}

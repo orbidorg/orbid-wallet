@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MiniKit, VerifyCommandInput, VerificationLevel } from '@worldcoin/minikit-js';
 import { AnimatedButton, FadeIn } from './ui/Motion';
 import { createOrUpdateUser } from '@/lib/analytics';
+import { useI18n } from '@/lib/i18n';
 
 const VERIFIED_STORAGE_KEY = 'orbid_world_id_verified';
 
@@ -17,6 +18,7 @@ export default function WorldIDVerify({
     onVerificationSuccess,
     onVerificationError
 }: WorldIDVerifyProps) {
+    const { t } = useI18n();
     const [isVerifying, setIsVerifying] = useState(false);
     const [isVerified, setIsVerified] = useState(false);
     const [showAlreadyVerified, setShowAlreadyVerified] = useState(false);
@@ -37,7 +39,7 @@ export default function WorldIDVerify({
         }
 
         if (!MiniKit.isInstalled()) {
-            setError('Open this app in World App to verify your identity');
+            setError(t.worldId.openInWorldAppError);
             return;
         }
 
@@ -72,10 +74,10 @@ export default function WorldIDVerify({
 
                 onVerificationSuccess?.(finalPayload);
             } else {
-                throw new Error('Verification failed');
+                throw new Error(t.worldId.verificationFailed);
             }
         } catch (err) {
-            const errorMsg = err instanceof Error ? err.message : 'Verification failed';
+            const errorMsg = err instanceof Error ? err.message : t.worldId.verificationFailed;
             setError(errorMsg);
             onVerificationError?.(err instanceof Error ? err : new Error(errorMsg));
         } finally {
@@ -105,8 +107,8 @@ export default function WorldIDVerify({
                             </svg>
                         </motion.div>
                         <div className="text-left">
-                            <p className="font-medium text-emerald-400 text-sm">Human Verified with Orb</p>
-                            <p className="text-xs text-zinc-500">Your identity is verified on OrbId Wallet</p>
+                            <p className="font-medium text-emerald-400 text-sm">{t.worldId.verifiedTitle}</p>
+                            <p className="text-xs text-zinc-500">{t.worldId.verifiedDesc}</p>
                         </div>
                     </div>
 
@@ -119,7 +121,7 @@ export default function WorldIDVerify({
                                 className="mt-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3"
                             >
                                 <p className="text-xs text-emerald-400 text-center">
-                                    ✓ You have already verified as a real human in OrbId Wallet
+                                    ✓ {t.worldId.alreadyVerified}
                                 </p>
                             </motion.div>
                         )}
@@ -149,8 +151,8 @@ export default function WorldIDVerify({
                         </svg>
                     </motion.div>
                     <div>
-                        <p className="font-medium text-white text-sm">World ID Verification</p>
-                        <p className="text-xs text-zinc-500">Prove you are a unique human</p>
+                        <p className="font-medium text-white text-sm">{t.worldId.title}</p>
+                        <p className="text-xs text-zinc-500">{t.worldId.description}</p>
                     </div>
                 </div>
 
@@ -182,14 +184,14 @@ export default function WorldIDVerify({
                                 transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                                 className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
                             />
-                            Verifying...
+                            {t.worldId.verifying}
                         </>
                     ) : (
                         <>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                             </svg>
-                            Verify with World ID
+                            {t.worldId.verifyButton}
                         </>
                     )}
                 </AnimatedButton>
