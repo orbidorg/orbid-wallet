@@ -1,16 +1,19 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface DashboardStats {
     totalUsers: number;
     verifiedUsers: number;
     newUsersToday: number;
+    totalLogins: number;
     countries: { country: string; count: number }[];
     growth: { date: string; count: number }[];
     devices: { device: string; count: number }[];
     browsers: { browser: string; count: number }[];
     os: { os: string; count: number }[];
+    recentUsers: { email: string; wallet: string; country: string; created: string; logins: number }[];
 }
 
 export default function AdminDashboard() {
@@ -33,23 +36,26 @@ export default function AdminDashboard() {
         setRefreshing(true);
         try {
             const headers = { 'Authorization': `Bearer ${pwd}` };
-            const [overview, countries, growth, devices, browsers, os] = await Promise.all([
+            const [overview, countries, growth, devices, browsers, os, recentUsers] = await Promise.all([
                 fetch('/api/analytics?stat=overview', { headers }).then(r => r.json()),
                 fetch('/api/analytics?stat=countries', { headers }).then(r => r.json()),
                 fetch('/api/analytics?stat=growth', { headers }).then(r => r.json()),
                 fetch('/api/analytics?stat=devices', { headers }).then(r => r.json()),
                 fetch('/api/analytics?stat=browsers', { headers }).then(r => r.json()),
-                fetch('/api/analytics?stat=os', { headers }).then(r => r.json())
+                fetch('/api/analytics?stat=os', { headers }).then(r => r.json()),
+                fetch('/api/analytics?stat=recent', { headers }).then(r => r.json()).catch(() => ({ users: [] }))
             ]);
             setStats({
                 totalUsers: overview.totalUsers || 0,
                 verifiedUsers: overview.verifiedUsers || 0,
                 newUsersToday: overview.newUsersToday || 0,
+                totalLogins: overview.totalLogins || 0,
                 countries: countries.countries || [],
                 growth: growth.growth || [],
                 devices: devices.devices || [],
                 browsers: browsers.browsers || [],
-                os: os.os || []
+                os: os.os || [],
+                recentUsers: recentUsers.users || []
             });
         } catch {
             console.error('Failed to load stats');
@@ -81,14 +87,23 @@ export default function AdminDashboard() {
     // Login Screen
     if (!authenticated) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-black to-zinc-900 flex items-center justify-center p-4">
-                <div className="w-full max-w-md">
+            <div className="min-h-screen bg-black flex items-center justify-center p-4">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="w-full max-w-md"
+                >
                     <div className="bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-2xl p-8 shadow-2xl">
                         <div className="text-center mb-8">
-                            <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                <span className="text-2xl">🔐</span>
-                            </div>
-                            <h1 className="text-2xl font-bold text-white">OrbId Admin</h1>
+                            <motion.div
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ type: 'spring', delay: 0.1 }}
+                                className="w-16 h-16 bg-gradient-to-br from-pink-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                            >
+                                <LockIcon className="w-8 h-8 text-white" />
+                            </motion.div>
+                            <h1 className="text-2xl font-bold text-white">OrbId Wallet Admin</h1>
                             <p className="text-zinc-400 mt-2">Analytics Dashboard</p>
                         </div>
 
@@ -101,7 +116,18 @@ export default function AdminDashboard() {
                                 placeholder="Admin Secret"
                                 className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-pink-500 transition-colors"
                             />
-                            {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+                            <AnimatePresence>
+                                {error && (
+                                    <motion.p
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: 'auto' }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        className="text-red-400 text-sm text-center"
+                                    >
+                                        {error}
+                                    </motion.p>
+                                )}
+                            </AnimatePresence>
                             <button
                                 onClick={authenticate}
                                 disabled={loading || !password}
@@ -111,14 +137,23 @@ export default function AdminDashboard() {
                             </button>
                         </div>
                     </div>
-                </div>
+                </motion.div>
+            </div>
+        );
+    }
+
+    // Loading state after auth (simple, no animation)
+    if (!stats) {
+        return (
+            <div className="min-h-screen bg-black flex items-center justify-center">
+                <p className="text-zinc-400">Loading dashboard...</p>
             </div>
         );
     }
 
     // Dashboard
     return (
-        <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-black to-zinc-900 p-4 md:p-6">
+        <div className="min-h-screen bg-black p-4 md:p-6">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
@@ -129,33 +164,39 @@ export default function AdminDashboard() {
                     <button
                         onClick={loadStats}
                         disabled={refreshing}
-                        className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+                        className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl transition-colors disabled:opacity-50 flex items-center gap-2"
                     >
-                        <span className={refreshing ? 'animate-spin' : ''}>↻</span>
+                        <RefreshIcon className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
                         {refreshing ? 'Loading...' : 'Refresh'}
                     </button>
                 </div>
 
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                     <StatCard
                         title="Total Users"
-                        value={stats?.totalUsers || 0}
-                        icon="👥"
+                        value={stats.totalUsers}
+                        icon={<UsersIcon className="w-5 h-5" />}
                         color="from-blue-500 to-cyan-500"
                     />
                     <StatCard
                         title="Verified Humans"
                         value={stats?.verifiedUsers || 0}
-                        icon="✓"
+                        icon={<CheckIcon className="w-5 h-5" />}
                         color="from-green-500 to-emerald-500"
-                        subtitle={stats && stats.totalUsers > 0 ? `${((stats.verifiedUsers / stats.totalUsers) * 100).toFixed(1)}% verified` : undefined}
+                        subtitle={stats && stats.totalUsers > 0 ? `${((stats.verifiedUsers / stats.totalUsers) * 100).toFixed(1)}%` : undefined}
                     />
                     <StatCard
                         title="New Today"
                         value={stats?.newUsersToday || 0}
-                        icon="📈"
+                        icon={<TrendingIcon className="w-5 h-5" />}
                         color="from-pink-500 to-purple-500"
+                    />
+                    <StatCard
+                        title="Total Logins"
+                        value={stats?.totalLogins || 0}
+                        icon={<LoginIcon className="w-5 h-5" />}
+                        color="from-amber-500 to-orange-500"
                     />
                 </div>
 
@@ -163,13 +204,20 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
                     {/* Growth Chart */}
                     <div className="bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-2xl p-4 md:p-6">
-                        <h2 className="text-lg font-semibold text-white mb-4">User Growth (30 Days)</h2>
+                        <div className="flex items-center gap-2 mb-4">
+                            <ChartIcon className="w-5 h-5 text-pink-400" />
+                            <h2 className="text-lg font-semibold text-white">User Growth (30 Days)</h2>
+                        </div>
                         <div className="h-48 flex items-end gap-0.5">
                             {(stats?.growth || []).slice(-30).map((day, i) => (
-                                <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                                <div
+                                    key={i}
+                                    className="flex-1 flex flex-col items-center gap-1"
+                                >
                                     <div
-                                        className="w-full bg-gradient-to-t from-pink-500 to-purple-500 rounded-t"
-                                        style={{ height: `${Math.max(4, (day.count / Math.max(...(stats?.growth || []).map(d => d.count), 1)) * 160)}px` }}
+                                        className="w-full bg-gradient-to-t from-pink-500 to-purple-500 rounded-t hover:opacity-80 transition-opacity cursor-pointer"
+                                        style={{ height: '100%' }}
+                                        title={`${day.date}: ${day.count} users`}
                                     />
                                     {i % 7 === 0 && (
                                         <span className="text-[9px] text-zinc-500">
@@ -183,10 +231,16 @@ export default function AdminDashboard() {
 
                     {/* Countries */}
                     <div className="bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-2xl p-4 md:p-6">
-                        <h2 className="text-lg font-semibold text-white mb-4">Top Countries</h2>
+                        <div className="flex items-center gap-2 mb-4">
+                            <GlobeIcon className="w-5 h-5 text-cyan-400" />
+                            <h2 className="text-lg font-semibold text-white">Top Countries</h2>
+                        </div>
                         <div className="space-y-2">
                             {(stats?.countries || []).slice(0, 6).map((country, i) => (
-                                <div key={i} className="flex items-center gap-3">
+                                <div
+                                    key={i}
+                                    className="flex items-center gap-3"
+                                >
                                     <span className="text-lg">{getFlagEmoji(country.country)}</span>
                                     <span className="flex-1 text-white text-sm truncate">{country.country || 'Unknown'}</span>
                                     <span className="text-zinc-400 text-sm">{country.count}</span>
@@ -206,77 +260,73 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Charts Grid - Row 2: Devices, Browsers, OS */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Devices */}
-                    <div className="bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-2xl p-4 md:p-6">
-                        <h2 className="text-lg font-semibold text-white mb-4">📱 Devices</h2>
-                        <div className="space-y-3">
-                            {(stats?.devices || []).map((item, i) => (
-                                <div key={i} className="flex items-center justify-between">
-                                    <span className="text-white capitalize">{item.device}</span>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-20 h-2 bg-zinc-800 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full bg-gradient-to-r from-cyan-500 to-blue-500"
-                                                style={{ width: `${(item.count / (stats?.devices[0]?.count || 1)) * 100}%` }}
-                                            />
-                                        </div>
-                                        <span className="text-zinc-400 text-sm w-8 text-right">{item.count}</span>
-                                    </div>
-                                </div>
-                            ))}
-                            {(!stats?.devices || stats.devices.length === 0) && (
-                                <p className="text-zinc-500 text-center py-4">No data</p>
-                            )}
-                        </div>
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <DistributionCard
+                        title="Devices"
+                        icon={<DevicesIcon className="w-5 h-5 text-cyan-400" />}
+                        data={(stats?.devices || []).map(d => ({ name: d.device, count: d.count }))}
+                        color="from-cyan-500 to-blue-500"
+                    />
+                    <DistributionCard
+                        title="Browsers"
+                        icon={<BrowserIcon className="w-5 h-5 text-amber-400" />}
+                        data={(stats?.browsers || []).map(d => ({ name: d.browser, count: d.count }))}
+                        color="from-amber-500 to-orange-500"
+                    />
+                    <DistributionCard
+                        title="Operating Systems"
+                        icon={<OSIcon className="w-5 h-5 text-emerald-400" />}
+                        data={(stats?.os || []).map(d => ({ name: d.os, count: d.count }))}
+                        color="from-emerald-500 to-teal-500"
+                    />
+                </div>
 
-                    {/* Browsers */}
-                    <div className="bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-2xl p-4 md:p-6">
-                        <h2 className="text-lg font-semibold text-white mb-4">🌐 Browsers</h2>
-                        <div className="space-y-3">
-                            {(stats?.browsers || []).map((item, i) => (
-                                <div key={i} className="flex items-center justify-between">
-                                    <span className="text-white">{item.browser}</span>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-20 h-2 bg-zinc-800 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full bg-gradient-to-r from-orange-500 to-amber-500"
-                                                style={{ width: `${(item.count / (stats?.browsers[0]?.count || 1)) * 100}%` }}
-                                            />
-                                        </div>
-                                        <span className="text-zinc-400 text-sm w-8 text-right">{item.count}</span>
-                                    </div>
-                                </div>
-                            ))}
-                            {(!stats?.browsers || stats.browsers.length === 0) && (
-                                <p className="text-zinc-500 text-center py-4">No data</p>
-                            )}
-                        </div>
+                {/* Recent Users Table */}
+                <div className="bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-2xl p-4 md:p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                        <UsersIcon className="w-5 h-5 text-purple-400" />
+                        <h2 className="text-lg font-semibold text-white">Recent Users</h2>
                     </div>
-
-                    {/* OS */}
-                    <div className="bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-2xl p-4 md:p-6">
-                        <h2 className="text-lg font-semibold text-white mb-4">💻 Operating Systems</h2>
-                        <div className="space-y-3">
-                            {(stats?.os || []).map((item, i) => (
-                                <div key={i} className="flex items-center justify-between">
-                                    <span className="text-white">{item.os}</span>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-20 h-2 bg-zinc-800 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full bg-gradient-to-r from-emerald-500 to-teal-500"
-                                                style={{ width: `${(item.count / (stats?.os[0]?.count || 1)) * 100}%` }}
-                                            />
-                                        </div>
-                                        <span className="text-zinc-400 text-sm w-8 text-right">{item.count}</span>
-                                    </div>
-                                </div>
-                            ))}
-                            {(!stats?.os || stats.os.length === 0) && (
-                                <p className="text-zinc-500 text-center py-4">No data</p>
-                            )}
-                        </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="text-zinc-400 border-b border-zinc-800">
+                                    <th className="text-left py-2 px-2">Email</th>
+                                    <th className="text-left py-2 px-2">Wallet</th>
+                                    <th className="text-left py-2 px-2">Country</th>
+                                    <th className="text-left py-2 px-2">Logins</th>
+                                    <th className="text-left py-2 px-2">Joined</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {(stats?.recentUsers || []).slice(0, 10).map((user, i) => (
+                                    <tr
+                                        key={i}
+                                        className="border-b border-zinc-800/50 hover:bg-zinc-800/30"
+                                    >
+                                        <td className="py-2 px-2 text-white">{user.email || '—'}</td>
+                                        <td className="py-2 px-2 text-zinc-400 font-mono text-xs">
+                                            {user.wallet ? `${user.wallet.slice(0, 6)}...${user.wallet.slice(-4)}` : '—'}
+                                        </td>
+                                        <td className="py-2 px-2">
+                                            {user.country ? (
+                                                <span className="flex items-center gap-1">
+                                                    <span>{getFlagEmoji(user.country)}</span>
+                                                    <span className="text-zinc-400">{user.country}</span>
+                                                </span>
+                                            ) : '—'}
+                                        </td>
+                                        <td className="py-2 px-2 text-zinc-400">{user.logins || 1}</td>
+                                        <td className="py-2 px-2 text-zinc-500">{formatDate(user.created)}</td>
+                                    </tr>
+                                ))}
+                                {(!stats?.recentUsers || stats.recentUsers.length === 0) && (
+                                    <tr>
+                                        <td colSpan={5} className="py-8 text-center text-zinc-500">No users yet</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -284,37 +334,86 @@ export default function AdminDashboard() {
     );
 }
 
-function StatCard({ title, value, icon, color, subtitle }: { title: string; value: number; icon: string; color: string; subtitle?: string }) {
+// Components
+function StatCard({ title, value, icon, color, subtitle }: { title: string; value: number; icon: React.ReactNode; color: string; subtitle?: string }) {
     return (
-        <div className="bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-2xl p-4 md:p-6 relative overflow-hidden">
+        <motion.div
+            whileHover={{ scale: 1.02 }}
+            className="bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-2xl p-4 md:p-6 relative overflow-hidden"
+        >
             <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${color} opacity-10 rounded-full -translate-y-1/2 translate-x-1/2`} />
             <div className="flex items-start justify-between">
                 <div>
                     <p className="text-zinc-400 text-sm">{title}</p>
-                    <p className="text-3xl md:text-4xl font-bold text-white mt-1">{value.toLocaleString()}</p>
-                    {subtitle && <p className="text-zinc-500 text-sm mt-1">{subtitle}</p>}
+                    <motion.p
+                        key={value}
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="text-2xl md:text-3xl font-bold text-white mt-1"
+                    >
+                        {value.toLocaleString()}
+                    </motion.p>
+                    {subtitle && <p className="text-zinc-500 text-xs mt-1">{subtitle}</p>}
                 </div>
-                <div className={`w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br ${color} rounded-xl flex items-center justify-center text-lg md:text-xl`}>
+                <div className={`w-10 h-10 bg-gradient-to-br ${color} rounded-xl flex items-center justify-center text-white`}>
                     {icon}
                 </div>
+            </div>
+        </motion.div>
+    );
+}
+
+function DistributionCard({ title, icon, data, color }: { title: string; icon: React.ReactNode; data: { name: string; count: number }[]; color: string }) {
+    const max = data[0]?.count || 1;
+    return (
+        <div className="bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-2xl p-4 md:p-6">
+            <div className="flex items-center gap-2 mb-4">
+                {icon}
+                <h2 className="text-lg font-semibold text-white">{title}</h2>
+            </div>
+            <div className="space-y-3">
+                {data.map((item, i) => (
+                    <motion.div
+                        key={i}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                        className="flex items-center justify-between"
+                    >
+                        <span className="text-white capitalize text-sm">{item.name}</span>
+                        <div className="flex items-center gap-2">
+                            <div className="w-20 h-2 bg-zinc-800 rounded-full overflow-hidden">
+                                <motion.div
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${(item.count / max) * 100}%` }}
+                                    transition={{ delay: i * 0.05 + 0.2 }}
+                                    className={`h-full bg-gradient-to-r ${color}`}
+                                />
+                            </div>
+                            <span className="text-zinc-400 text-sm w-8 text-right">{item.count}</span>
+                        </div>
+                    </motion.div>
+                ))}
+                {data.length === 0 && <p className="text-zinc-500 text-center py-4">No data</p>}
             </div>
         </div>
     );
 }
 
+function formatDate(dateStr: string): string {
+    if (!dateStr) return '—';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
 function getFlagEmoji(countryName: string): string {
-    // Use country code to generate flag emoji dynamically
     const countryToCodes: Record<string, string> = {
-        // Americas
         'United States': 'US', 'Canada': 'CA', 'Mexico': 'MX', 'Brazil': 'BR',
         'Argentina': 'AR', 'Colombia': 'CO', 'Chile': 'CL', 'Peru': 'PE',
         'Venezuela': 'VE', 'Ecuador': 'EC', 'Bolivia': 'BO', 'Paraguay': 'PY',
         'Uruguay': 'UY', 'Costa Rica': 'CR', 'Panama': 'PA', 'Guatemala': 'GT',
         'Honduras': 'HN', 'El Salvador': 'SV', 'Nicaragua': 'NI', 'Cuba': 'CU',
         'Dominican Republic': 'DO', 'Puerto Rico': 'PR', 'Jamaica': 'JM', 'Haiti': 'HT',
-        'Trinidad and Tobago': 'TT', 'Bahamas': 'BS', 'Barbados': 'BB', 'Belize': 'BZ',
-        'Guyana': 'GY', 'Suriname': 'SR',
-        // Europe
         'United Kingdom': 'GB', 'Germany': 'DE', 'France': 'FR', 'Italy': 'IT',
         'Spain': 'ES', 'Portugal': 'PT', 'Netherlands': 'NL', 'Belgium': 'BE',
         'Switzerland': 'CH', 'Austria': 'AT', 'Sweden': 'SE', 'Norway': 'NO',
@@ -322,46 +421,85 @@ function getFlagEmoji(countryName: string): string {
         'Czech Republic': 'CZ', 'Czechia': 'CZ', 'Greece': 'GR', 'Hungary': 'HU',
         'Romania': 'RO', 'Bulgaria': 'BG', 'Croatia': 'HR', 'Slovakia': 'SK',
         'Slovenia': 'SI', 'Serbia': 'RS', 'Ukraine': 'UA', 'Russia': 'RU',
-        'Belarus': 'BY', 'Lithuania': 'LT', 'Latvia': 'LV', 'Estonia': 'EE',
-        'Iceland': 'IS', 'Luxembourg': 'LU', 'Malta': 'MT', 'Cyprus': 'CY',
-        'Albania': 'AL', 'North Macedonia': 'MK', 'Montenegro': 'ME', 'Bosnia and Herzegovina': 'BA',
-        'Moldova': 'MD', 'Kosovo': 'XK',
-        // Asia
         'China': 'CN', 'Japan': 'JP', 'South Korea': 'KR', 'Korea, Republic of': 'KR',
         'India': 'IN', 'Indonesia': 'ID', 'Thailand': 'TH', 'Vietnam': 'VN',
         'Philippines': 'PH', 'Malaysia': 'MY', 'Singapore': 'SG', 'Taiwan': 'TW',
-        'Hong Kong': 'HK', 'Pakistan': 'PK', 'Bangladesh': 'BD', 'Sri Lanka': 'LK',
-        'Nepal': 'NP', 'Myanmar': 'MM', 'Cambodia': 'KH', 'Laos': 'LA',
-        'Mongolia': 'MN', 'North Korea': 'KP', 'Brunei': 'BN', 'Timor-Leste': 'TL',
-        // Middle East
-        'Turkey': 'TR', 'Israel': 'IL', 'Saudi Arabia': 'SA', 'United Arab Emirates': 'AE',
-        'Qatar': 'QA', 'Kuwait': 'KW', 'Bahrain': 'BH', 'Oman': 'OM',
-        'Jordan': 'JO', 'Lebanon': 'LB', 'Syria': 'SY', 'Iraq': 'IQ',
-        'Iran': 'IR', 'Yemen': 'YE', 'Palestine': 'PS', 'Afghanistan': 'AF',
-        // Africa
+        'Hong Kong': 'HK', 'Pakistan': 'PK', 'Bangladesh': 'BD', 'Turkey': 'TR',
+        'Israel': 'IL', 'Saudi Arabia': 'SA', 'United Arab Emirates': 'AE',
         'South Africa': 'ZA', 'Nigeria': 'NG', 'Egypt': 'EG', 'Kenya': 'KE',
-        'Ethiopia': 'ET', 'Ghana': 'GH', 'Morocco': 'MA', 'Algeria': 'DZ',
-        'Tunisia': 'TN', 'Tanzania': 'TZ', 'Uganda': 'UG', 'Rwanda': 'RW',
-        'Senegal': 'SN', 'Ivory Coast': 'CI', "Cote d'Ivoire": 'CI', 'Cameroon': 'CM',
-        'Zimbabwe': 'ZW', 'Zambia': 'ZM', 'Botswana': 'BW', 'Namibia': 'NA',
-        'Mozambique': 'MZ', 'Angola': 'AO', 'Democratic Republic of the Congo': 'CD',
-        'Republic of the Congo': 'CG', 'Sudan': 'SD', 'Libya': 'LY', 'Mali': 'ML',
-        'Niger': 'NE', 'Burkina Faso': 'BF', 'Benin': 'BJ', 'Togo': 'TG',
-        'Mauritius': 'MU', 'Madagascar': 'MG', 'Malawi': 'MW', 'Liberia': 'LR',
-        'Sierra Leone': 'SL', 'Guinea': 'GN', 'Gambia': 'GM', 'Cape Verde': 'CV',
-        // Oceania
-        'Australia': 'AU', 'New Zealand': 'NZ', 'Fiji': 'FJ', 'Papua New Guinea': 'PG',
-        'Samoa': 'WS', 'Tonga': 'TO', 'Vanuatu': 'VU', 'Solomon Islands': 'SB',
-        // Central Asia
-        'Kazakhstan': 'KZ', 'Uzbekistan': 'UZ', 'Turkmenistan': 'TM', 'Tajikistan': 'TJ',
-        'Kyrgyzstan': 'KG', 'Azerbaijan': 'AZ', 'Georgia': 'GE', 'Armenia': 'AM',
+        'Australia': 'AU', 'New Zealand': 'NZ'
     };
-
     const code = countryToCodes[countryName];
     if (code) {
-        // Convert country code to flag emoji using regional indicator symbols
         const codePoints = [...code.toUpperCase()].map(c => 0x1F1E6 + c.charCodeAt(0) - 65);
         return String.fromCodePoint(...codePoints);
     }
-    return String.fromCodePoint(0x1F30D); // Globe emoji as fallback
+    return '🌍';
 }
+
+// SVG Icons
+const LockIcon = ({ className }: { className?: string }) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+    </svg>
+);
+
+const RefreshIcon = ({ className }: { className?: string }) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+    </svg>
+);
+
+const UsersIcon = ({ className }: { className?: string }) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+    </svg>
+);
+
+const CheckIcon = ({ className }: { className?: string }) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+);
+
+const TrendingIcon = ({ className }: { className?: string }) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+    </svg>
+);
+
+const LoginIcon = ({ className }: { className?: string }) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+    </svg>
+);
+
+const ChartIcon = ({ className }: { className?: string }) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+    </svg>
+);
+
+const GlobeIcon = ({ className }: { className?: string }) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+);
+
+const DevicesIcon = ({ className }: { className?: string }) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+    </svg>
+);
+
+const BrowserIcon = ({ className }: { className?: string }) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+    </svg>
+);
+
+const OSIcon = ({ className }: { className?: string }) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+    </svg>
+);

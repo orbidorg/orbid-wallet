@@ -46,10 +46,17 @@ export async function GET(request: NextRequest) {
                 .select('*', { count: 'exact', head: true })
                 .gte('created_at', today);
 
+            // Sum total logins
+            const { data: loginsData } = await supabaseAdmin
+                .from('analytics_users')
+                .select('total_logins');
+            const totalLogins = (loginsData || []).reduce((sum: number, row: { total_logins: number }) => sum + (row.total_logins || 0), 0);
+
             return NextResponse.json({
                 totalUsers: total || 0,
                 verifiedUsers: verified || 0,
-                newUsersToday: newToday || 0
+                newUsersToday: newToday || 0,
+                totalLogins
             });
         }
 
@@ -161,6 +168,31 @@ export async function GET(request: NextRequest) {
                 .sort((a, b) => b.count - a.count);
 
             return NextResponse.json({ os: osList });
+        }
+
+        // Recent users
+        if (stat === 'recent') {
+            const { data } = await supabaseAdmin
+                .from('analytics_users')
+                .select('email, wallet_address, country, created_at, total_logins')
+                .order('created_at', { ascending: false })
+                .limit(20);
+
+            const users = (data || []).map((row: {
+                email: string | null;
+                wallet_address: string | null;
+                country: string | null;
+                created_at: string;
+                total_logins: number | null;
+            }) => ({
+                email: row.email || null,
+                wallet: row.wallet_address || null,
+                country: row.country || null,
+                created: row.created_at,
+                logins: row.total_logins || 1
+            }));
+
+            return NextResponse.json({ users });
         }
 
         return NextResponse.json({ ok: true });
