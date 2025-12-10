@@ -79,6 +79,18 @@ export default function SendModal({ isOpen, onClose, balances }: SendModalProps)
                 setTxHash(hash);
                 setStep('success');
                 showToast({ type: 'success', title: t.modals.transactionSent, message: `${amount} ${selectedToken.token.symbol}`, txHash: hash });
+
+                // Send push notification to recipient (fire and forget)
+                fetch('/api/notifications/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        walletAddresses: [recipient],
+                        type: 'tx_received',
+                        amount: amount,
+                        token: selectedToken.token.symbol,
+                    }),
+                }).catch(err => console.warn('Notification send failed:', err));
             } else {
                 setError(t.modals.transactionRejected);
                 setStep('error');
