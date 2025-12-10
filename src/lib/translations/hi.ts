@@ -121,6 +121,16 @@ export const hi: Translations = {
         followXDesc: 'नवीनतम समाचारों से अपडेट रहें',
         followCta: '@OrbIdLabs को फॉलो करें',
     },
+    notifications: {
+        title: 'सूचनाएं',
+        enable: 'सूचनाएं सक्षम करें',
+        enabled: 'सूचनाएं सक्षम',
+        disabled: 'सूचनाएं अक्षम',
+        permissionDenied: 'अनुमति अस्वीकृत',
+        transactionReceived: 'भुगतान प्राप्त',
+        transactionSent: 'लेनदेन भेजा गया',
+        notSupported: 'सूचनाएं समर्थित नहीं',
+    },
     common: {
         loading: 'लोड हो रहा है...',
         error: 'कुछ गलत हो गया',

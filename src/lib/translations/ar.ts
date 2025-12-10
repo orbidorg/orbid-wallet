@@ -121,6 +121,16 @@ export const ar: Translations = {
         followXDesc: 'ابق على اطلاع بآخر الأخبار',
         followCta: 'تابع @OrbIdLabs',
     },
+    notifications: {
+        title: 'الإشعارات',
+        enable: 'تفعيل الإشعارات',
+        enabled: 'الإشعارات مفعلة',
+        disabled: 'الإشعارات معطلة',
+        permissionDenied: 'تم رفض الإذن',
+        transactionReceived: 'تم استلام الدفع',
+        transactionSent: 'تم إرسال المعاملة',
+        notSupported: 'الإشعارات غير مدعومة',
+    },
     common: {
         loading: 'جارٍ التحميل...',
         error: 'حدث خطأ ما',

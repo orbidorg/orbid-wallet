@@ -121,6 +121,16 @@ export const de: Translations = {
         followXDesc: 'Bleiben Sie über die neuesten Nachrichten informiert',
         followCta: '@OrbIdLabs folgen',
     },
+    notifications: {
+        title: 'Benachrichtigungen',
+        enable: 'Benachrichtigungen aktivieren',
+        enabled: 'Benachrichtigungen aktiviert',
+        disabled: 'Benachrichtigungen deaktiviert',
+        permissionDenied: 'Berechtigung verweigert',
+        transactionReceived: 'Zahlung erhalten',
+        transactionSent: 'Transaktion gesendet',
+        notSupported: 'Benachrichtigungen nicht unterstützt',
+    },
     common: {
         loading: 'Laden...',
         error: 'Etwas ist schiefgelaufen',

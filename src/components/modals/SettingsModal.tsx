@@ -7,6 +7,7 @@ import { AnimatedButton, ModalBackdrop, ModalContent, FadeIn, Pressable } from '
 import AboutModal from './AboutModal';
 import HelpModal from './HelpModal';
 import { useI18n } from '@/lib/i18n';
+import { useNotifications } from '@/hooks/useNotifications';
 
 interface SettingsModalProps {
     isOpen: boolean;
@@ -15,6 +16,7 @@ interface SettingsModalProps {
 
 export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     const { t, lang, setLang, languages } = useI18n();
+    const { isEnabled: notificationsEnabled, isSupported: notificationsSupported, isLoading: notificationsLoading, requestPermission, disableNotifications } = useNotifications();
     const [showAboutModal, setShowAboutModal] = useState(false);
     const [showHelpModal, setShowHelpModal] = useState(false);
     const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
@@ -36,6 +38,35 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             rightContent: (
                 <span className="text-sm text-zinc-400">{currentLanguage?.flag} {currentLanguage?.nativeName}</span>
             ),
+        },
+        {
+            id: 'notifications',
+            label: t.notifications.title,
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+            ),
+            color: 'text-amber-400',
+            bgColor: 'bg-amber-500/10',
+            action: async () => {
+                if (!notificationsSupported) return;
+                if (notificationsEnabled) {
+                    disableNotifications();
+                } else {
+                    await requestPermission();
+                }
+            },
+            rightContent: (
+                <div className={`w-11 h-6 rounded-full relative transition-colors ${notificationsEnabled ? 'bg-emerald-500' : 'bg-zinc-600'} ${!notificationsSupported ? 'opacity-50' : ''}`}>
+                    <motion.div
+                        className="w-5 h-5 bg-white rounded-full absolute top-0.5 shadow"
+                        animate={{ left: notificationsEnabled ? '22px' : '2px' }}
+                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                    />
+                </div>
+            ),
+            disabled: !notificationsSupported || notificationsLoading,
         },
         {
             id: 'about',
@@ -162,8 +193,8 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                                                                             key={language.code}
                                                                             onClick={() => handleLanguageSelect(language.code)}
                                                                             className={`flex items-center gap-2 p-2 rounded-lg text-sm transition-colors ${lang === language.code
-                                                                                    ? 'bg-pink-500/20 text-pink-400'
-                                                                                    : 'hover:bg-white/5 text-zinc-300'
+                                                                                ? 'bg-pink-500/20 text-pink-400'
+                                                                                : 'hover:bg-white/5 text-zinc-300'
                                                                                 }`}
                                                                         >
                                                                             <span className="text-lg">{language.flag}</span>

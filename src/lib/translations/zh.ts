@@ -121,6 +121,16 @@ export const zh: Translations = {
         followXDesc: '获取最新消息',
         followCta: '关注 @OrbIdLabs',
     },
+    notifications: {
+        title: '通知',
+        enable: '开启通知',
+        enabled: '通知已开启',
+        disabled: '通知已关闭',
+        permissionDenied: '权限被拒绝',
+        transactionReceived: '收到付款',
+        transactionSent: '交易已发送',
+        notSupported: '不支持通知',
+    },
     common: {
         loading: '加载中...',
         error: '出现错误',

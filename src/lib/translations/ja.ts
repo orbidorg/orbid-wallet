@@ -121,6 +121,16 @@ export const ja: Translations = {
         followXDesc: '最新ニュースをチェック',
         followCta: '@OrbIdLabsをフォロー',
     },
+    notifications: {
+        title: '通知',
+        enable: '通知を有効にする',
+        enabled: '通知が有効',
+        disabled: '通知が無効',
+        permissionDenied: '許可が拒否されました',
+        transactionReceived: '支払いを受け取りました',
+        transactionSent: '取引が送信されました',
+        notSupported: '通知はサポートされていません',
+    },
     common: {
         loading: '読み込み中...',
         error: 'エラーが発生しました',

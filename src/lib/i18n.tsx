@@ -157,6 +157,17 @@ export interface Translations {
         followXDesc: string;
         followCta: string;
     };
+    // Notifications
+    notifications: {
+        title: string;
+        enable: string;
+        enabled: string;
+        disabled: string;
+        permissionDenied: string;
+        transactionReceived: string;
+        transactionSent: string;
+        notSupported: string;
+    };
     // Common
     common: {
         loading: string;

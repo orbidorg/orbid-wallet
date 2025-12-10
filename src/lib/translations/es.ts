@@ -121,6 +121,16 @@ export const es: Translations = {
         followXDesc: 'Mantente al día con las últimas noticias',
         followCta: 'Seguir @OrbIdLabs',
     },
+    notifications: {
+        title: 'Notificaciones',
+        enable: 'Activar notificaciones',
+        enabled: 'Notificaciones activadas',
+        disabled: 'Notificaciones desactivadas',
+        permissionDenied: 'Permiso denegado',
+        transactionReceived: 'Pago recibido',
+        transactionSent: 'Transacción enviada',
+        notSupported: 'Notificaciones no soportadas',
+    },
     common: {
         loading: 'Cargando...',
         error: 'Algo salió mal',

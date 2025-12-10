@@ -121,6 +121,16 @@ export const ko: Translations = {
         followXDesc: '최신 뉴스를 확인하세요',
         followCta: '@OrbIdLabs 팔로우',
     },
+    notifications: {
+        title: '알림',
+        enable: '알림 활성화',
+        enabled: '알림 활성화됨',
+        disabled: '알림 비활성화됨',
+        permissionDenied: '권한 거부됨',
+        transactionReceived: '결제 수신됨',
+        transactionSent: '거래 전송됨',
+        notSupported: '알림이 지원되지 않습니다',
+    },
     common: {
         loading: '로딩 중...',
         error: '문제가 발생했습니다',
