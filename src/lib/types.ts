@@ -5,6 +5,7 @@ export interface Token {
     address: string;
     decimals: number;
     logoURI: string;
+    isNative?: boolean; // true for WLD (direct transfer), false/undefined for ERC-20 (Permit2)
 }
 
 export interface TokenBalance {
