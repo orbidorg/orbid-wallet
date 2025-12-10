@@ -8,6 +8,7 @@ export const WORLD_CHAIN_TOKENS: Token[] = [
         address: '0x2cFc85d8E48F8EAB294be644d9E25C3030863003',
         decimals: 18,
         logoURI: 'https://assets.coingecko.com/coins/images/31069/standard/worldcoin.jpeg',
+        isNative: true, // WLD uses direct transfer, others use Permit2
     },
     {
         symbol: 'USDC',
