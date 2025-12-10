@@ -80,8 +80,7 @@ export default function SendModal({ isOpen, onClose, balances }: SendModalProps)
                     }],
                     functionName: 'transfer',
                     args: [recipient, amountInWei]
-                }],
-                formatPayload: false // Disable auto-formatting to prevent simulation errors
+                }]
             });
 
             if (finalPayload.status === 'success') {
