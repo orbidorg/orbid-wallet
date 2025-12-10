@@ -68,10 +68,20 @@ export default function SendModal({ isOpen, onClose, balances }: SendModalProps)
             const { finalPayload } = await MiniKit.commandsAsync.sendTransaction({
                 transaction: [{
                     address: selectedToken.token.address as `0x${string}`,
-                    abi: [{ name: 'transfer', type: 'function', inputs: [{ name: 'to', type: 'address' }, { name: 'amount', type: 'uint256' }], outputs: [{ name: '', type: 'bool' }], stateMutability: 'nonpayable' }],
+                    abi: [{
+                        name: 'transfer',
+                        type: 'function',
+                        inputs: [
+                            { name: 'to', type: 'address' },
+                            { name: 'amount', type: 'uint256' }
+                        ],
+                        outputs: [{ name: '', type: 'bool' }],
+                        stateMutability: 'nonpayable'
+                    }],
                     functionName: 'transfer',
                     args: [recipient, amountInWei]
-                }]
+                }],
+                formatPayload: false // Disable auto-formatting to prevent simulation errors
             });
 
             if (finalPayload.status === 'success') {
