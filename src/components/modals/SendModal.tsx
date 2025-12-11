@@ -66,101 +66,26 @@ export default function SendModal({ isOpen, onClose, balances }: SendModalProps)
             const amountInWei = BigInt(Math.floor(parseFloat(amount) * Math.pow(10, decimals))).toString();
             const tokenAddress = selectedToken.token.address as `0x${string}`;
 
-            let finalPayload;
-
-            if (selectedToken.token.isNative) {
-                // WLD: Use direct transfer
-                const result = await MiniKit.commandsAsync.sendTransaction({
-                    transaction: [{
-                        address: tokenAddress,
-                        abi: [{
-                            name: 'transfer',
-                            type: 'function',
-                            inputs: [
-                                { name: 'to', type: 'address' },
-                                { name: 'amount', type: 'uint256' }
-                            ],
-                            outputs: [{ name: '', type: 'bool' }],
-                            stateMutability: 'nonpayable'
-                        }],
-                        functionName: 'transfer',
-                        args: [recipient, amountInWei]
-                    }]
-                });
-                finalPayload = result.finalPayload;
-            } else {
-                // ERC-20 tokens: Use Permit2 signature transfer
-                const PERMIT2_ADDRESS = '0x000000000022D473030F116dDEE9F6B43aC78BA3';
-
-                const permitTransfer = {
-                    permitted: {
-                        token: tokenAddress,
-                        amount: amountInWei,
-                    },
-                    nonce: Date.now().toString(),
-                    deadline: Math.floor((Date.now() + 30 * 60 * 1000) / 1000).toString(),
-                };
-
-                const transferDetails = {
-                    to: recipient,
-                    requestedAmount: amountInWei,
-                };
-
-                const result = await MiniKit.commandsAsync.sendTransaction({
-                    transaction: [{
-                        address: PERMIT2_ADDRESS,
-                        abi: [{
-                            name: 'permitTransferFrom',
-                            type: 'function',
-                            inputs: [
-                                {
-                                    name: 'permit',
-                                    type: 'tuple',
-                                    components: [
-                                        {
-                                            name: 'permitted',
-                                            type: 'tuple',
-                                            components: [
-                                                { name: 'token', type: 'address' },
-                                                { name: 'amount', type: 'uint256' }
-                                            ]
-                                        },
-                                        { name: 'nonce', type: 'uint256' },
-                                        { name: 'deadline', type: 'uint256' }
-                                    ]
-                                },
-                                {
-                                    name: 'transferDetails',
-                                    type: 'tuple',
-                                    components: [
-                                        { name: 'to', type: 'address' },
-                                        { name: 'requestedAmount', type: 'uint256' }
-                                    ]
-                                },
-                                { name: 'owner', type: 'address' },
-                                { name: 'signature', type: 'bytes' }
-                            ],
-                            outputs: [],
-                            stateMutability: 'nonpayable'
-                        }],
-                        functionName: 'permitTransferFrom',
-                        args: [
-                            [
-                                [permitTransfer.permitted.token, permitTransfer.permitted.amount],
-                                permitTransfer.nonce,
-                                permitTransfer.deadline
-                            ],
-                            [transferDetails.to, transferDetails.requestedAmount],
-                            'PERMIT2_SIGNATURE_PLACEHOLDER_0'
-                        ]
+            // Unified ERC-20 transfer for ALL tokens (WLD, ORO, FOOTBALL, etc.)
+            const result = await MiniKit.commandsAsync.sendTransaction({
+                transaction: [{
+                    address: tokenAddress,
+                    abi: [{
+                        name: 'transfer',
+                        type: 'function',
+                        inputs: [
+                            { name: 'to', type: 'address' },
+                            { name: 'amount', type: 'uint256' }
+                        ],
+                        outputs: [{ name: '', type: 'bool' }],
+                        stateMutability: 'nonpayable'
                     }],
-                    permit2: [{
-                        ...permitTransfer,
-                        spender: PERMIT2_ADDRESS,
-                    }]
-                });
-                finalPayload = result.finalPayload;
-            }
+                    functionName: 'transfer',
+                    args: [recipient, amountInWei]
+                }]
+            });
+
+            const finalPayload = result.finalPayload;
 
             if (finalPayload.status === 'success') {
                 const hash = finalPayload.transaction_id || '';
