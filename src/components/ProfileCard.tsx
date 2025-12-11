@@ -56,13 +56,13 @@ export default function ProfileCard({
                     <div className="flex-1 min-w-0">
                         {/* World ID Username with Verification Badge */}
                         {username ? (
-                            <div className="flex items-center gap-2 mb-0.5">
+                            <div className="flex items-center gap-1.5 mb-0.5">
                                 <span className="font-bold text-white text-lg">@{username}</span>
-                                <div className="flex items-center justify-center w-5 h-5 bg-emerald-500 rounded-full">
-                                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                    </svg>
-                                </div>
+                                {/* Twitter/X style verified badge */}
+                                <svg className="w-5 h-5" viewBox="0 0 22 22" fill="none">
+                                    <path d="M20.396 11c.396-.636.396-1.364 0-2l-1.214-1.944c-.264-.424-.396-.928-.396-1.444V4.056c0-.756-.612-1.368-1.368-1.368h-1.556c-.516 0-1.02-.132-1.444-.396L12.474.078c-.636-.396-1.364-.396-2 0l-1.944 1.214c-.424.264-.928.396-1.444.396H5.53c-.756 0-1.368.612-1.368 1.368v1.556c0 .516-.132 1.02-.396 1.444L2.552 8c-.396.636-.396 1.364 0 2l1.214 1.944c.264.424.396.928.396 1.444v1.556c0 .756.612 1.368 1.368 1.368h1.556c.516 0 1.02.132 1.444.396l1.944 1.214c.636.396 1.364.396 2 0l1.944-1.214c.424-.264.928-.396 1.444-.396h1.556c.756 0 1.368-.612 1.368-1.368v-1.556c0-.516.132-1.02.396-1.444L20.396 11z" fill="#1D9BF0" />
+                                    <path d="M9.5 12.5l2 2 4-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
                             </div>
                         ) : (
                             <div className="flex items-center gap-2 mb-0.5">
