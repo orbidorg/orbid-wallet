@@ -122,15 +122,33 @@ export default function SendModal({ isOpen, onClose, balances }: SendModalProps)
                     }),
                 }).catch(err => console.warn('Notification send failed:', err));
             } else {
-                setError(t.modals.transactionRejected);
+                // Extract detailed error info from MiniKit response
+                const errorCode = (finalPayload as { error_code?: string }).error_code || 'unknown';
+                const debugUrl = (finalPayload as { debug_url?: string }).debug_url;
+
+                // Build detailed error message
+                let errorMsg = `Error: ${errorCode}`;
+                if (debugUrl) {
+                    errorMsg += `\n\nDebug: ${debugUrl}`;
+                }
+
+                // Log full payload for debugging
+                console.error('[SendModal] Transaction failed:', JSON.stringify(finalPayload, null, 2));
+
+                setError(errorMsg);
                 setStep('error');
-                showToast({ type: 'error', title: t.modals.transactionFailed, message: t.modals.transactionRejected });
+                showToast({
+                    type: 'error',
+                    title: `${t.modals.transactionFailed}: ${errorCode}`,
+                    message: debugUrl ? `Debug URL available` : t.modals.transactionRejected
+                });
             }
         } catch (err) {
             console.error('Transaction error:', err);
-            setError(t.common.error);
+            const errorMsg = err instanceof Error ? err.message : String(err);
+            setError(`Exception: ${errorMsg}`);
             setStep('error');
-            showToast({ type: 'error', title: t.modals.transactionFailed, message: t.common.error });
+            showToast({ type: 'error', title: t.modals.transactionFailed, message: errorMsg });
         }
     };
 
@@ -331,7 +349,17 @@ export default function SendModal({ isOpen, onClose, balances }: SendModalProps)
                                             </svg>
                                         </motion.div>
                                         <h3 className="text-xl font-bold text-white mb-2">{t.modals.transactionFailed}</h3>
-                                        <p className="text-zinc-500 mb-6">{error}</p>
+                                        <p className="text-zinc-400 mb-4 text-sm whitespace-pre-wrap break-all max-h-32 overflow-y-auto px-2">{error}</p>
+                                        {error.includes('http') && (
+                                            <a
+                                                href={error.match(/https?:\/\/[^\s]+/)?.[0] || '#'}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-sm text-pink-400 hover:text-pink-300 mb-4 block underline"
+                                            >
+                                                Open Debug URL →
+                                            </a>
+                                        )}
                                         <AnimatedButton variant="glass" onClick={() => setStep('form')} fullWidth>{t.modals.tryAgain}</AnimatedButton>
                                     </motion.div>
                                 )}
