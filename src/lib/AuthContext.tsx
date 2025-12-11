@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { MiniKit } from '@worldcoin/minikit-js';
 import { useMiniKit } from '@/components/Providers';
-import Analytics, { createOrUpdateUser, setAnalyticsUser } from './analytics';
+import Analytics, { setAnalyticsUser } from './analytics';
 
 interface AuthState {
     isReady: boolean;
@@ -12,9 +12,7 @@ interface AuthState {
     username: string | null;
     email: string | null;
     isInWorldApp: boolean;
-    // New: World ID connected but email not yet linked
     pendingEmailLink: boolean;
-    // World ID verification status
     isVerifiedHuman: boolean;
 }
 
@@ -26,7 +24,8 @@ interface AuthContextType extends AuthState {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-const STORAGE_KEY = 'orbid_auth';
+// Temporary local cache for wallet (needed since MiniKit doesn't persist wallet)
+const WALLET_CACHE_KEY = 'orbid_wallet_cache';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [state, setState] = useState<AuthState>({
@@ -41,68 +40,82 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     const { isReady: miniKitReady, isInstalled: isInWorldApp } = useMiniKit();
 
-    // Initialize auth state
+    // Initialize auth state - Uses Supabase as source of truth
     const initAuth = useCallback(async () => {
         try {
-            // Check World ID verification status from localStorage
-            const isVerifiedHuman = localStorage.getItem('orbid_world_id_verified') === 'true';
+            // Try to get cached wallet address
+            const cached = localStorage.getItem(WALLET_CACHE_KEY);
+            const cachedWallet = cached ? JSON.parse(cached) : null;
 
-            // Check for server session first
-            const res = await fetch('/api/auth/me');
-            const data = await res.json();
-
-            // Check localStorage for wallet
-            const stored = localStorage.getItem(STORAGE_KEY);
-            const parsedStored = stored ? JSON.parse(stored) : null;
-
-            // Full authentication: wallet + email session
-            if (data.authenticated && data.email && parsedStored?.walletAddress) {
-                setState({
-                    isReady: true,
-                    isAuthenticated: true,
-                    walletAddress: parsedStored.walletAddress,
-                    username: parsedStored.username || null,
-                    email: data.email,
-                    isInWorldApp,
-                    pendingEmailLink: false,
-                    isVerifiedHuman,
-                });
-
-                // Track user
-                createOrUpdateUser({
-                    email: data.email,
-                    walletAddress: parsedStored.walletAddress,
-                    isVerifiedHuman
-                }).then(result => result.success && setAnalyticsUser(result.userId || null));
-                return;
-            }
-
-            // Wallet exists but no email session - need to link email
-            if (parsedStored?.walletAddress && !data.authenticated) {
+            if (!cachedWallet?.walletAddress) {
+                // No cached wallet - user needs to connect
                 setState({
                     isReady: true,
                     isAuthenticated: false,
-                    walletAddress: parsedStored.walletAddress,
-                    username: parsedStored.username || null,
+                    walletAddress: null,
+                    username: null,
                     email: null,
                     isInWorldApp,
-                    pendingEmailLink: true,
-                    isVerifiedHuman,
+                    pendingEmailLink: false,
+                    isVerifiedHuman: false,
                 });
                 return;
             }
 
-            // Not authenticated
-            setState({
-                isReady: true,
-                isAuthenticated: false,
-                walletAddress: null,
-                username: null,
-                email: null,
-                isInWorldApp,
-                pendingEmailLink: false,
-                isVerifiedHuman: false,
-            });
+            // Check Supabase for user session
+            const sessionRes = await fetch(`/api/auth/session?wallet=${cachedWallet.walletAddress}`);
+            const sessionData = await sessionRes.json();
+
+            if (!sessionData.authenticated) {
+                // User not in Supabase - clear cache and show login
+                localStorage.removeItem(WALLET_CACHE_KEY);
+                setState({
+                    isReady: true,
+                    isAuthenticated: false,
+                    walletAddress: null,
+                    username: null,
+                    email: null,
+                    isInWorldApp,
+                    pendingEmailLink: false,
+                    isVerifiedHuman: false,
+                });
+                return;
+            }
+
+            // User exists in Supabase
+            const user = sessionData.user;
+
+            // Check email session
+            const emailRes = await fetch('/api/auth/me');
+            const emailData = await emailRes.json();
+            const hasEmail = emailData.authenticated && emailData.email;
+
+            if (hasEmail) {
+                // Fully authenticated
+                setState({
+                    isReady: true,
+                    isAuthenticated: true,
+                    walletAddress: user.walletAddress,
+                    username: user.username || cachedWallet.username,
+                    email: emailData.email,
+                    isInWorldApp,
+                    pendingEmailLink: false,
+                    isVerifiedHuman: user.isVerifiedHuman || false,
+                });
+                setAnalyticsUser(user.id);
+            } else {
+                // Has wallet in Supabase but no email session
+                setState({
+                    isReady: true,
+                    isAuthenticated: false,
+                    walletAddress: user.walletAddress,
+                    username: user.username || cachedWallet.username,
+                    email: null,
+                    isInWorldApp,
+                    pendingEmailLink: true,
+                    isVerifiedHuman: user.isVerifiedHuman || false,
+                });
+            }
         } catch (error) {
             console.error('Auth init error:', error);
             setState({
@@ -124,16 +137,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, [miniKitReady, initAuth]);
 
-    // Login with World App (MiniKit) - Step 1: Get wallet, then need email
+    // Login with World App - Creates session in Supabase
     const loginWithWorldApp = useCallback(async () => {
         if (!isInWorldApp) {
-            // Should not happen - browser users see QR code
             return;
         }
 
         try {
-            // Use timestamp + random to ensure unique nonce each time
-            // This forces World App to prompt for new authorization
             const nonce = `${Date.now()}-${crypto.randomUUID()}`;
 
             const { finalPayload } = await MiniKit.commandsAsync.walletAuth({
@@ -143,25 +153,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             if (finalPayload.status === 'success') {
                 const address = finalPayload.address;
-
-                // Get username from MiniKit.user as per docs
-                // https://docs.world.org/mini-apps/reference/usernames
                 const username = MiniKit.user?.username || null;
 
-                console.log('[AuthContext] walletAuth response:', { address, username, fullPayload: finalPayload });
+                console.log('[AuthContext] walletAuth response:', { address, username });
 
-                localStorage.setItem(STORAGE_KEY, JSON.stringify({ walletAddress: address, username }));
+                // Cache wallet locally (temporary until Supabase confirms)
+                localStorage.setItem(WALLET_CACHE_KEY, JSON.stringify({ walletAddress: address, username }));
 
-                // Set pending email link state - user needs to link email
-                setState(prev => ({
-                    ...prev,
-                    walletAddress: address,
-                    username,
-                    pendingEmailLink: true,
-                }));
+                // Create session in Supabase
+                const res = await fetch('/api/auth/session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ walletAddress: address, username }),
+                });
+                const data = await res.json();
 
-                // Track initial connection
-                Analytics.login('worldapp');
+                if (data.success) {
+                    setState(prev => ({
+                        ...prev,
+                        walletAddress: address,
+                        username,
+                        pendingEmailLink: true,
+                    }));
+                    Analytics.login('worldapp');
+                }
             }
         } catch (error) {
             console.error('World App login error:', error);
@@ -169,64 +184,68 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, [isInWorldApp]);
 
-    // Complete email linking - Step 2: After email verification
-    // Returns { success: boolean, error?: string } to handle wallet_already_linked errors
+    // Complete email linking
     const completeEmailLink = useCallback(async (email: string): Promise<{ success: boolean; error?: string }> => {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        const parsedStored = stored ? JSON.parse(stored) : {};
+        try {
+            // Update user in Supabase with email
+            const res = await fetch('/api/analytics/user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email,
+                    walletAddress: state.walletAddress,
+                    isVerifiedHuman: state.isVerifiedHuman,
+                }),
+            });
+            const result = await res.json();
 
-        // Call API to link email to wallet
-        const result = await createOrUpdateUser({
-            email,
-            walletAddress: state.walletAddress || undefined,
-            isVerifiedHuman: true
-        });
-
-        if (!result.success) {
-            // Handle wallet already linked to another email
-            if (result.error === 'wallet_already_linked') {
-                // Clear the pending wallet and show error
-                localStorage.removeItem(STORAGE_KEY);
-                setState(prev => ({
-                    ...prev,
-                    walletAddress: null,
-                    username: null,
-                    pendingEmailLink: false,
-                }));
-                return {
-                    success: false,
-                    error: `This World ID is already linked to another email (${result.linkedEmail || 'unknown'}). Please login with that email.`
-                };
+            if (!result.success) {
+                if (result.error === 'wallet_already_linked') {
+                    // Clear cache
+                    localStorage.removeItem(WALLET_CACHE_KEY);
+                    return {
+                        success: false,
+                        error: `This World ID is already linked to another email (${result.linkedEmail || 'unknown'}).`
+                    };
+                }
+                return { success: false, error: result.error || 'Failed to link email' };
             }
-            return { success: false, error: result.error || 'Failed to link email' };
+
+            setState(prev => ({
+                ...prev,
+                isAuthenticated: true,
+                email,
+                pendingEmailLink: false,
+            }));
+
+            setAnalyticsUser(result.userId || null);
+            Analytics.verifyWorldId(true);
+
+            return { success: true };
+        } catch (error) {
+            console.error('Email link error:', error);
+            return { success: false, error: 'Server error' };
         }
+    }, [state.walletAddress, state.isVerifiedHuman]);
 
-        // Update localStorage with email
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-            ...parsedStored,
-            email
-        }));
-
-        setState(prev => ({
-            ...prev,
-            isAuthenticated: true,
-            email,
-            pendingEmailLink: false,
-        }));
-
-        setAnalyticsUser(result.userId || null);
-        Analytics.verifyWorldId(true);
-
-        return { success: true };
-    }, [state.walletAddress]);
-
-    // Logout
+    // Logout - Removes from Supabase
     const logout = useCallback(async () => {
         try {
+            // Remove from email session
             await fetch('/api/auth/logout', { method: 'POST' });
+
+            // Remove from Supabase session
+            if (state.walletAddress) {
+                await fetch('/api/auth/session', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ walletAddress: state.walletAddress }),
+                });
+            }
         } catch { }
 
-        localStorage.removeItem(STORAGE_KEY);
+        // Clear local cache
+        localStorage.removeItem(WALLET_CACHE_KEY);
         localStorage.removeItem('orbid_world_id_verified');
 
         setState({
@@ -242,7 +261,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         Analytics.logout();
         setAnalyticsUser(null);
-    }, [isInWorldApp]);
+    }, [isInWorldApp, state.walletAddress]);
 
     return (
         <AuthContext.Provider value={{
