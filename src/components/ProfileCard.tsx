@@ -62,7 +62,7 @@ export default function ProfileCard({
                             <div className="flex items-center gap-1.5 mb-0.5">
                                 <span className="font-bold text-white text-lg">@{username}</span>
                                 {/* Verified badge - only shown for World ID verified users */}
-                                {isVerifiedHuman && <MdVerified className="w-5 h-5 text-[#1D9BF0]" />}
+                                {isVerifiedHuman && <MdVerified className="w-[18px] h-[18px] text-[#1D9BF0]" />}
                             </div>
                         ) : (
                             <div className="flex items-center gap-2 mb-0.5">
