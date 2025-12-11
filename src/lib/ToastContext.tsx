@@ -62,22 +62,22 @@ function ToastContainer({ toasts, onDismiss }: { toasts: Toast[]; onDismiss: (id
     if (toasts.length === 0) return null;
 
     return (
-        <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 max-w-sm w-full pointer-events-none">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 sm:left-auto sm:right-4 sm:translate-x-0 z-[100] flex flex-col gap-2 max-w-[calc(100vw-2rem)] sm:max-w-sm w-full pointer-events-none">
             {toasts.map((toast) => (
                 <div
                     key={toast.id}
                     className={`pointer-events-auto glass rounded-xl p-4 shadow-lg animate-slide-in border-l-4 ${toast.type === 'success' ? 'border-l-emerald-500' :
-                            toast.type === 'error' ? 'border-l-red-500' :
-                                toast.type === 'warning' ? 'border-l-yellow-500' :
-                                    'border-l-blue-500'
+                        toast.type === 'error' ? 'border-l-red-500' :
+                            toast.type === 'warning' ? 'border-l-yellow-500' :
+                                'border-l-blue-500'
                         }`}
                 >
                     <div className="flex items-start gap-3">
                         {/* Icon */}
                         <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${toast.type === 'success' ? 'bg-emerald-500/10' :
-                                toast.type === 'error' ? 'bg-red-500/10' :
-                                    toast.type === 'warning' ? 'bg-yellow-500/10' :
-                                        'bg-blue-500/10'
+                            toast.type === 'error' ? 'bg-red-500/10' :
+                                toast.type === 'warning' ? 'bg-yellow-500/10' :
+                                    'bg-blue-500/10'
                             }`}>
                             {toast.type === 'success' && (
                                 <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
