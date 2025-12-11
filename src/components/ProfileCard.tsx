@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { MdVerified } from 'react-icons/md';
 import Identicon from './Identicon';
 import { AnimatedButton, FadeIn } from './ui/Motion';
 import { useI18n } from '@/lib/i18n';
@@ -58,11 +59,8 @@ export default function ProfileCard({
                         {username ? (
                             <div className="flex items-center gap-1.5 mb-0.5">
                                 <span className="font-bold text-white text-lg">@{username}</span>
-                                {/* Twitter/X style verified badge */}
-                                <svg className="w-5 h-5" viewBox="0 0 22 22" fill="none">
-                                    <path d="M20.396 11c.396-.636.396-1.364 0-2l-1.214-1.944c-.264-.424-.396-.928-.396-1.444V4.056c0-.756-.612-1.368-1.368-1.368h-1.556c-.516 0-1.02-.132-1.444-.396L12.474.078c-.636-.396-1.364-.396-2 0l-1.944 1.214c-.424.264-.928.396-1.444.396H5.53c-.756 0-1.368.612-1.368 1.368v1.556c0 .516-.132 1.02-.396 1.444L2.552 8c-.396.636-.396 1.364 0 2l1.214 1.944c.264.424.396.928.396 1.444v1.556c0 .756.612 1.368 1.368 1.368h1.556c.516 0 1.02.132 1.444.396l1.944 1.214c.636.396 1.364.396 2 0l1.944-1.214c.424-.264.928-.396 1.444-.396h1.556c.756 0 1.368-.612 1.368-1.368v-1.556c0-.516.132-1.02.396-1.444L20.396 11z" fill="#1D9BF0" />
-                                    <path d="M8.5 11l2.5 2.5 4.5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
+                                {/* Verified badge using react-icons */}
+                                <MdVerified className="w-5 h-5 text-[#1D9BF0]" />
                             </div>
                         ) : (
                             <div className="flex items-center gap-2 mb-0.5">
