@@ -59,8 +59,8 @@ export default function WorldIDVerify({
                 localStorage.setItem(VERIFIED_STORAGE_KEY, 'true');
 
                 // Update user as verified in Supabase
-                const stored = localStorage.getItem('orbid_auth');
-                console.log('[WorldIDVerify] orbid_auth from localStorage:', stored);
+                const stored = localStorage.getItem('orbid_wallet_cache');
+                console.log('[WorldIDVerify] orbid_wallet_cache from localStorage:', stored);
 
                 const walletAddress = stored ? JSON.parse(stored)?.walletAddress : null;
                 console.log('[WorldIDVerify] walletAddress extracted:', walletAddress);
