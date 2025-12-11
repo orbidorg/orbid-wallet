@@ -31,6 +31,7 @@ export default function WalletApp() {
         isAuthenticated,
         walletAddress,
         username,
+        isVerifiedHuman,
         isInWorldApp,
         pendingEmailLink,
         loginWithWorldApp,
@@ -220,6 +221,7 @@ export default function WalletApp() {
                             <ProfileCard
                                 address={walletAddress!}
                                 username={username}
+                                isVerifiedHuman={isVerifiedHuman}
                                 totalBalanceUSD={totalValueUSD}
                                 wldBalance={wldBalance}
                                 onDisconnect={logout}

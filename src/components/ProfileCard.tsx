@@ -10,6 +10,7 @@ import { useI18n } from '@/lib/i18n';
 interface ProfileCardProps {
     address: string;
     username?: string | null;
+    isVerifiedHuman?: boolean;
     totalBalanceUSD: number;
     wldBalance: string;
     onDisconnect: () => void;
@@ -18,6 +19,7 @@ interface ProfileCardProps {
 export default function ProfileCard({
     address,
     username,
+    isVerifiedHuman = false,
     totalBalanceUSD,
     wldBalance,
     onDisconnect
@@ -59,8 +61,8 @@ export default function ProfileCard({
                         {username ? (
                             <div className="flex items-center gap-1.5 mb-0.5">
                                 <span className="font-bold text-white text-lg">@{username}</span>
-                                {/* Verified badge using react-icons */}
-                                <MdVerified className="w-5 h-5 text-[#1D9BF0]" />
+                                {/* Verified badge - only shown for World ID verified users */}
+                                {isVerifiedHuman && <MdVerified className="w-5 h-5 text-[#1D9BF0]" />}
                             </div>
                         ) : (
                             <div className="flex items-center gap-2 mb-0.5">

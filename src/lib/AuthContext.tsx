@@ -14,6 +14,8 @@ interface AuthState {
     isInWorldApp: boolean;
     // New: World ID connected but email not yet linked
     pendingEmailLink: boolean;
+    // World ID verification status
+    isVerifiedHuman: boolean;
 }
 
 interface AuthContextType extends AuthState {
@@ -35,12 +37,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: null,
         isInWorldApp: false,
         pendingEmailLink: false,
+        isVerifiedHuman: false,
     });
     const { isReady: miniKitReady, isInstalled: isInWorldApp } = useMiniKit();
 
     // Initialize auth state
     const initAuth = useCallback(async () => {
         try {
+            // Check World ID verification status from localStorage
+            const isVerifiedHuman = localStorage.getItem('orbid_world_id_verified') === 'true';
+
             // Check for server session first
             const res = await fetch('/api/auth/me');
             const data = await res.json();
@@ -59,13 +65,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     email: data.email,
                     isInWorldApp,
                     pendingEmailLink: false,
+                    isVerifiedHuman,
                 });
 
                 // Track user
                 createOrUpdateUser({
                     email: data.email,
                     walletAddress: parsedStored.walletAddress,
-                    isVerifiedHuman: true
+                    isVerifiedHuman
                 }).then(result => result.success && setAnalyticsUser(result.userId || null));
                 return;
             }
@@ -80,6 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     email: null,
                     isInWorldApp,
                     pendingEmailLink: true,
+                    isVerifiedHuman,
                 });
                 return;
             }
@@ -93,6 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 email: null,
                 isInWorldApp,
                 pendingEmailLink: false,
+                isVerifiedHuman: false,
             });
         } catch (error) {
             console.error('Auth init error:', error);
@@ -104,6 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 email: null,
                 isInWorldApp,
                 pendingEmailLink: false,
+                isVerifiedHuman: false,
             });
         }
     }, [isInWorldApp]);
@@ -217,7 +227,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch { }
 
         localStorage.removeItem(STORAGE_KEY);
-        localStorage.removeItem('worldid_verified');
+        localStorage.removeItem('orbid_world_id_verified');
 
         setState({
             isReady: true,
@@ -227,6 +237,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             email: null,
             isInWorldApp,
             pendingEmailLink: false,
+            isVerifiedHuman: false,
         });
 
         Analytics.logout();
