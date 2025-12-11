@@ -133,7 +133,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             if (finalPayload.status === 'success') {
                 const address = finalPayload.address;
-                const username = (finalPayload as { username?: string }).username || null;
+
+                // Get username from MiniKit.user as per docs
+                // https://docs.world.org/mini-apps/reference/usernames
+                const username = MiniKit.user?.username || null;
 
                 console.log('[AuthContext] walletAuth response:', { address, username, fullPayload: finalPayload });
 
