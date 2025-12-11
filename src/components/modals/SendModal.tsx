@@ -62,11 +62,15 @@ export default function SendModal({ isOpen, onClose, balances }: SendModalProps)
                 return;
             }
 
+            // 1. Prepare data with precision
             const decimals = selectedToken.token.decimals;
-            const amountInWei = BigInt(Math.floor(parseFloat(amount) * Math.pow(10, decimals))).toString();
+            const amountInWei = BigInt(Math.floor(parseFloat(amount) * Math.pow(10, decimals)));
             const tokenAddress = selectedToken.token.address as `0x${string}`;
 
-            // Unified ERC-20 transfer for ALL tokens (WLD, ORO, FOOTBALL, etc.)
+            // Convert BigInt to hex string for MiniKit (starts with 0x)
+            const amountHex = '0x' + amountInWei.toString(16);
+
+            // 2. ERC-20 transfer with properly formatted amount
             const result = await MiniKit.commandsAsync.sendTransaction({
                 transaction: [{
                     address: tokenAddress,
@@ -81,7 +85,7 @@ export default function SendModal({ isOpen, onClose, balances }: SendModalProps)
                         stateMutability: 'nonpayable'
                     }],
                     functionName: 'transfer',
-                    args: [recipient, amountInWei]
+                    args: [recipient as `0x${string}`, amountHex]
                 }]
             });
 
