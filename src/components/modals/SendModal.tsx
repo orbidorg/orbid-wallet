@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
 import { MiniKit } from '@worldcoin/minikit-js';
+import { parseUnits } from 'viem';
 import type { TokenBalance } from '@/lib/types';
 import { useToast } from '@/lib/ToastContext';
 import { useI18n } from '@/lib/i18n';
@@ -62,15 +63,24 @@ export default function SendModal({ isOpen, onClose, balances }: SendModalProps)
                 return;
             }
 
-            // 1. Prepare data with precision
+            // 1. Prepare data with viem parseUnits for precise decimal handling
             const decimals = selectedToken.token.decimals;
-            const amountInWei = BigInt(Math.floor(parseFloat(amount) * Math.pow(10, decimals)));
             const tokenAddress = selectedToken.token.address as `0x${string}`;
 
-            // Convert BigInt to hex string for MiniKit (starts with 0x)
-            const amountHex = '0x' + amountInWei.toString(16);
+            // Use viem's parseUnits for accurate BigInt conversion
+            const amountWei = parseUnits(amount, decimals);
 
-            // 2. ERC-20 transfer with properly formatted amount
+            // Log for debugging
+            console.log('[SendModal] Transfer params:', {
+                token: selectedToken.token.symbol,
+                tokenAddress,
+                recipient,
+                amountRaw: amount,
+                decimals,
+                amountWei: amountWei.toString(),
+            });
+
+            // 2. ERC-20 transfer - use BigInt toString() as MiniKit expects
             const result = await MiniKit.commandsAsync.sendTransaction({
                 transaction: [{
                     address: tokenAddress,
@@ -85,7 +95,7 @@ export default function SendModal({ isOpen, onClose, balances }: SendModalProps)
                         stateMutability: 'nonpayable'
                     }],
                     functionName: 'transfer',
-                    args: [recipient as `0x${string}`, amountHex]
+                    args: [recipient, amountWei.toString()]
                 }]
             });
 
