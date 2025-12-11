@@ -9,6 +9,7 @@ interface DashboardStats {
     newUsersToday: number;
     totalLogins: number;
     countries: { country: string; count: number }[];
+    cities: { city: string; count: number }[];
     growth: { date: string; count: number }[];
     devices: { device: string; count: number }[];
     browsers: { browser: string; count: number }[];
@@ -36,9 +37,10 @@ export default function AdminDashboard() {
         setRefreshing(true);
         try {
             const headers = { 'Authorization': `Bearer ${pwd}` };
-            const [overview, countries, growth, devices, browsers, os, recentUsers] = await Promise.all([
+            const [overview, countries, cities, growth, devices, browsers, os, recentUsers] = await Promise.all([
                 fetch('/api/analytics?stat=overview', { headers }).then(r => r.json()),
                 fetch('/api/analytics?stat=countries', { headers }).then(r => r.json()),
+                fetch('/api/analytics?stat=cities', { headers }).then(r => r.json()),
                 fetch('/api/analytics?stat=growth', { headers }).then(r => r.json()),
                 fetch('/api/analytics?stat=devices', { headers }).then(r => r.json()),
                 fetch('/api/analytics?stat=browsers', { headers }).then(r => r.json()),
@@ -51,6 +53,7 @@ export default function AdminDashboard() {
                 newUsersToday: overview.newUsersToday || 0,
                 totalLogins: overview.totalLogins || 0,
                 countries: countries.countries || [],
+                cities: cities.cities || [],
                 growth: growth.growth || [],
                 devices: devices.devices || [],
                 browsers: browsers.browsers || [],
@@ -253,6 +256,35 @@ export default function AdminDashboard() {
                                 </div>
                             ))}
                             {(!stats?.countries || stats.countries.length === 0) && (
+                                <p className="text-zinc-500 text-center py-6">No data yet</p>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Cities */}
+                    <div className="bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-2xl p-4 md:p-6">
+                        <div className="flex items-center gap-2 mb-4">
+                            <LocationIcon className="w-5 h-5 text-rose-400" />
+                            <h2 className="text-lg font-semibold text-white">Top Cities</h2>
+                        </div>
+                        <div className="space-y-2">
+                            {(stats?.cities || []).slice(0, 6).map((city, i) => (
+                                <div
+                                    key={i}
+                                    className="flex items-center gap-3"
+                                >
+                                    <span className="text-rose-400">📍</span>
+                                    <span className="flex-1 text-white text-sm truncate">{city.city}</span>
+                                    <span className="text-zinc-400 text-sm">{city.count}</span>
+                                    <div className="w-16 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-gradient-to-r from-rose-500 to-pink-500"
+                                            style={{ width: `${(city.count / (stats?.cities[0]?.count || 1)) * 100}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                            {(!stats?.cities || stats.cities.length === 0) && (
                                 <p className="text-zinc-500 text-center py-6">No data yet</p>
                             )}
                         </div>
@@ -501,5 +533,12 @@ const BrowserIcon = ({ className }: { className?: string }) => (
 const OSIcon = ({ className }: { className?: string }) => (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+    </svg>
+);
+
+const LocationIcon = ({ className }: { className?: string }) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
     </svg>
 );

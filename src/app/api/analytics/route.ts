@@ -79,7 +79,27 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ countries });
         }
 
-        // Growth over time (last 30 days)
+        // Cities distribution
+        if (stat === 'cities') {
+            const { data } = await supabaseAdmin
+                .from('analytics_users')
+                .select('city, country')
+                .not('city', 'is', null);
+
+            const cityMap: Record<string, number> = {};
+            (data || []).forEach((row: { city: string; country: string }) => {
+                const label = row.city ? `${row.city}, ${row.country || 'Unknown'}` : null;
+                if (label) {
+                    cityMap[label] = (cityMap[label] || 0) + 1;
+                }
+            });
+
+            const cities = Object.entries(cityMap)
+                .map(([city, count]) => ({ city, count }))
+                .sort((a, b) => b.count - a.count);
+
+            return NextResponse.json({ cities });
+        }
         if (stat === 'growth') {
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
