@@ -80,7 +80,9 @@ export default function SendModal({ isOpen, onClose, balances }: SendModalProps)
                 amountWei: amountWei.toString(),
             });
 
-            // 2. ERC-20 transfer - use BigInt toString() as MiniKit expects
+            // 2. ERC-20 transfer
+            // formatPayload: false prevents MiniKit from re-formatting the payload
+            // which can cause issues with some token contracts
             const result = await MiniKit.commandsAsync.sendTransaction({
                 transaction: [{
                     address: tokenAddress,
@@ -96,7 +98,8 @@ export default function SendModal({ isOpen, onClose, balances }: SendModalProps)
                     }],
                     functionName: 'transfer',
                     args: [recipient, amountWei.toString()]
-                }]
+                }],
+                formatPayload: false
             });
 
             const finalPayload = result.finalPayload;
