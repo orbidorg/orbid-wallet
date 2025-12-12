@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
 import { MiniKit } from '@worldcoin/minikit-js';
@@ -15,17 +15,30 @@ interface SendModalProps {
     onClose: () => void;
     balances: TokenBalance[];
     walletAddress: string;
+    initialToken?: TokenBalance | null;
 }
 
-export default function SendModal({ isOpen, onClose, balances }: SendModalProps) {
+export default function SendModal({ isOpen, onClose, balances, initialToken }: SendModalProps) {
     const { t } = useI18n();
     const { showToast } = useToast();
-    const [step, setStep] = useState<'select' | 'form' | 'confirm' | 'loading' | 'success' | 'error'>('select');
-    const [selectedToken, setSelectedToken] = useState<TokenBalance | null>(null);
+    // Start at 'form' if initialToken provided, otherwise 'select'
+    const [step, setStep] = useState<'select' | 'form' | 'confirm' | 'loading' | 'success' | 'error'>(initialToken ? 'form' : 'select');
+    const [selectedToken, setSelectedToken] = useState<TokenBalance | null>(initialToken || null);
     const [recipient, setRecipient] = useState('');
     const [amount, setAmount] = useState('');
     const [error, setError] = useState('');
     const [txHash, setTxHash] = useState('');
+
+    // Sync when initialToken changes (e.g., when opening from TokenDetailModal)
+    useEffect(() => {
+        if (initialToken) {
+            setSelectedToken(initialToken);
+            setStep('form');
+        } else if (isOpen) {
+            // Reset to select when opening without initialToken
+            setStep('select');
+        }
+    }, [initialToken, isOpen]);
 
     const handleSelectToken = (token: TokenBalance) => {
         setSelectedToken(token);
