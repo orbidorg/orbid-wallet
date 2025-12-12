@@ -110,6 +110,9 @@ export default function SendModal({ isOpen, onClose, balances }: SendModalProps)
                 const nonce = Date.now().toString();
                 const deadline = Math.floor((Date.now() + 30 * 60 * 1000) / 1000).toString(); // 30 min
 
+                // Convert token address to lowercase for Permit2 validation
+                const tokenAddressLower = tokenAddress.toLowerCase() as `0x${string}`;
+
                 result = await MiniKit.commandsAsync.sendTransaction({
                     transaction: [{
                         address: PERMIT2_ADDRESS,
@@ -148,14 +151,14 @@ export default function SendModal({ isOpen, onClose, balances }: SendModalProps)
                         }],
                         functionName: 'signatureTransfer',
                         args: [
-                            [[tokenAddress, amountStr], nonce, deadline], // permit as nested array
+                            [[tokenAddressLower, amountStr], nonce, deadline], // permit as nested array
                             [recipient, amountStr], // transferDetails as array
                             'PERMIT2_SIGNATURE_PLACEHOLDER_0' // MiniKit replaces this with actual signature
                         ]
                     }],
                     permit2: [{
                         permitted: {
-                            token: tokenAddress,
+                            token: tokenAddressLower,
                             amount: amountStr,
                         },
                         spender: PERMIT2_ADDRESS,
