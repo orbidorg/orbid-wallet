@@ -102,7 +102,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             ),
             color: 'text-pink-400',
             bgColor: 'bg-pink-500/10',
-            action: () => window.open('mailto:support@orbid.io', '_blank'),
+            action: () => window.open('mailto:support@orbidwallet.com', '_blank'),
         },
         {
             id: 'twitter',

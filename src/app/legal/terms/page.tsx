@@ -147,8 +147,8 @@ export default function TermsOfServicePage() {
                             <p className="text-zinc-300">
                                 <strong className="text-white">OrbId Labs</strong><br />
                                 Colombia<br />
-                                Email: <a href="mailto:legal@orbid.io" className="text-pink-400 hover:text-pink-300">legal@orbid.io</a><br />
-                                Support: <a href="mailto:support@orbid.io" className="text-pink-400 hover:text-pink-300">support@orbid.io</a>
+                                Email: <a href="mailto:legal@orbidwallet.com" className="text-pink-400 hover:text-pink-300">legal@orbidwallet.com</a><br />
+                                Support: <a href="mailto:support@orbidwallet.com" className="text-pink-400 hover:text-pink-300">support@orbidwallet.com</a>
                             </p>
                         </div>
                     </section>

@@ -130,8 +130,8 @@ export async function sendLoginCode(email: string, code: string, lang: string = 
                                 <p style="margin: 0; color: #a1a1aa; font-size: 11px; line-height: 1.5;">
                                     ${t.termsAgreement}
                                     <br/>
-                                    <a href="https://orbidwallet.com/legal/terms" style="color: #ec4899; text-decoration: underline;">Terms of Service</a> • 
-                                    <a href="https://orbidwallet.com/legal/privacy" style="color: #ec4899; text-decoration: underline;">Privacy Policy</a>
+                                    <a href="https://app.orbidwallet.com/legal/terms" style="color: #ec4899; text-decoration: underline;">Terms of Service</a> • 
+                                    <a href="https://app.orbidwallet.com/legal/privacy" style="color: #ec4899; text-decoration: underline;">Privacy Policy</a>
                                 </p>
                             </td>
                         </tr>

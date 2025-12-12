@@ -134,7 +134,7 @@ export default function PrivacyPolicyPage() {
                             <li><strong>Objection:</strong> Opt-out of certain data processing</li>
                         </ul>
                         <p className="text-zinc-300 mt-3">
-                            To exercise these rights, contact: <a href="mailto:privacy@orbid.io" className="text-pink-400 hover:text-pink-300">privacy@orbid.io</a>
+                            To exercise these rights, contact: <a href="mailto:privacy@orbidwallet.com" className="text-pink-400 hover:text-pink-300">privacy@orbidwallet.com</a>
                         </p>
                     </section>
 
@@ -171,8 +171,8 @@ export default function PrivacyPolicyPage() {
                             <p className="text-zinc-300">
                                 <strong className="text-white">OrbId Labs</strong><br />
                                 Colombia<br />
-                                Email: <a href="mailto:privacy@orbid.io" className="text-pink-400 hover:text-pink-300">privacy@orbid.io</a><br />
-                                Data Protection Officer: <a href="mailto:dpo@orbid.io" className="text-pink-400 hover:text-pink-300">dpo@orbid.io</a>
+                                Email: <a href="mailto:privacy@orbidwallet.com" className="text-pink-400 hover:text-pink-300">privacy@orbidwallet.com</a><br />
+                                Data Protection Officer: <a href="mailto:dpo@orbidwallet.com" className="text-pink-400 hover:text-pink-300">dpo@orbidwallet.com</a>
                             </p>
                         </div>
                     </section>
