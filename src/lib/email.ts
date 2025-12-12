@@ -76,7 +76,7 @@ export async function sendLoginCode(email: string, code: string, lang: string = 
                                 <table cellpadding="0" cellspacing="0">
                                     <tr>
                                         <td style="vertical-align: middle; padding-right: 12px;">
-                                            <img src="https://raw.githubusercontent.com/orbidorg/orbid-wallet/refs/heads/main/public/logo.png" alt="OrbId" width="50" height="50" style="border-radius: 50%;" />
+                                            <img src="https://app.orbidwallet.com/logo.png" alt="OrbId" width="50" height="50" style="border-radius: 50%;" />
                                         </td>
                                         <td style="vertical-align: middle;">
                                             <span style="color: #ffffff; font-size: 22px; font-weight: 700; letter-spacing: -0.5px;">OrbId Wallet</span>
