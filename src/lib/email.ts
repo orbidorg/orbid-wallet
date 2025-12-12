@@ -106,7 +106,7 @@ export async function sendLoginCode(email: string, code: string, lang: string = 
                         
                         <!-- Code Box -->
                         <tr>
-                            <td align="center" style="padding-bottom: 30px;">
+                            <td align="center" style="padding-bottom: 20px;">
                                 <div style="background: linear-gradient(135deg, rgba(236,72,153,0.1), rgba(139,92,246,0.1)); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px 40px;">
                                     <span style="color: #ffffff; font-size: 32px; font-weight: 700; letter-spacing: 8px; font-family: monospace;">
                                         ${code}
@@ -117,18 +117,37 @@ export async function sendLoginCode(email: string, code: string, lang: string = 
                         
                         <!-- Expiry notice -->
                         <tr>
-                            <td align="${textAlign}" style="padding-bottom: 40px;">
+                            <td align="${textAlign}" style="padding-bottom: 20px;">
                                 <p style="margin: 0; color: #71717a; font-size: 12px;">
                                     ${t.expiresIn}
                                 </p>
                             </td>
                         </tr>
+
+                        <!-- Terms Agreement -->
+                        <tr>
+                            <td align="${textAlign}" style="padding-bottom: 20px;">
+                                <p style="margin: 0; color: #a1a1aa; font-size: 11px; line-height: 1.5;">
+                                    ${t.termsAgreement}
+                                    <br/>
+                                    <a href="https://orbidwallet.com/legal/terms" style="color: #ec4899; text-decoration: underline;">Terms of Service</a> • 
+                                    <a href="https://orbidwallet.com/legal/privacy" style="color: #ec4899; text-decoration: underline;">Privacy Policy</a>
+                                </p>
+                            </td>
+                        </tr>
+
+                        <!-- Divider -->
+                        <tr>
+                            <td style="padding-bottom: 20px;">
+                                <div style="border-top: 1px solid rgba(255,255,255,0.1);"></div>
+                            </td>
+                        </tr>
                         
-                        <!-- Footer -->
+                        <!-- Security Warning -->
                         <tr>
                             <td align="${textAlign}">
-                                <p style="margin: 0; color: #52525b; font-size: 11px;">
-                                    ${t.ignoreNotice}
+                                <p style="margin: 0; color: #52525b; font-size: 11px; line-height: 1.6;">
+                                    ${t.securityWarning}
                                 </p>
                             </td>
                         </tr>
@@ -146,3 +165,4 @@ export async function sendLoginCode(email: string, code: string, lang: string = 
         htmlContent,
     });
 }
+

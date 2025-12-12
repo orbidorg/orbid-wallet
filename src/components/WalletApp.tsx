@@ -41,6 +41,7 @@ export default function WalletApp() {
     const { t } = useI18n();
     const [activeTab, setActiveTab] = useState<TabType>('wallet');
     const [selectedToken, setSelectedToken] = useState<TokenBalance | null>(null);
+    const [sendWithToken, setSendWithToken] = useState<TokenBalance | null>(null);
     const [showSendModal, setShowSendModal] = useState(false);
     const [showReceiveModal, setShowReceiveModal] = useState(false);
     const [showBuyModal, setShowBuyModal] = useState(false);
@@ -272,16 +273,24 @@ export default function WalletApp() {
                     tokenBalance={selectedToken}
                     isOpen={true}
                     onClose={() => setSelectedToken(null)}
-                    onSend={() => { setSelectedToken(null); setShowSendModal(true); }}
+                    onSend={() => {
+                        setSendWithToken(selectedToken);
+                        setSelectedToken(null);
+                        setShowSendModal(true);
+                    }}
                     onBuy={() => { setSelectedToken(null); setShowBuyModal(true); }}
                 />
             )}
 
             <SendModal
                 isOpen={showSendModal}
-                onClose={() => setShowSendModal(false)}
+                onClose={() => {
+                    setShowSendModal(false);
+                    setSendWithToken(null);
+                }}
                 walletAddress={walletAddress!}
                 balances={balances}
+                initialToken={sendWithToken}
             />
 
             <ReceiveModal
