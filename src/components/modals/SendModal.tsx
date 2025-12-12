@@ -66,9 +66,11 @@ export default function SendModal({ isOpen, onClose, balances }: SendModalProps)
             // 1. Prepare data with viem parseUnits for precise decimal handling
             const decimals = selectedToken.token.decimals;
             const tokenAddress = selectedToken.token.address as `0x${string}`;
+            const isNativeToken = selectedToken.token.isNative; // WLD has isNative: true
 
             // Use viem's parseUnits for accurate BigInt conversion
             const amountWei = parseUnits(amount, decimals);
+            const amountStr = amountWei.toString();
 
             // Log for debugging
             console.log('[SendModal] Transfer params:', {
@@ -77,30 +79,91 @@ export default function SendModal({ isOpen, onClose, balances }: SendModalProps)
                 recipient,
                 amountRaw: amount,
                 decimals,
-                amountWei: amountWei.toString(),
+                amountWei: amountStr,
+                isNativeToken,
             });
 
-            // 2. ERC-20 transfer
-            // formatPayload: false prevents MiniKit from re-formatting the payload
-            // which can cause issues with some token contracts
-            const result = await MiniKit.commandsAsync.sendTransaction({
-                transaction: [{
-                    address: tokenAddress,
-                    abi: [{
-                        name: 'transfer',
-                        type: 'function',
-                        inputs: [
-                            { name: 'to', type: 'address' },
-                            { name: 'amount', type: 'uint256' }
-                        ],
-                        outputs: [{ name: '', type: 'bool' }],
-                        stateMutability: 'nonpayable'
+            let result;
+
+            if (isNativeToken) {
+                // WLD uses direct ERC-20 transfer
+                result = await MiniKit.commandsAsync.sendTransaction({
+                    transaction: [{
+                        address: tokenAddress,
+                        abi: [{
+                            name: 'transfer',
+                            type: 'function',
+                            inputs: [
+                                { name: 'to', type: 'address' },
+                                { name: 'amount', type: 'uint256' }
+                            ],
+                            outputs: [{ name: '', type: 'bool' }],
+                            stateMutability: 'nonpayable'
+                        }],
+                        functionName: 'transfer',
+                        args: [recipient, amountStr]
+                    }]
+                });
+            } else {
+                // Other tokens (ORO, FOOTBALL, etc.) use Permit2 signatureTransfer
+                const PERMIT2_ADDRESS = '0xF0882554ee924278806d708396F1a7975b732522';
+                const nonce = Date.now().toString();
+                const deadline = Math.floor((Date.now() + 30 * 60 * 1000) / 1000).toString(); // 30 min
+
+                result = await MiniKit.commandsAsync.sendTransaction({
+                    transaction: [{
+                        address: PERMIT2_ADDRESS,
+                        abi: [{
+                            inputs: [
+                                {
+                                    components: [
+                                        {
+                                            components: [
+                                                { name: 'token', type: 'address' },
+                                                { name: 'amount', type: 'uint256' }
+                                            ],
+                                            name: 'permitted',
+                                            type: 'tuple'
+                                        },
+                                        { name: 'nonce', type: 'uint256' },
+                                        { name: 'deadline', type: 'uint256' }
+                                    ],
+                                    name: 'permit',
+                                    type: 'tuple'
+                                },
+                                {
+                                    components: [
+                                        { name: 'to', type: 'address' },
+                                        { name: 'requestedAmount', type: 'uint256' }
+                                    ],
+                                    name: 'transferDetails',
+                                    type: 'tuple'
+                                },
+                                { name: 'signature', type: 'bytes' }
+                            ],
+                            name: 'signatureTransfer',
+                            outputs: [],
+                            stateMutability: 'nonpayable',
+                            type: 'function'
+                        }],
+                        functionName: 'signatureTransfer',
+                        args: [
+                            [[tokenAddress, amountStr], nonce, deadline], // permit as nested array
+                            [recipient, amountStr], // transferDetails as array
+                            'PERMIT2_SIGNATURE_PLACEHOLDER_0' // MiniKit replaces this with actual signature
+                        ]
                     }],
-                    functionName: 'transfer',
-                    args: [recipient, amountWei.toString()]
-                }],
-                formatPayload: false
-            });
+                    permit2: [{
+                        permitted: {
+                            token: tokenAddress,
+                            amount: amountStr,
+                        },
+                        spender: PERMIT2_ADDRESS,
+                        nonce: nonce,
+                        deadline: deadline,
+                    }]
+                });
+            }
 
             const finalPayload = result.finalPayload;
 
