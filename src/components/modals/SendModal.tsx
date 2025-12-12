@@ -125,12 +125,18 @@ export default function SendModal({ isOpen, onClose, balances }: SendModalProps)
                 // Extract detailed error info from MiniKit response
                 const errorCode = (finalPayload as { error_code?: string }).error_code || 'unknown';
                 const debugUrl = (finalPayload as { debug_url?: string }).debug_url;
+                const transactionId = (finalPayload as { transaction_id?: string }).transaction_id;
 
-                // Build detailed error message
+                // Build detailed error message showing full payload
                 let errorMsg = `Error: ${errorCode}`;
-                if (debugUrl) {
-                    errorMsg += `\n\nDebug: ${debugUrl}`;
+                if (transactionId) {
+                    errorMsg += `\nTx ID: ${transactionId}`;
                 }
+                if (debugUrl) {
+                    errorMsg += `\nDebug: ${debugUrl}`;
+                }
+                // Show full payload for debugging
+                errorMsg += `\n\nFull response:\n${JSON.stringify(finalPayload, null, 2)}`;
 
                 // Log full payload for debugging
                 console.error('[SendModal] Transaction failed:', JSON.stringify(finalPayload, null, 2));
