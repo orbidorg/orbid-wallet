@@ -8,6 +8,8 @@ function generateCode(): string {
 }
 
 export async function POST(request: NextRequest) {
+    const startTime = Date.now();
+
     try {
         const { email, lang } = await request.json();
 
@@ -19,7 +21,10 @@ export async function POST(request: NextRequest) {
         }
 
         // Rate limiting: check if code was sent recently
+        const rateCheckStart = Date.now();
         const existingCode = await sessionStore.get(`login_code:${email}`);
+        console.log(`[send-code] Rate check took ${Date.now() - rateCheckStart}ms`);
+
         if (existingCode) {
             return NextResponse.json(
                 { error: 'Please wait before requesting a new code' },
@@ -27,20 +32,27 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Generate and store code (expires in 10 minutes)
+        // Generate code first
         const code = generateCode();
-        await sessionStore.set(`login_code:${email}`, code, 600);
 
-        // Send email with language preference
+        // Send email first (this is what the user waits for)
+        const emailStart = Date.now();
         const sent = await sendLoginCode(email, code, lang || 'en');
+        console.log(`[send-code] Email send took ${Date.now() - emailStart}ms`);
 
         if (!sent) {
-            await sessionStore.delete(`login_code:${email}`);
             return NextResponse.json(
                 { error: 'Failed to send email' },
                 { status: 500 }
             );
         }
+
+        // Store code after email is sent (10 minutes expiry)
+        const storeStart = Date.now();
+        await sessionStore.set(`login_code:${email}`, code, 600);
+        console.log(`[send-code] Session store took ${Date.now() - storeStart}ms`);
+
+        console.log(`[send-code] Total time: ${Date.now() - startTime}ms`);
 
         return NextResponse.json({
             success: true,
@@ -49,6 +61,7 @@ export async function POST(request: NextRequest) {
 
     } catch (error) {
         console.error('Send code error:', error);
+        console.log(`[send-code] Failed after ${Date.now() - startTime}ms`);
         return NextResponse.json(
             { error: 'Internal server error' },
             { status: 500 }
