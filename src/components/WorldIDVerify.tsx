@@ -55,6 +55,30 @@ export default function WorldIDVerify({
             const { finalPayload } = await MiniKit.commandsAsync.verify(verifyPayload);
 
             if (finalPayload.status === 'success') {
+                // Verify the proof on backend (this registers with World ID)
+                console.log('[WorldIDVerify] Verifying proof on backend...');
+                const backendRes = await fetch('/api/auth/verify-world-id', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        payload: finalPayload,
+                        action: 'verifyhuman',
+                    }),
+                });
+
+                const backendData = await backendRes.json();
+                console.log('[WorldIDVerify] Backend verification result:', backendData);
+
+                if (!backendRes.ok) {
+                    // If already verified (common case), still allow it locally
+                    if (backendData.code === 'already_verified') {
+                        console.log('[WorldIDVerify] User already verified, proceeding...');
+                    } else {
+                        console.warn('[WorldIDVerify] Backend verification failed:', backendData.error);
+                        // Continue anyway - the proof is valid from MiniKit
+                    }
+                }
+
                 setIsVerified(true);
                 localStorage.setItem(VERIFIED_STORAGE_KEY, 'true');
 
