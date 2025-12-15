@@ -55,8 +55,7 @@ export default function WorldIDVerify({
             const { finalPayload } = await MiniKit.commandsAsync.verify(verifyPayload);
 
             if (finalPayload.status === 'success') {
-                // Verify the proof on backend (this registers with World ID)
-                console.log('[WorldIDVerify] Verifying proof on backend...');
+                // Verify proof on backend (registers with World ID portal)
                 const backendRes = await fetch('/api/auth/verify-world-id', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -67,16 +66,10 @@ export default function WorldIDVerify({
                 });
 
                 const backendData = await backendRes.json();
-                console.log('[WorldIDVerify] Backend verification result:', backendData);
 
-                if (!backendRes.ok) {
-                    // If already verified (common case), still allow it locally
-                    if (backendData.code === 'already_verified') {
-                        console.log('[WorldIDVerify] User already verified, proceeding...');
-                    } else {
-                        console.warn('[WorldIDVerify] Backend verification failed:', backendData.error);
-                        // Continue anyway - the proof is valid from MiniKit
-                    }
+                // Continue regardless of backend result - MiniKit proof is valid
+                if (!backendRes.ok && backendData.code !== 'already_verified') {
+                    console.warn('[WorldIDVerify] Backend verification failed:', backendData.error);
                 }
 
                 setIsVerified(true);
@@ -84,16 +77,10 @@ export default function WorldIDVerify({
 
                 // Update user as verified in Supabase
                 const stored = localStorage.getItem('orbid_wallet_cache');
-                console.log('[WorldIDVerify] orbid_wallet_cache from localStorage:', stored);
-
                 const walletAddress = stored ? JSON.parse(stored)?.walletAddress : null;
-                console.log('[WorldIDVerify] walletAddress extracted:', walletAddress);
 
                 if (walletAddress) {
-                    const result = await createOrUpdateUser({ walletAddress, isVerifiedHuman: true });
-                    console.log('[WorldIDVerify] createOrUpdateUser result:', result);
-                } else {
-                    console.warn('[WorldIDVerify] No wallet address found - cannot update verified status');
+                    await createOrUpdateUser({ walletAddress, isVerifiedHuman: true });
                 }
 
                 onVerificationSuccess?.(finalPayload);

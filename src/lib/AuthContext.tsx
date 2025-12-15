@@ -155,9 +155,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const address = finalPayload.address;
                 const username = MiniKit.user?.username || null;
 
-                console.log('[AuthContext] walletAuth response:', { address, username });
-
-                // Cache wallet locally (temporary until Supabase confirms)
                 localStorage.setItem(WALLET_CACHE_KEY, JSON.stringify({ walletAddress: address, username }));
 
                 // Create session in Supabase

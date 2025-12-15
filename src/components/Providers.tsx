@@ -40,11 +40,9 @@ export default function Providers({ children }: { children: ReactNode }) {
         isInstalled: false
     });
 
-    // Check MiniKit status after mount (immediate check)
+    // Check MiniKit status after mount
     useEffect(() => {
-        // Immediate check - no delay needed since MiniKit.install is synchronous
         const installed = MiniKit.isInstalled();
-        console.log('MiniKit status:', { installed, appId: APP_ID });
         setMiniKitState({
             isReady: true,
             isInstalled: installed

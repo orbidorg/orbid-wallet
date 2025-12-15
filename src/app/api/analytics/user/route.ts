@@ -66,7 +66,6 @@ async function getGeoData(ip: string): Promise<{
 
     // Skip local/private IPs
     if (!ip || ip.startsWith('127.') || ip.startsWith('192.168.') || ip.startsWith('10.') || ip === '::1') {
-        console.log('[Analytics] Skipping geo lookup for local IP:', ip);
         return defaultGeo;
     }
 
@@ -78,8 +77,6 @@ async function getGeoData(ip: string): Promise<{
 
         if (res.ok) {
             const data = await res.json();
-            console.log('[Analytics] Geo data for IP', ip, ':', data);
-
             if (data.status === 'success') {
                 return {
                     country: data.country || '',
@@ -103,9 +100,6 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         const { email, walletAddress, isVerifiedHuman } = body;
 
-        console.log('[Analytics API] Received:', { email, walletAddress, isVerifiedHuman });
-
-        // Need at least one identifier
         if (!walletAddress && !email) {
             return NextResponse.json({ error: 'No identifier provided' }, { status: 400 });
         }
@@ -121,11 +115,7 @@ export async function POST(request: NextRequest) {
             request.headers.get('x-real-ip') ||
             request.headers.get('cf-connecting-ip') || '';
 
-        console.log('[Analytics API] Request meta:', { ip, userAgent, deviceType, browser, os });
-
-        // Get geo data
         const geo = await getGeoData(ip);
-        console.log('[Analytics API] Geo result:', geo);
 
         // Build update/insert data
         const trackingData = {
@@ -166,11 +156,8 @@ export async function POST(request: NextRequest) {
                     total_logins: (existingByWallet.total_logins || 0) + 1,
                     ...trackingData,
                     ...(email && !existingByWallet.email && { email }),
-                    // Only update is_verified_human if explicitly set to true
                     ...(isVerifiedHuman === true && { is_verified_human: true })
                 };
-
-                console.log('[Analytics API] Updating user:', existingByWallet.id, updateData);
 
                 await supabase.from('analytics_users').update(updateData).eq('id', existingByWallet.id);
 
@@ -207,7 +194,6 @@ export async function POST(request: NextRequest) {
                 }
             }
 
-            // Create new user with wallet
             const insertData = {
                 email: email || null,
                 wallet_address: walletAddress,
@@ -215,8 +201,6 @@ export async function POST(request: NextRequest) {
                 ...trackingData,
                 total_logins: 1
             };
-
-            console.log('[Analytics API] Creating new user:', insertData);
 
             const { data: newUser, error } = await supabase
                 .from('analytics_users')

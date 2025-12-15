@@ -81,20 +81,8 @@ export default function SendModal({ isOpen, onClose, balances, initialToken }: S
             const tokenAddress = selectedToken.token.address as `0x${string}`;
             const isNativeToken = selectedToken.token.isNative; // WLD has isNative: true
 
-            // Use viem's parseUnits for accurate BigInt conversion
             const amountWei = parseUnits(amount, decimals);
             const amountStr = amountWei.toString();
-
-            // Log for debugging
-            console.log('[SendModal] Transfer params:', {
-                token: selectedToken.token.symbol,
-                tokenAddress,
-                recipient,
-                amountRaw: amount,
-                decimals,
-                amountWei: amountStr,
-                isNativeToken,
-            });
 
             let result;
 
