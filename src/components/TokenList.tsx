@@ -1,12 +1,56 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, memo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import type { TokenBalance } from '@/lib/types';
 import Image from 'next/image';
 import AdCarousel from './AdCarousel';
 import { Pressable, StaggerContainer, StaggerItem, FadeIn } from './ui/Motion';
 import { useI18n } from '@/lib/i18n';
+
+/** Memoized token item to prevent re-renders */
+const TokenItem = memo(function TokenItem({
+    item,
+    onClick
+}: {
+    item: TokenBalance;
+    onClick: () => void;
+}) {
+    return (
+        <StaggerItem>
+            <Pressable
+                onClick={onClick}
+                className="w-full flex items-center justify-between px-4 py-3 text-left"
+            >
+                <div className="flex items-center gap-3">
+                    <div className="relative w-9 h-9 rounded-full overflow-hidden bg-zinc-800">
+                        <Image
+                            src={item.token.logoURI}
+                            alt={item.token.name}
+                            fill
+                            className="object-cover"
+                        />
+                    </div>
+                    <div>
+                        <p className="font-medium text-white text-sm">{item.token.symbol}</p>
+                        <p className="text-xs text-zinc-500">{item.token.name}</p>
+                    </div>
+                </div>
+                <div className="text-right">
+                    <p className="font-medium text-white text-sm">{parseFloat(item.balance).toFixed(4)}</p>
+                    <div className="flex items-center justify-end gap-1.5">
+                        <span className="text-xs text-zinc-500">
+                            ${item.valueUSD.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        </span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded ${item.change24h >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
+                            {item.change24h >= 0 ? '+' : ''}{item.change24h.toFixed(2)}%
+                        </span>
+                    </div>
+                </div>
+            </Pressable>
+        </StaggerItem>
+    );
+});
 
 interface TokenListProps {
     balances: TokenBalance[];
@@ -17,7 +61,7 @@ interface TokenListProps {
     onBuy?: () => void;
 }
 
-export default function TokenList({ balances, isLoading, onTokenClick, onSend, onReceive, onBuy }: TokenListProps) {
+function TokenListComponent({ balances, isLoading, onTokenClick, onSend, onReceive, onBuy }: TokenListProps) {
     const { t } = useI18n();
     const sortedBalances = useMemo(() =>
         [...balances].sort((a, b) => {
@@ -120,38 +164,11 @@ export default function TokenList({ balances, isLoading, onTokenClick, onSend, o
                     ) : (
                         <StaggerContainer className="divide-y divide-white/5">
                             {sortedBalances.map((item) => (
-                                <StaggerItem key={item.token.symbol}>
-                                    <Pressable
-                                        onClick={() => onTokenClick?.(item)}
-                                        className="w-full flex items-center justify-between px-4 py-3 text-left"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="relative w-9 h-9 rounded-full overflow-hidden bg-zinc-800">
-                                                <Image
-                                                    src={item.token.logoURI}
-                                                    alt={item.token.name}
-                                                    fill
-                                                    className="object-cover"
-                                                />
-                                            </div>
-                                            <div>
-                                                <p className="font-medium text-white text-sm">{item.token.symbol}</p>
-                                                <p className="text-xs text-zinc-500">{item.token.name}</p>
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="font-medium text-white text-sm">{parseFloat(item.balance).toFixed(4)}</p>
-                                            <div className="flex items-center justify-end gap-1.5">
-                                                <span className="text-xs text-zinc-500">
-                                                    ${item.valueUSD.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                                                </span>
-                                                <span className={`text-[10px] px-1.5 py-0.5 rounded ${item.change24h >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
-                                                    {item.change24h >= 0 ? '+' : ''}{item.change24h.toFixed(2)}%
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </Pressable>
-                                </StaggerItem>
+                                <TokenItem
+                                    key={item.token.symbol}
+                                    item={item}
+                                    onClick={() => onTokenClick?.(item)}
+                                />
                             ))}
                         </StaggerContainer>
                     )}
@@ -160,3 +177,5 @@ export default function TokenList({ balances, isLoading, onTokenClick, onSend, o
         </div>
     );
 }
+
+export default memo(TokenListComponent);
