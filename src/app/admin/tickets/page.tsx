@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 
 interface SupportTicket {
     id: string;
@@ -41,11 +42,9 @@ export default function AdminTicketsPage() {
     const [password, setPassword] = useState('');
     const [tickets, setTickets] = useState<SupportTicket[]>([]);
     const [loading, setLoading] = useState(false);
-    const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
     const [filter, setFilter] = useState('all');
+    const [search, setSearch] = useState('');
     const [error, setError] = useState('');
-    const [editNotes, setEditNotes] = useState('');
-    const [editReply, setEditReply] = useState('');
 
     const loadTickets = useCallback(async () => {
         if (!password) return;
@@ -67,6 +66,7 @@ export default function AdminTicketsPage() {
             const res = await fetch('/api/support', { headers: { 'Authorization': `Bearer ${password}` } });
             if (res.ok) {
                 setAuthenticated(true);
+                localStorage.setItem('adminToken', password);
                 await loadTickets();
             } else {
                 setError('Contraseña incorrecta');
@@ -75,42 +75,30 @@ export default function AdminTicketsPage() {
         setLoading(false);
     };
 
-    const updateTicket = async (updates: Record<string, unknown>) => {
-        if (!selectedTicket) return;
-        try {
-            const res = await fetch('/api/support', {
-                method: 'PATCH',
-                headers: { 'Authorization': `Bearer ${password}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ticketId: selectedTicket.ticket_id, ...updates })
-            });
-            if (res.ok) {
-                await loadTickets();
-                const data = await res.json();
-                setSelectedTicket(data.ticket);
-            }
-        } catch (e) { console.error(e); }
-    };
-
-    const deleteTicket = async () => {
-        if (!selectedTicket || !confirm('¿Eliminar este ticket?')) return;
-        try {
-            await fetch(`/api/support?id=${selectedTicket.ticket_id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${password}` }
-            });
-            await loadTickets();
-            setSelectedTicket(null);
-        } catch (e) { console.error(e); }
-    };
+    useEffect(() => {
+        const stored = localStorage.getItem('adminToken');
+        if (stored) {
+            setPassword(stored);
+            setAuthenticated(true);
+        }
+    }, []);
 
     useEffect(() => {
-        if (selectedTicket) {
-            setEditNotes(selectedTicket.internal_notes || '');
-            setEditReply(selectedTicket.admin_reply || '');
+        if (authenticated && password) {
+            loadTickets();
         }
-    }, [selectedTicket]);
+    }, [authenticated, password, loadTickets]);
 
-    const filteredTickets = filter === 'all' ? tickets : tickets.filter(t => t.status === filter);
+    // Filter and search
+    const filteredTickets = tickets
+        .filter(t => filter === 'all' || t.status === filter)
+        .filter(t =>
+            search === '' ||
+            t.email.toLowerCase().includes(search.toLowerCase()) ||
+            t.ticket_id.toLowerCase().includes(search.toLowerCase()) ||
+            (t.wallet_address && t.wallet_address.toLowerCase().includes(search.toLowerCase()))
+        );
+
     const stats = {
         total: tickets.length,
         new: tickets.filter(t => t.status === 'new').length,
@@ -156,18 +144,24 @@ export default function AdminTicketsPage() {
 
     return (
         <div className="min-h-screen bg-black text-white p-6">
-            <div className="max-w-7xl mx-auto">
+            <div className="max-w-6xl mx-auto">
+                {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                     <div>
                         <h1 className="text-2xl font-bold">🎫 Tickets de Soporte</h1>
-                        <p className="text-zinc-400 text-sm">Gestiona solicitudes</p>
+                        <p className="text-zinc-400 text-sm">Gestiona solicitudes de usuarios</p>
                     </div>
                     <div className="flex gap-2">
-                        <button onClick={loadTickets} className="px-3 py-2 bg-zinc-800 rounded-lg text-sm">🔄</button>
-                        <a href="/admin" className="px-3 py-2 bg-zinc-800 rounded-lg text-sm">← Dashboard</a>
+                        <button onClick={loadTickets} className="px-3 py-2 bg-zinc-800 rounded-lg text-sm hover:bg-zinc-700">
+                            🔄 Actualizar
+                        </button>
+                        <Link href="/admin" className="px-3 py-2 bg-zinc-800 rounded-lg text-sm hover:bg-zinc-700">
+                            ← Dashboard
+                        </Link>
                     </div>
                 </div>
 
+                {/* Stats */}
                 <div className="grid grid-cols-4 gap-3 mb-6">
                     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
                         <p className="text-zinc-400 text-xs">Total</p>
@@ -187,153 +181,67 @@ export default function AdminTicketsPage() {
                     </div>
                 </div>
 
-                <div className="flex gap-2 mb-4">
-                    {['all', 'new', 'in-progress', 'resolved', 'closed'].map((s) => (
-                        <button
-                            key={s}
-                            onClick={() => setFilter(s)}
-                            className={`px-3 py-1.5 rounded-lg text-sm ${filter === s ? 'bg-pink-500/20 text-pink-400' : 'bg-zinc-800 text-zinc-400'}`}
-                        >
-                            {s === 'all' ? 'Todos' : STATUS_CONFIG[s as keyof typeof STATUS_CONFIG]?.label}
-                        </button>
-                    ))}
+                {/* Search and Filters */}
+                <div className="flex gap-4 mb-4">
+                    <input
+                        type="text"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="🔍 Buscar por email, ID o wallet..."
+                        className="flex-1 px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:border-pink-500 focus:outline-none"
+                    />
+                    <div className="flex gap-1">
+                        {['all', 'new', 'in-progress', 'resolved', 'closed'].map((s) => (
+                            <button
+                                key={s}
+                                onClick={() => setFilter(s)}
+                                className={`px-3 py-2 rounded-lg text-sm transition-colors ${filter === s ? 'bg-pink-500/20 text-pink-400' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'}`}
+                            >
+                                {s === 'all' ? 'Todos' : STATUS_CONFIG[s as keyof typeof STATUS_CONFIG]?.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
-                <div className="flex gap-4">
-                    <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-                        {loading ? (
-                            <div className="p-8 text-center text-zinc-500">Cargando...</div>
-                        ) : filteredTickets.length === 0 ? (
-                            <div className="p-8 text-center text-zinc-500">No hay tickets</div>
-                        ) : (
-                            <div className="divide-y divide-zinc-800">
-                                {filteredTickets.map((ticket) => (
-                                    <div
-                                        key={ticket.id}
-                                        onClick={() => setSelectedTicket(ticket)}
-                                        className={`p-4 cursor-pointer hover:bg-white/5 ${selectedTicket?.id === ticket.id ? 'bg-white/5' : ''}`}
-                                    >
-                                        <div className="flex items-start justify-between">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xl">{TOPIC_ICONS[ticket.topic] || '📝'}</span>
-                                                <div>
-                                                    <p className="font-medium text-white text-sm">{ticket.email}</p>
-                                                    <p className="text-xs text-zinc-500">{ticket.ticket_id} • {timeAgo(ticket.created_at)}</p>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className={`text-xs ${PRIORITY_CONFIG[ticket.priority].color}`}>
-                                                    {ticket.priority === 'high' ? '🔴' : ticket.priority === 'medium' ? '🟡' : '⚪'}
-                                                </span>
-                                                <span className={`px-2 py-0.5 rounded text-xs ${STATUS_CONFIG[ticket.status].color}/20 text-white`}>
-                                                    {STATUS_CONFIG[ticket.status].label}
-                                                </span>
+                {/* Tickets List */}
+                <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+                    {loading ? (
+                        <div className="p-8 text-center text-zinc-500">Cargando...</div>
+                    ) : filteredTickets.length === 0 ? (
+                        <div className="p-8 text-center text-zinc-500">
+                            {search ? 'No se encontraron tickets' : 'No hay tickets'}
+                        </div>
+                    ) : (
+                        <div className="divide-y divide-zinc-800">
+                            {filteredTickets.map((ticket) => (
+                                <Link
+                                    key={ticket.id}
+                                    href={`/admin/tickets/${ticket.ticket_id}`}
+                                    className="block p-4 hover:bg-white/5 transition-colors"
+                                >
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-xl">{TOPIC_ICONS[ticket.topic] || '📝'}</span>
+                                            <div>
+                                                <p className="font-medium text-white">{ticket.email}</p>
+                                                <p className="text-xs text-zinc-500">
+                                                    {ticket.ticket_id} • {timeAgo(ticket.created_at)}
+                                                </p>
                                             </div>
                                         </div>
-                                        <p className="mt-2 text-xs text-zinc-400 line-clamp-1">{ticket.message}</p>
+                                        <div className="flex items-center gap-2">
+                                            <span className={`text-xs ${PRIORITY_CONFIG[ticket.priority].color}`}>
+                                                {ticket.priority === 'high' ? '🔴' : ticket.priority === 'medium' ? '🟡' : '⚪'}
+                                            </span>
+                                            <span className={`px-2 py-0.5 rounded text-xs ${STATUS_CONFIG[ticket.status].color}/20 text-white`}>
+                                                {STATUS_CONFIG[ticket.status].label}
+                                            </span>
+                                            <span className="text-zinc-600">→</span>
+                                        </div>
                                     </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    {selectedTicket && (
-                        <div className="w-96 bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-4">
-                            <div className="flex items-center justify-between">
-                                <h2 className="font-bold">Detalles</h2>
-                                <button onClick={() => setSelectedTicket(null)} className="text-zinc-400">✕</button>
-                            </div>
-
-                            <div>
-                                <p className="text-xs text-zinc-500">ID</p>
-                                <p className="font-mono text-sm">{selectedTicket.ticket_id}</p>
-                            </div>
-
-                            <div>
-                                <p className="text-xs text-zinc-500">Email</p>
-                                <p className="text-sm">{selectedTicket.email}</p>
-                            </div>
-
-                            {selectedTicket.wallet_address && (
-                                <div>
-                                    <p className="text-xs text-zinc-500">Wallet</p>
-                                    <p className="font-mono text-xs text-zinc-400 break-all">{selectedTicket.wallet_address}</p>
-                                </div>
-                            )}
-
-                            <div className="grid grid-cols-2 gap-2">
-                                <div>
-                                    <p className="text-xs text-zinc-500 mb-1">Estado</p>
-                                    <select
-                                        value={selectedTicket.status}
-                                        onChange={(e) => updateTicket({ status: e.target.value })}
-                                        className="w-full px-2 py-1.5 bg-zinc-800 border border-zinc-700 rounded text-sm"
-                                    >
-                                        <option value="new">🔵 Nuevo</option>
-                                        <option value="in-progress">🟡 En Curso</option>
-                                        <option value="resolved">🟢 Resuelto</option>
-                                        <option value="closed">⚫ Cerrado</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <p className="text-xs text-zinc-500 mb-1">Prioridad</p>
-                                    <select
-                                        value={selectedTicket.priority}
-                                        onChange={(e) => updateTicket({ priority: e.target.value })}
-                                        className="w-full px-2 py-1.5 bg-zinc-800 border border-zinc-700 rounded text-sm"
-                                    >
-                                        <option value="low">⚪ Baja</option>
-                                        <option value="medium">🟡 Media</option>
-                                        <option value="high">🔴 Alta</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div>
-                                <p className="text-xs text-zinc-500 mb-1">Mensaje</p>
-                                <div className="bg-zinc-800 rounded p-2 text-sm text-zinc-300 max-h-32 overflow-y-auto">
-                                    {selectedTicket.message}
-                                </div>
-                            </div>
-
-                            <div>
-                                <p className="text-xs text-zinc-500 mb-1">Notas internas</p>
-                                <textarea
-                                    value={editNotes}
-                                    onChange={(e) => setEditNotes(e.target.value)}
-                                    onBlur={() => updateTicket({ internal_notes: editNotes })}
-                                    placeholder="Solo visible para admin..."
-                                    className="w-full px-2 py-1.5 bg-zinc-800 border border-zinc-700 rounded text-sm h-16 resize-none"
-                                />
-                            </div>
-
-                            <div>
-                                <p className="text-xs text-zinc-500 mb-1">Respuesta al usuario</p>
-                                <textarea
-                                    value={editReply}
-                                    onChange={(e) => setEditReply(e.target.value)}
-                                    placeholder="Se enviará por email al resolver..."
-                                    className="w-full px-2 py-1.5 bg-zinc-800 border border-zinc-700 rounded text-sm h-16 resize-none"
-                                />
-                                <button
-                                    onClick={() => updateTicket({ admin_reply: editReply, status: 'resolved' })}
-                                    className="mt-2 w-full py-2 bg-emerald-500/20 text-emerald-400 rounded text-sm"
-                                >
-                                    ✅ Resolver y enviar respuesta
-                                </button>
-                            </div>
-
-                            <div className="pt-2 border-t border-zinc-800 flex gap-2">
-                                <a
-                                    href={`mailto:${selectedTicket.email}?subject=Re: Ticket ${selectedTicket.ticket_id}`}
-                                    className="flex-1 py-2 bg-pink-500/20 text-pink-400 rounded text-center text-sm"
-                                >
-                                    📧 Email
-                                </a>
-                                <button onClick={deleteTicket} className="px-4 py-2 bg-red-500/20 text-red-400 rounded text-sm">
-                                    🗑️
-                                </button>
-                            </div>
+                                    <p className="mt-2 text-xs text-zinc-400 line-clamp-1">{ticket.message}</p>
+                                </Link>
+                            ))}
                         </div>
                     )}
                 </div>

@@ -148,13 +148,17 @@ async function sendResolvedEmail(email: string, ticketId: string, adminReply: st
         subtitle: 'Tu solicitud ha sido atendida',
         replyLabel: 'Respuesta del equipo',
         noReply: 'Tu problema ha sido resuelto.',
-        footer: 'Si aún tienes problemas, responde a este email o crea un nuevo ticket.'
+        footer: 'Si aún tienes problemas, responde a este email o crea un nuevo ticket.',
+        signature: 'Equipo de Soporte de OrbId Wallet',
+        agent: 'Thian from OrbId Labs'
     } : {
         title: 'Ticket Resolved',
         subtitle: 'Your request has been addressed',
         replyLabel: 'Team Response',
         noReply: 'Your issue has been resolved.',
-        footer: 'If you still have issues, reply to this email or create a new ticket.'
+        footer: 'If you still have issues, reply to this email or create a new ticket.',
+        signature: 'OrbId Wallet Support Team',
+        agent: 'Thian from OrbId Labs'
     };
 
     const html = `
@@ -185,8 +189,12 @@ async function sendResolvedEmail(email: string, ticketId: string, adminReply: st
         <p style="color:#a1a1aa;font-size:12px;margin:16px 0 8px;">${t.replyLabel}</p>
         <p style="color:#fff;font-size:14px;margin:0;">${adminReply || t.noReply}</p>
     </td></tr>
-    <tr><td style="padding-top:24px;text-align:center;">
-        <p style="color:#71717a;font-size:12px;margin:0;">${t.footer}</p>
+    <tr><td style="padding-top:24px;">
+        <p style="color:#a1a1aa;font-size:13px;margin:0 0 4px;">${t.agent}</p>
+        <p style="color:#71717a;font-size:12px;margin:0;">${t.signature}</p>
+    </td></tr>
+    <tr><td style="padding-top:16px;text-align:center;">
+        <p style="color:#52525b;font-size:11px;margin:0;">${t.footer}</p>
     </td></tr>
 </table>
 </td></tr>
@@ -207,6 +215,84 @@ async function sendResolvedEmail(email: string, ticketId: string, adminReply: st
         });
     } catch (e) { console.error('Email error:', e); }
 }
+
+/** Send reply email (for in-progress tickets) */
+async function sendReplyEmail(email: string, ticketId: string, replyMessage: string, lang: string) {
+    const apiKey = process.env.BREVO_API_KEY;
+    const senderEmail = process.env.BREVO_SENDER_EMAIL;
+    if (!apiKey || !senderEmail) return;
+
+    const t = lang === 'es' ? {
+        title: 'Nueva Respuesta',
+        subtitle: 'Hemos respondido a tu ticket de soporte',
+        replyLabel: 'Mensaje del equipo',
+        footer: 'Responde a este email para continuar la conversación.',
+        signature: 'Equipo de Soporte de OrbId Wallet',
+        agent: 'Thian from OrbId Labs'
+    } : {
+        title: 'New Reply',
+        subtitle: 'We have responded to your support ticket',
+        replyLabel: 'Team Message',
+        footer: 'Reply to this email to continue the conversation.',
+        signature: 'OrbId Wallet Support Team',
+        agent: 'Thian from OrbId Labs'
+    };
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0a0a;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 20px;">
+<tr><td align="center">
+<table width="100%" style="max-width:400px;" cellpadding="0" cellspacing="0">
+    <tr><td align="center" style="padding-bottom:30px;">
+        <table><tr>
+            <td style="vertical-align:middle;padding-right:12px;">
+                <img src="https://app.orbidwallet.com/logo.png" alt="OrbId" width="50" height="50" style="border-radius:50%;">
+            </td>
+            <td style="vertical-align:middle;">
+                <span style="color:#fff;font-size:22px;font-weight:700;">OrbId Wallet</span>
+            </td>
+        </tr></table>
+    </td></tr>
+    <tr><td align="center" style="padding-bottom:10px;">
+        <h1 style="margin:0;color:#f59e0b;font-size:24px;">💬 ${t.title}</h1>
+    </td></tr>
+    <tr><td align="center" style="padding-bottom:20px;">
+        <p style="margin:0;color:#a1a1aa;font-size:14px;">${t.subtitle}</p>
+    </td></tr>
+    <tr><td style="background:#27272a;border-radius:12px;padding:20px;">
+        <p style="color:#a1a1aa;font-size:12px;margin:0 0 8px;">Ticket #${ticketId}</p>
+        <p style="color:#a1a1aa;font-size:12px;margin:16px 0 8px;">${t.replyLabel}</p>
+        <p style="color:#fff;font-size:14px;margin:0;white-space:pre-wrap;">${replyMessage}</p>
+    </td></tr>
+    <tr><td style="padding-top:24px;">
+        <p style="color:#a1a1aa;font-size:13px;margin:0 0 4px;">${t.agent}</p>
+        <p style="color:#71717a;font-size:12px;margin:0;">${t.signature}</p>
+    </td></tr>
+    <tr><td style="padding-top:16px;text-align:center;">
+        <p style="color:#52525b;font-size:11px;margin:0;">${t.footer}</p>
+    </td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
+
+    try {
+        await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: { 'accept': 'application/json', 'api-key': apiKey, 'content-type': 'application/json' },
+            body: JSON.stringify({
+                sender: { name: 'OrbId Support', email: senderEmail },
+                to: [{ email }],
+                subject: lang === 'es' ? `Ticket #${ticketId} - Nueva respuesta 💬` : `Ticket #${ticketId} - New reply 💬`,
+                htmlContent: html
+            })
+        });
+    } catch (e) { console.error('Email error:', e); }
+}
+
 
 /** POST - Create ticket */
 export async function POST(request: NextRequest) {
@@ -287,7 +373,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     try {
-        const { ticketId, status, priority, internal_notes, admin_reply } = await request.json();
+        const { ticketId, status, priority, internal_notes, admin_reply, action } = await request.json();
 
         if (!ticketId) {
             return NextResponse.json({ error: 'Ticket ID required' }, { status: 400 });
@@ -305,7 +391,18 @@ export async function PATCH(request: NextRequest) {
         if (priority) updates.priority = priority;
         if (internal_notes !== undefined) updates.internal_notes = internal_notes;
         if (admin_reply !== undefined) updates.admin_reply = admin_reply;
-        if (status === 'resolved' || status === 'closed') updates.resolved_at = new Date().toISOString();
+
+        // Handle actions
+        if (action === 'reply' && admin_reply) {
+            // Reply action: set to in-progress and send reply email
+            updates.status = 'in-progress';
+        } else if (action === 'resolve') {
+            // Resolve action: set to resolved
+            updates.status = 'resolved';
+            updates.resolved_at = new Date().toISOString();
+        } else if (status === 'resolved' || status === 'closed') {
+            updates.resolved_at = new Date().toISOString();
+        }
 
         const { data, error } = await db
             .from('support_tickets')
@@ -318,9 +415,13 @@ export async function PATCH(request: NextRequest) {
             return NextResponse.json({ error: 'Update failed' }, { status: 500 });
         }
 
-        // Send email on resolve
-        if (status === 'resolved' && current?.status !== 'resolved' && current?.email) {
-            await sendResolvedEmail(current.email, ticketId, admin_reply, current.language || 'en');
+        // Send emails based on action
+        if (current?.email) {
+            if (action === 'reply' && admin_reply) {
+                await sendReplyEmail(current.email, ticketId, admin_reply, current.language || 'en');
+            } else if (action === 'resolve') {
+                await sendResolvedEmail(current.email, ticketId, admin_reply, current.language || 'en');
+            }
         }
 
         return NextResponse.json({ success: true, ticket: data });
