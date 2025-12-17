@@ -46,16 +46,42 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
         e.preventDefault();
         setIsSubmitting(true);
 
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        try {
+            const response = await fetch('/api/support', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email,
+                    topic: selectedTopic,
+                    message,
+                })
+            });
 
-        setView('success');
-        setIsSubmitting(false);
-        showToast({
-            type: 'success',
-            title: t.help.messageSent,
-            message: t.help.responseTime
-        });
+            if (response.ok) {
+                const data = await response.json();
+                setView('success');
+                showToast({
+                    type: 'success',
+                    title: t.help.messageSent,
+                    message: `Ticket #${data.ticketId} - ${t.help.responseTime}`
+                });
+            } else {
+                showToast({
+                    type: 'error',
+                    title: 'Error',
+                    message: 'Failed to submit ticket'
+                });
+            }
+        } catch (error) {
+            console.error('Failed to submit ticket:', error);
+            showToast({
+                type: 'error',
+                title: 'Error',
+                message: 'Connection error'
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handleClose = () => {
