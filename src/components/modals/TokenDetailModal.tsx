@@ -5,6 +5,7 @@ import Image from 'next/image';
 import type { TokenBalance } from '@/lib/types';
 import { useTokenMarketData, ChartPeriod, PricePoint } from '@/hooks/useTokenMarketData';
 import { useI18n } from '@/lib/i18n';
+import { formatPrice, formatTokenValue } from '@/lib/format';
 
 interface TokenDetailModalProps {
     tokenBalance: TokenBalance;
@@ -227,7 +228,7 @@ export default function TokenDetailModal({ tokenBalance, isOpen, onClose, onSend
                             <div className="w-32 h-9 bg-zinc-800 rounded animate-pulse" />
                         ) : (
                             <span className="text-3xl font-bold text-white">
-                                ${displayPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                                {formatPrice(displayPrice)}
                             </span>
                         )}
                         <span className={`text-sm font-medium px-2 py-0.5 rounded ${change24h >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
@@ -244,8 +245,8 @@ export default function TokenDetailModal({ tokenBalance, isOpen, onClose, onSend
                             </>
                         ) : marketData && marketData.high24h > 0 ? (
                             <>
-                                <span>H: ${marketData.high24h.toLocaleString('en-US', { maximumFractionDigits: 4 })}</span>
-                                <span>L: ${marketData.low24h.toLocaleString('en-US', { maximumFractionDigits: 4 })}</span>
+                                <span>H: {formatPrice(marketData.high24h)}</span>
+                                <span>L: {formatPrice(marketData.low24h)}</span>
                             </>
                         ) : null}
                     </div>
@@ -354,7 +355,7 @@ export default function TokenDetailModal({ tokenBalance, isOpen, onClose, onSend
                         <p className="text-xs text-zinc-500 mb-2">{t.tokenDetail.yourBalance}</p>
                         <div className="flex items-center justify-between">
                             <span className="text-xl font-bold text-white">{balance} {token.symbol}</span>
-                            <span className="text-lg text-zinc-400">${valueUSD.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                            <span className="text-lg text-zinc-400">{formatTokenValue(valueUSD)}</span>
                         </div>
                     </div>
                 </div>
@@ -376,7 +377,7 @@ export default function TokenDetailModal({ tokenBalance, isOpen, onClose, onSend
                             </div>
                             <div className="glass rounded-xl p-3">
                                 <p className="text-[10px] text-zinc-500 mb-1">{t.tokenDetail.high24h}</p>
-                                <p className="text-sm font-semibold text-white">${marketData.high24h.toLocaleString('en-US', { maximumFractionDigits: 4 })}</p>
+                                <p className="text-sm font-semibold text-white">{formatPrice(marketData.high24h)}</p>
                             </div>
                             <div className="glass rounded-xl p-3">
                                 <p className="text-[10px] text-zinc-500 mb-1">{t.tokenDetail.fdv}</p>
