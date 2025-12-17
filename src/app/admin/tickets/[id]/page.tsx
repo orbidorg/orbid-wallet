@@ -16,6 +16,7 @@ interface SupportTicket {
     language: string;
     internal_notes?: string;
     admin_reply?: string;
+    attachments?: string[];
     created_at: string;
     updated_at: string;
     resolved_at?: string;
@@ -273,6 +274,30 @@ export default function TicketDetailPage() {
                         <div className="bg-zinc-800 rounded-lg p-4">
                             <p className="text-zinc-300 whitespace-pre-wrap">{ticket.message}</p>
                         </div>
+
+                        {/* User Attachments */}
+                        {ticket.attachments && ticket.attachments.length > 0 && (
+                            <div className="mt-4">
+                                <p className="text-xs text-zinc-500 mb-2">📎 Imágenes adjuntas</p>
+                                <div className="flex gap-2 flex-wrap">
+                                    {ticket.attachments.map((url, index) => (
+                                        <a
+                                            key={index}
+                                            href={url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="block"
+                                        >
+                                            <img
+                                                src={url}
+                                                alt={`Attachment ${index + 1}`}
+                                                className="w-24 h-24 object-cover rounded-lg border border-zinc-700 hover:border-pink-500 transition-colors"
+                                            />
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Admin Reply Section */}

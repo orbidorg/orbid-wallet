@@ -22,6 +22,9 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
     const [email, setEmail] = useState('');
     const [message, setMessage] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [attachments, setAttachments] = useState<File[]>([]);
+    const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
+    const [isUploading, setIsUploading] = useState(false);
 
     const topics: { id: Topic; labelKey: keyof typeof t.help; icon: string; descKey: keyof typeof t.help }[] = [
         { id: 'general', labelKey: 'topicGeneral', icon: '❓', descKey: 'topicGeneralDesc' },
@@ -42,6 +45,49 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
         setView('form');
     };
 
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+
+        // Limit to 3 files max
+        const newFiles = files.slice(0, 3 - attachments.length);
+        if (newFiles.length === 0) {
+            showToast({ type: 'error', title: 'Error', message: 'Máximo 3 imágenes' });
+            return;
+        }
+
+        setIsUploading(true);
+        const urls: string[] = [];
+
+        for (const file of newFiles) {
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const res = await fetch('/api/support/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    urls.push(data.url);
+                }
+            } catch (err) {
+                console.error('Upload error:', err);
+            }
+        }
+
+        setAttachments(prev => [...prev, ...newFiles]);
+        setUploadedUrls(prev => [...prev, ...urls]);
+        setIsUploading(false);
+    };
+
+    const removeAttachment = (index: number) => {
+        setAttachments(prev => prev.filter((_, i) => i !== index));
+        setUploadedUrls(prev => prev.filter((_, i) => i !== index));
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
@@ -54,6 +100,7 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
                     email,
                     topic: selectedTopic,
                     message,
+                    attachments: uploadedUrls,
                 })
             });
 
@@ -89,6 +136,8 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
         setSelectedTopic(null);
         setEmail('');
         setMessage('');
+        setAttachments([]);
+        setUploadedUrls([]);
         onClose();
     };
 
@@ -259,6 +308,58 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
                                                     rows={4}
                                                     className="w-full px-4 py-3 rounded-xl bg-black/30 border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-pink-500/50 resize-none transition-colors"
                                                 />
+                                            </div>
+                                        </FadeIn>
+
+                                        {/* Attachment Section */}
+                                        <FadeIn delay={0.12}>
+                                            <div>
+                                                <label className="text-xs text-zinc-500 mb-1.5 block">
+                                                    📎 Adjuntar imágenes (opcional, máx. 3)
+                                                </label>
+
+                                                {/* Attachment previews */}
+                                                {attachments.length > 0 && (
+                                                    <div className="flex gap-2 mb-2 flex-wrap">
+                                                        {attachments.map((file, index) => (
+                                                            <div key={index} className="relative group">
+                                                                <img
+                                                                    src={URL.createObjectURL(file)}
+                                                                    alt={`Attachment ${index + 1}`}
+                                                                    className="w-16 h-16 object-cover rounded-lg border border-white/10"
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => removeAttachment(index)}
+                                                                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                >
+                                                                    ✕
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+
+                                                {/* Upload button */}
+                                                {attachments.length < 3 && (
+                                                    <label className="flex items-center gap-2 px-4 py-2 rounded-xl bg-black/30 border border-white/10 text-zinc-400 cursor-pointer hover:border-pink-500/50 transition-colors">
+                                                        <input
+                                                            type="file"
+                                                            accept="image/jpeg,image/png"
+                                                            onChange={handleFileSelect}
+                                                            className="hidden"
+                                                            disabled={isUploading}
+                                                        />
+                                                        {isUploading ? (
+                                                            <span className="text-sm">Subiendo...</span>
+                                                        ) : (
+                                                            <>
+                                                                <span>📷</span>
+                                                                <span className="text-sm">Agregar imagen</span>
+                                                            </>
+                                                        )}
+                                                    </label>
+                                                )}
                                             </div>
                                         </FadeIn>
 

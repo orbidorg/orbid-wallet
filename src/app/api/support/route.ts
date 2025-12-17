@@ -27,6 +27,7 @@ export interface SupportTicket {
     language: string;
     internal_notes?: string;
     admin_reply?: string;
+    attachments?: string[];
     created_at: string;
     updated_at: string;
     resolved_at?: string;
@@ -303,7 +304,7 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { email, topic, message, walletAddress, priority = 'medium' } = body;
+        const { email, topic, message, walletAddress, priority = 'medium', attachments = [] } = body;
 
         if (!email || !topic || !message) {
             return NextResponse.json({ error: 'Email, topic, and message required' }, { status: 400 });
@@ -319,7 +320,8 @@ export async function POST(request: NextRequest) {
             message,
             priority,
             wallet_address: walletAddress,
-            language: lang
+            language: lang,
+            attachments: attachments
         });
 
         if (error) {
