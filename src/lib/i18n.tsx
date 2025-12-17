@@ -139,6 +139,8 @@ export interface Translations {
         connectedWallet: string;
         emailRequired: string;
         changeEmail: string;
+        optionalMessage: string;
+        skipButton: string;
     };
     // Swap
     swap: {
@@ -156,6 +158,10 @@ export interface Translations {
         followX: string;
         followXDesc: string;
         followCta: string;
+        emailOptional: string;
+        emailOptionalDesc: string;
+        oidTokens: string;
+        oidTokensDesc: string;
     };
     // Notifications
     notifications: {
@@ -239,6 +245,10 @@ export interface Translations {
         poweredBy: string;
         gateway: string;
         connectWithWorldApp: string;
+        termsNotice: string;
+        termsLink: string;
+        and: string;
+        privacyLink: string;
     };
     // World ID Verification
     worldId: {

@@ -105,6 +105,8 @@ export const hi: Translations = {
         connectedWallet: 'कनेक्टेड वॉलेट',
         emailRequired: 'खाता पुनर्प्राप्ति के लिए ईमेल आवश्यक है',
         changeEmail: 'ईमेल बदलें',
+        optionalMessage: 'वैकल्पिक लेकिन अनुशंसित',
+        skipButton: 'अभी के लिए छोड़ें',
     },
     swap: {
         comingSoon: 'जल्द आ रहा है!',
@@ -120,6 +122,10 @@ export const hi: Translations = {
         followX: 'X पर हमें फॉलो करें',
         followXDesc: 'नवीनतम समाचारों से अपडेट रहें',
         followCta: '@OrbIdLabs को फॉलो करें',
+        emailOptional: 'ईमेल अब वैकल्पिक है',
+        emailOptionalDesc: 'हम आपकी गोपनीयता की परवाह करते हैं। सूचनाएं चाहिए तभी ईमेल लिंक करें।',
+        oidTokens: '$OID टोकन प्राप्त करें',
+        oidTokensDesc: 'जल्द ही आप OrbId Wallet इस्तेमाल करने के लिए $OID टोकन प्राप्त कर सकेंगे।',
     },
     notifications: {
         title: 'सूचनाएं',
@@ -198,6 +204,10 @@ export const hi: Translations = {
         poweredBy: 'Worldcoin द्वारा संचालित',
         gateway: 'World App के लिए आपका द्वार',
         connectWithWorldApp: 'World App से कनेक्ट करें',
+        termsNotice: 'कनेक्ट करके, आप हमारी स्वीकार करते हैं',
+        termsLink: 'सेवा की शर्तें',
+        and: 'और',
+        privacyLink: 'गोपनीयता नीति',
     },
     worldId: {
         title: 'World ID सत्यापन',
@@ -252,3 +262,4 @@ export const hi: Translations = {
         worldChainWarning: 'केवल World Chain संगत टोकन इस पते पर भेजें।',
     },
 };
+

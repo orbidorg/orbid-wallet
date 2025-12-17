@@ -1,33 +1,39 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 interface SupportTicket {
     id: string;
+    ticket_id: string;
     email: string;
     topic: string;
     message: string;
     status: 'new' | 'in-progress' | 'resolved' | 'closed';
-    walletAddress?: string;
-    createdAt: string;
-    updatedAt: string;
-    resolvedAt?: string;
+    priority: 'low' | 'medium' | 'high';
+    wallet_address?: string;
+    language: string;
+    internal_notes?: string;
+    admin_reply?: string;
+    created_at: string;
+    updated_at: string;
+    resolved_at?: string;
 }
 
 const STATUS_CONFIG = {
-    'new': { label: 'Nuevo', color: 'bg-blue-500', textColor: 'text-blue-400' },
-    'in-progress': { label: 'En Curso', color: 'bg-yellow-500', textColor: 'text-yellow-400' },
-    'resolved': { label: 'Resuelto', color: 'bg-emerald-500', textColor: 'text-emerald-400' },
-    'closed': { label: 'Cerrado', color: 'bg-zinc-500', textColor: 'text-zinc-400' },
+    'new': { label: 'Nuevo', color: 'bg-blue-500' },
+    'in-progress': { label: 'En Curso', color: 'bg-yellow-500' },
+    'resolved': { label: 'Resuelto', color: 'bg-emerald-500' },
+    'closed': { label: 'Cerrado', color: 'bg-zinc-500' },
+};
+
+const PRIORITY_CONFIG = {
+    'low': { label: 'Baja', color: 'text-zinc-400' },
+    'medium': { label: 'Media', color: 'text-yellow-400' },
+    'high': { label: 'Alta', color: 'text-red-400' },
 };
 
 const TOPIC_ICONS: Record<string, string> = {
-    'general': '❓',
-    'transactions': '💸',
-    'account': '👤',
-    'security': '🔐',
-    'other': '📝',
+    'general': '❓', 'transactions': '💸', 'account': '👤', 'security': '🔐', 'other': '📝'
 };
 
 export default function AdminTicketsPage() {
@@ -36,92 +42,75 @@ export default function AdminTicketsPage() {
     const [tickets, setTickets] = useState<SupportTicket[]>([]);
     const [loading, setLoading] = useState(false);
     const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
-    const [filter, setFilter] = useState<string>('all');
+    const [filter, setFilter] = useState('all');
     const [error, setError] = useState('');
+    const [editNotes, setEditNotes] = useState('');
+    const [editReply, setEditReply] = useState('');
 
     const loadTickets = useCallback(async () => {
         if (!password) return;
-
         setLoading(true);
         try {
-            const res = await fetch('/api/support', {
-                headers: { 'Authorization': `Bearer ${password}` }
-            });
-
+            const res = await fetch('/api/support', { headers: { 'Authorization': `Bearer ${password}` } });
             if (res.ok) {
                 const data = await res.json();
                 setTickets(data.tickets || []);
             }
-        } catch (err) {
-            console.error('Failed to load tickets:', err);
-        } finally {
-            setLoading(false);
-        }
+        } catch (e) { console.error(e); }
+        setLoading(false);
     }, [password]);
 
     const authenticate = async () => {
         setLoading(true);
         setError('');
-
         try {
-            const res = await fetch('/api/support', {
-                headers: { 'Authorization': `Bearer ${password}` }
-            });
-
+            const res = await fetch('/api/support', { headers: { 'Authorization': `Bearer ${password}` } });
             if (res.ok) {
                 setAuthenticated(true);
                 await loadTickets();
             } else {
                 setError('Contraseña incorrecta');
             }
-        } catch {
-            setError('Error de conexión');
-        }
+        } catch { setError('Error de conexión'); }
         setLoading(false);
     };
 
-    const updateTicketStatus = async (ticketId: string, newStatus: string) => {
+    const updateTicket = async (updates: Record<string, unknown>) => {
+        if (!selectedTicket) return;
         try {
             const res = await fetch('/api/support', {
                 method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${password}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ ticketId, status: newStatus })
+                headers: { 'Authorization': `Bearer ${password}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ticketId: selectedTicket.ticket_id, ...updates })
             });
-
             if (res.ok) {
                 await loadTickets();
-                if (selectedTicket?.id === ticketId) {
-                    const data = await res.json();
-                    setSelectedTicket(data.ticket);
-                }
+                const data = await res.json();
+                setSelectedTicket(data.ticket);
             }
-        } catch (err) {
-            console.error('Failed to update ticket:', err);
-        }
+        } catch (e) { console.error(e); }
     };
 
-    const deleteTicket = async (ticketId: string) => {
-        if (!confirm('¿Estás seguro de eliminar este ticket?')) return;
-
+    const deleteTicket = async () => {
+        if (!selectedTicket || !confirm('¿Eliminar este ticket?')) return;
         try {
-            await fetch(`/api/support?id=${ticketId}`, {
+            await fetch(`/api/support?id=${selectedTicket.ticket_id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${password}` }
             });
             await loadTickets();
             setSelectedTicket(null);
-        } catch (err) {
-            console.error('Failed to delete ticket:', err);
-        }
+        } catch (e) { console.error(e); }
     };
 
-    const filteredTickets = filter === 'all'
-        ? tickets
-        : tickets.filter(t => t.status === filter);
+    useEffect(() => {
+        if (selectedTicket) {
+            setEditNotes(selectedTicket.internal_notes || '');
+            setEditReply(selectedTicket.admin_reply || '');
+        }
+    }, [selectedTicket]);
 
+    const filteredTickets = filter === 'all' ? tickets : tickets.filter(t => t.status === filter);
     const stats = {
         total: tickets.length,
         new: tickets.filter(t => t.status === 'new').length,
@@ -129,45 +118,38 @@ export default function AdminTicketsPage() {
         resolved: tickets.filter(t => t.status === 'resolved').length,
     };
 
-    // Login Screen
+    const timeAgo = (date: string) => {
+        const mins = Math.floor((Date.now() - new Date(date).getTime()) / 60000);
+        if (mins < 60) return `${mins}m`;
+        const hrs = Math.floor(mins / 60);
+        if (hrs < 24) return `${hrs}h`;
+        return `${Math.floor(hrs / 24)}d`;
+    };
+
     if (!authenticated) {
         return (
             <div className="min-h-screen bg-black flex items-center justify-center p-4">
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="w-full max-w-md"
-                >
-                    <div className="bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-2xl p-8 shadow-2xl">
-                        <div className="text-center mb-8">
-                            <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                <span className="text-3xl">🎫</span>
-                            </div>
-                            <h1 className="text-2xl font-bold text-white">Tickets de Soporte</h1>
-                            <p className="text-zinc-400 mt-2">Panel de administración</p>
+                <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+                    <div className="text-center mb-8">
+                        <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <span className="text-3xl">🎫</span>
                         </div>
-
-                        <form onSubmit={(e) => { e.preventDefault(); authenticate(); }}>
-                            <input
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder="Contraseña de admin"
-                                className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-pink-500 transition-colors mb-4"
-                            />
-                            {error && (
-                                <p className="text-red-400 text-sm mb-4">{error}</p>
-                            )}
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-600 rounded-xl font-semibold text-white hover:opacity-90 transition-opacity disabled:opacity-50"
-                            >
-                                {loading ? 'Cargando...' : 'Acceder'}
-                            </button>
-                        </form>
+                        <h1 className="text-2xl font-bold text-white">Tickets de Soporte</h1>
                     </div>
-                </motion.div>
+                    <form onSubmit={(e) => { e.preventDefault(); authenticate(); }}>
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Contraseña"
+                            className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-xl text-white mb-4"
+                        />
+                        {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
+                        <button type="submit" disabled={loading} className="w-full py-3 bg-pink-500 rounded-xl font-semibold text-white">
+                            {loading ? 'Cargando...' : 'Acceder'}
+                        </button>
+                    </form>
+                </div>
             </div>
         );
     }
@@ -175,207 +157,185 @@ export default function AdminTicketsPage() {
     return (
         <div className="min-h-screen bg-black text-white p-6">
             <div className="max-w-7xl mx-auto">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h1 className="text-3xl font-bold">🎫 Tickets de Soporte</h1>
-                        <p className="text-zinc-400">Gestiona las solicitudes de los usuarios</p>
+                        <h1 className="text-2xl font-bold">🎫 Tickets de Soporte</h1>
+                        <p className="text-zinc-400 text-sm">Gestiona solicitudes</p>
                     </div>
-                    <div className="flex gap-3">
-                        <button
-                            onClick={loadTickets}
-                            className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-xl transition-colors"
-                        >
-                            🔄 Actualizar
-                        </button>
-                        <a
-                            href="/admin"
-                            className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-xl transition-colors"
-                        >
-                            ← Dashboard
-                        </a>
+                    <div className="flex gap-2">
+                        <button onClick={loadTickets} className="px-3 py-2 bg-zinc-800 rounded-lg text-sm">🔄</button>
+                        <a href="/admin" className="px-3 py-2 bg-zinc-800 rounded-lg text-sm">← Dashboard</a>
                     </div>
                 </div>
 
-                {/* Stats Cards */}
-                <div className="grid grid-cols-4 gap-4 mb-8">
-                    <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-5">
-                        <p className="text-zinc-400 text-sm">Total</p>
-                        <p className="text-3xl font-bold text-white">{stats.total}</p>
+                <div className="grid grid-cols-4 gap-3 mb-6">
+                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                        <p className="text-zinc-400 text-xs">Total</p>
+                        <p className="text-2xl font-bold">{stats.total}</p>
                     </div>
-                    <div className="bg-zinc-900/50 border border-blue-900/50 rounded-2xl p-5">
-                        <p className="text-blue-400 text-sm">Nuevos</p>
-                        <p className="text-3xl font-bold text-blue-400">{stats.new}</p>
+                    <div className="bg-zinc-900 border border-blue-900/50 rounded-xl p-4">
+                        <p className="text-blue-400 text-xs">Nuevos</p>
+                        <p className="text-2xl font-bold text-blue-400">{stats.new}</p>
                     </div>
-                    <div className="bg-zinc-900/50 border border-yellow-900/50 rounded-2xl p-5">
-                        <p className="text-yellow-400 text-sm">En Curso</p>
-                        <p className="text-3xl font-bold text-yellow-400">{stats.inProgress}</p>
+                    <div className="bg-zinc-900 border border-yellow-900/50 rounded-xl p-4">
+                        <p className="text-yellow-400 text-xs">En Curso</p>
+                        <p className="text-2xl font-bold text-yellow-400">{stats.inProgress}</p>
                     </div>
-                    <div className="bg-zinc-900/50 border border-emerald-900/50 rounded-2xl p-5">
-                        <p className="text-emerald-400 text-sm">Resueltos</p>
-                        <p className="text-3xl font-bold text-emerald-400">{stats.resolved}</p>
+                    <div className="bg-zinc-900 border border-emerald-900/50 rounded-xl p-4">
+                        <p className="text-emerald-400 text-xs">Resueltos</p>
+                        <p className="text-2xl font-bold text-emerald-400">{stats.resolved}</p>
                     </div>
                 </div>
 
-                {/* Filter Tabs */}
-                <div className="flex gap-2 mb-6">
-                    {['all', 'new', 'in-progress', 'resolved', 'closed'].map((status) => (
+                <div className="flex gap-2 mb-4">
+                    {['all', 'new', 'in-progress', 'resolved', 'closed'].map((s) => (
                         <button
-                            key={status}
-                            onClick={() => setFilter(status)}
-                            className={`px-4 py-2 rounded-xl transition-colors ${filter === status
-                                    ? 'bg-pink-500/20 text-pink-400 border border-pink-500/50'
-                                    : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
-                                }`}
+                            key={s}
+                            onClick={() => setFilter(s)}
+                            className={`px-3 py-1.5 rounded-lg text-sm ${filter === s ? 'bg-pink-500/20 text-pink-400' : 'bg-zinc-800 text-zinc-400'}`}
                         >
-                            {status === 'all' ? 'Todos' : STATUS_CONFIG[status as keyof typeof STATUS_CONFIG]?.label || status}
+                            {s === 'all' ? 'Todos' : STATUS_CONFIG[s as keyof typeof STATUS_CONFIG]?.label}
                         </button>
                     ))}
                 </div>
 
-                <div className="flex gap-6">
-                    {/* Tickets List */}
-                    <div className="flex-1 bg-zinc-900/50 border border-zinc-800 rounded-2xl overflow-hidden">
+                <div className="flex gap-4">
+                    <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
                         {loading ? (
-                            <div className="p-8 text-center text-zinc-500">Cargando tickets...</div>
+                            <div className="p-8 text-center text-zinc-500">Cargando...</div>
                         ) : filteredTickets.length === 0 ? (
                             <div className="p-8 text-center text-zinc-500">No hay tickets</div>
                         ) : (
                             <div className="divide-y divide-zinc-800">
                                 {filteredTickets.map((ticket) => (
-                                    <motion.div
+                                    <div
                                         key={ticket.id}
                                         onClick={() => setSelectedTicket(ticket)}
-                                        whileHover={{ backgroundColor: 'rgba(255,255,255,0.02)' }}
-                                        className={`p-4 cursor-pointer transition-colors ${selectedTicket?.id === ticket.id ? 'bg-white/5' : ''
-                                            }`}
+                                        className={`p-4 cursor-pointer hover:bg-white/5 ${selectedTicket?.id === ticket.id ? 'bg-white/5' : ''}`}
                                     >
                                         <div className="flex items-start justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <span className="text-2xl">
-                                                    {TOPIC_ICONS[ticket.topic] || '📝'}
-                                                </span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xl">{TOPIC_ICONS[ticket.topic] || '📝'}</span>
                                                 <div>
-                                                    <p className="font-medium text-white">{ticket.email}</p>
-                                                    <p className="text-sm text-zinc-500">
-                                                        {ticket.id} • {new Date(ticket.createdAt).toLocaleDateString('es-ES')}
-                                                    </p>
+                                                    <p className="font-medium text-white text-sm">{ticket.email}</p>
+                                                    <p className="text-xs text-zinc-500">{ticket.ticket_id} • {timeAgo(ticket.created_at)}</p>
                                                 </div>
                                             </div>
-                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_CONFIG[ticket.status].color}/20 ${STATUS_CONFIG[ticket.status].textColor}`}>
-                                                {STATUS_CONFIG[ticket.status].label}
-                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <span className={`text-xs ${PRIORITY_CONFIG[ticket.priority].color}`}>
+                                                    {ticket.priority === 'high' ? '🔴' : ticket.priority === 'medium' ? '🟡' : '⚪'}
+                                                </span>
+                                                <span className={`px-2 py-0.5 rounded text-xs ${STATUS_CONFIG[ticket.status].color}/20 text-white`}>
+                                                    {STATUS_CONFIG[ticket.status].label}
+                                                </span>
+                                            </div>
                                         </div>
-                                        <p className="mt-2 text-sm text-zinc-400 line-clamp-2">
-                                            {ticket.message}
-                                        </p>
-                                    </motion.div>
+                                        <p className="mt-2 text-xs text-zinc-400 line-clamp-1">{ticket.message}</p>
+                                    </div>
                                 ))}
                             </div>
                         )}
                     </div>
 
-                    {/* Ticket Detail */}
-                    <AnimatePresence mode="wait">
-                        {selectedTicket && (
-                            <motion.div
-                                key={selectedTicket.id}
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: 20 }}
-                                className="w-96 bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6"
-                            >
-                                <div className="flex items-center justify-between mb-4">
-                                    <h2 className="text-lg font-bold">Detalles del Ticket</h2>
-                                    <button
-                                        onClick={() => setSelectedTicket(null)}
-                                        className="text-zinc-400 hover:text-white"
+                    {selectedTicket && (
+                        <div className="w-96 bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h2 className="font-bold">Detalles</h2>
+                                <button onClick={() => setSelectedTicket(null)} className="text-zinc-400">✕</button>
+                            </div>
+
+                            <div>
+                                <p className="text-xs text-zinc-500">ID</p>
+                                <p className="font-mono text-sm">{selectedTicket.ticket_id}</p>
+                            </div>
+
+                            <div>
+                                <p className="text-xs text-zinc-500">Email</p>
+                                <p className="text-sm">{selectedTicket.email}</p>
+                            </div>
+
+                            {selectedTicket.wallet_address && (
+                                <div>
+                                    <p className="text-xs text-zinc-500">Wallet</p>
+                                    <p className="font-mono text-xs text-zinc-400 break-all">{selectedTicket.wallet_address}</p>
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                    <p className="text-xs text-zinc-500 mb-1">Estado</p>
+                                    <select
+                                        value={selectedTicket.status}
+                                        onChange={(e) => updateTicket({ status: e.target.value })}
+                                        className="w-full px-2 py-1.5 bg-zinc-800 border border-zinc-700 rounded text-sm"
                                     >
-                                        ✕
-                                    </button>
+                                        <option value="new">🔵 Nuevo</option>
+                                        <option value="in-progress">🟡 En Curso</option>
+                                        <option value="resolved">🟢 Resuelto</option>
+                                        <option value="closed">⚫ Cerrado</option>
+                                    </select>
                                 </div>
-
-                                <div className="space-y-4">
-                                    <div>
-                                        <p className="text-xs text-zinc-500 mb-1">ID del Ticket</p>
-                                        <p className="font-mono text-sm text-white">{selectedTicket.id}</p>
-                                    </div>
-
-                                    <div>
-                                        <p className="text-xs text-zinc-500 mb-1">Email</p>
-                                        <p className="text-white">{selectedTicket.email}</p>
-                                    </div>
-
-                                    {selectedTicket.walletAddress && (
-                                        <div>
-                                            <p className="text-xs text-zinc-500 mb-1">Wallet</p>
-                                            <p className="font-mono text-xs text-zinc-400 break-all">
-                                                {selectedTicket.walletAddress}
-                                            </p>
-                                        </div>
-                                    )}
-
-                                    <div>
-                                        <p className="text-xs text-zinc-500 mb-1">Tema</p>
-                                        <p className="text-white capitalize">
-                                            {TOPIC_ICONS[selectedTicket.topic]} {selectedTicket.topic}
-                                        </p>
-                                    </div>
-
-                                    <div>
-                                        <p className="text-xs text-zinc-500 mb-1">Estado</p>
-                                        <select
-                                            value={selectedTicket.status}
-                                            onChange={(e) => updateTicketStatus(selectedTicket.id, e.target.value)}
-                                            className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-pink-500"
-                                        >
-                                            <option value="new">🔵 Nuevo</option>
-                                            <option value="in-progress">🟡 En Curso</option>
-                                            <option value="resolved">🟢 Resuelto</option>
-                                            <option value="closed">⚫ Cerrado</option>
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <p className="text-xs text-zinc-500 mb-1">Mensaje</p>
-                                        <div className="bg-zinc-800 rounded-lg p-3 text-sm text-zinc-300 max-h-48 overflow-y-auto">
-                                            {selectedTicket.message}
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-3 text-xs">
-                                        <div>
-                                            <p className="text-zinc-500">Creado</p>
-                                            <p className="text-white">
-                                                {new Date(selectedTicket.createdAt).toLocaleString('es-ES')}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <p className="text-zinc-500">Actualizado</p>
-                                            <p className="text-white">
-                                                {new Date(selectedTicket.updatedAt).toLocaleString('es-ES')}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div className="pt-4 border-t border-zinc-800 flex gap-2">
-                                        <a
-                                            href={`mailto:${selectedTicket.email}?subject=Re: Ticket ${selectedTicket.id}`}
-                                            className="flex-1 py-2 bg-pink-500/20 text-pink-400 rounded-lg text-center hover:bg-pink-500/30 transition-colors"
-                                        >
-                                            📧 Responder
-                                        </a>
-                                        <button
-                                            onClick={() => deleteTicket(selectedTicket.id)}
-                                            className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
-                                        >
-                                            🗑️
-                                        </button>
-                                    </div>
+                                <div>
+                                    <p className="text-xs text-zinc-500 mb-1">Prioridad</p>
+                                    <select
+                                        value={selectedTicket.priority}
+                                        onChange={(e) => updateTicket({ priority: e.target.value })}
+                                        className="w-full px-2 py-1.5 bg-zinc-800 border border-zinc-700 rounded text-sm"
+                                    >
+                                        <option value="low">⚪ Baja</option>
+                                        <option value="medium">🟡 Media</option>
+                                        <option value="high">🔴 Alta</option>
+                                    </select>
                                 </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                            </div>
+
+                            <div>
+                                <p className="text-xs text-zinc-500 mb-1">Mensaje</p>
+                                <div className="bg-zinc-800 rounded p-2 text-sm text-zinc-300 max-h-32 overflow-y-auto">
+                                    {selectedTicket.message}
+                                </div>
+                            </div>
+
+                            <div>
+                                <p className="text-xs text-zinc-500 mb-1">Notas internas</p>
+                                <textarea
+                                    value={editNotes}
+                                    onChange={(e) => setEditNotes(e.target.value)}
+                                    onBlur={() => updateTicket({ internal_notes: editNotes })}
+                                    placeholder="Solo visible para admin..."
+                                    className="w-full px-2 py-1.5 bg-zinc-800 border border-zinc-700 rounded text-sm h-16 resize-none"
+                                />
+                            </div>
+
+                            <div>
+                                <p className="text-xs text-zinc-500 mb-1">Respuesta al usuario</p>
+                                <textarea
+                                    value={editReply}
+                                    onChange={(e) => setEditReply(e.target.value)}
+                                    placeholder="Se enviará por email al resolver..."
+                                    className="w-full px-2 py-1.5 bg-zinc-800 border border-zinc-700 rounded text-sm h-16 resize-none"
+                                />
+                                <button
+                                    onClick={() => updateTicket({ admin_reply: editReply, status: 'resolved' })}
+                                    className="mt-2 w-full py-2 bg-emerald-500/20 text-emerald-400 rounded text-sm"
+                                >
+                                    ✅ Resolver y enviar respuesta
+                                </button>
+                            </div>
+
+                            <div className="pt-2 border-t border-zinc-800 flex gap-2">
+                                <a
+                                    href={`mailto:${selectedTicket.email}?subject=Re: Ticket ${selectedTicket.ticket_id}`}
+                                    className="flex-1 py-2 bg-pink-500/20 text-pink-400 rounded text-center text-sm"
+                                >
+                                    📧 Email
+                                </a>
+                                <button onClick={deleteTicket} className="px-4 py-2 bg-red-500/20 text-red-400 rounded text-sm">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

@@ -45,6 +45,7 @@ export default function WalletApp() {
         pendingEmailLink,
         loginWithWorldApp,
         completeEmailLink,
+        skipEmailLink,
         logout,
     } = useAuth();
     const { t } = useI18n();
@@ -86,6 +87,7 @@ export default function WalletApp() {
                 username={username}
                 walletAddress={walletAddress}
                 onComplete={completeEmailLink}
+                onSkip={skipEmailLink}
             />
         );
     }
@@ -176,7 +178,14 @@ export default function WalletApp() {
                         {t.wallet.connectWithWorldApp}
                     </button>
 
-                    <p className="mt-6 text-xs text-zinc-600">
+                    <p className="mt-4 text-xs text-zinc-500 text-center">
+                        {t.wallet.termsNotice}{' '}
+                        <a href="/legal/terms" className="text-pink-400 hover:underline">{t.wallet.termsLink}</a>
+                        {' '}{t.wallet.and}{' '}
+                        <a href="/legal/privacy" className="text-pink-400 hover:underline">{t.wallet.privacyLink}</a>
+                    </p>
+
+                    <p className="mt-4 text-xs text-zinc-600">
                         {t.wallet.poweredBy}
                     </p>
                 </div>

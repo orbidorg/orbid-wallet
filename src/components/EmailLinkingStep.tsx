@@ -9,9 +9,10 @@ interface EmailLinkingStepProps {
     username: string | null;
     walletAddress: string;
     onComplete: (email: string) => Promise<{ success: boolean; error?: string }>;
+    onSkip: () => void;
 }
 
-export default function EmailLinkingStep({ username, walletAddress, onComplete }: EmailLinkingStepProps) {
+export default function EmailLinkingStep({ username, walletAddress, onComplete, onSkip }: EmailLinkingStepProps) {
     const { t, lang } = useI18n();
     const [email, setEmail] = useState('');
     const [code, setCode] = useState('');
@@ -143,8 +144,8 @@ export default function EmailLinkingStep({ username, walletAddress, onComplete }
                             <h3 className="text-lg font-semibold text-white mb-2">
                                 {t.email.linkEmail}
                             </h3>
-                            <p className="text-zinc-400 text-sm mb-6">
-                                Required for authentication and notifications
+                            <p className="text-zinc-400 text-sm mb-4">
+                                {t.email.optionalMessage || 'Optional but recommended'}
                             </p>
 
                             <div className="space-y-4">
@@ -181,6 +182,13 @@ export default function EmailLinkingStep({ username, walletAddress, onComplete }
                                         t.email.sendCode
                                     )}
                                 </AnimatedButton>
+
+                                <button
+                                    onClick={onSkip}
+                                    className="text-zinc-500 text-sm hover:text-zinc-300 transition-colors mt-2"
+                                >
+                                    {t.email.skipButton || 'Skip for now'}
+                                </button>
                             </div>
                         </div>
                     </FadeIn>

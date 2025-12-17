@@ -105,6 +105,8 @@ export const es: Translations = {
         connectedWallet: 'Billetera Conectada',
         emailRequired: 'El correo es necesario',
         changeEmail: 'Cambiar Correo',
+        optionalMessage: 'Opcional pero recomendado',
+        skipButton: 'Omitir por ahora',
     },
     swap: {
         comingSoon: '¡Próximamente!',
@@ -120,6 +122,10 @@ export const es: Translations = {
         followX: 'Síguenos en X',
         followXDesc: 'Mantente al día con las últimas noticias',
         followCta: 'Seguir @OrbIdLabs',
+        emailOptional: 'El Email Ahora es Opcional',
+        emailOptionalDesc: 'Nos importa tu privacidad. Vincula tu email solo si deseas notificaciones.',
+        oidTokens: 'Reclama Tokens $OID',
+        oidTokensDesc: 'Pronto podrás reclamar tokens $OID por usar OrbId Wallet.',
     },
     notifications: {
         title: 'Notificaciones',
@@ -198,6 +204,10 @@ export const es: Translations = {
         poweredBy: 'Impulsado por Worldcoin',
         gateway: 'Tu puerta de entrada a World App',
         connectWithWorldApp: 'Conectar con World App',
+        termsNotice: 'Al conectar, aceptas nuestros',
+        termsLink: 'Términos de Servicio',
+        and: 'y',
+        privacyLink: 'Política de Privacidad',
     },
     worldId: {
         title: 'Verificación World ID',

@@ -105,6 +105,8 @@ export const ar: Translations = {
         connectedWallet: 'المحفظة المتصلة',
         emailRequired: 'البريد الإلكتروني مطلوب لاستعادة الحساب',
         changeEmail: 'تغيير البريد الإلكتروني',
+        optionalMessage: 'اختياري لكن موصى به',
+        skipButton: 'تخطى الآن',
     },
     swap: {
         comingSoon: 'قريباً!',
@@ -120,6 +122,10 @@ export const ar: Translations = {
         followX: 'تابعنا على X',
         followXDesc: 'ابق على اطلاع بآخر الأخبار',
         followCta: 'تابع @OrbIdLabs',
+        emailOptional: 'البريد الإلكتروني اختياري الآن',
+        emailOptionalDesc: 'نحن نهتم بخصوصيتك. اربط بريدك فقط إذا كنت تريد الإشعارات.',
+        oidTokens: 'اطلب رموز $OID',
+        oidTokensDesc: 'قريباً ستتمكن من المطالبة برموز $OID مقابل استخدام OrbId Wallet.',
     },
     notifications: {
         title: 'الإشعارات',
@@ -198,6 +204,10 @@ export const ar: Translations = {
         poweredBy: 'مدعوم من Worldcoin',
         gateway: 'بوابتك إلى World App',
         connectWithWorldApp: 'الاتصال بـ World App',
+        termsNotice: 'بالاتصال، أنت توافق على',
+        termsLink: 'شروط الخدمة',
+        and: 'و',
+        privacyLink: 'سياسة الخصوصية',
     },
     worldId: {
         title: 'التحقق من World ID',
@@ -252,3 +262,4 @@ export const ar: Translations = {
         worldChainWarning: 'أرسل فقط الرموز المتوافقة مع World Chain إلى هذا العنوان.',
     },
 };
+

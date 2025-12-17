@@ -19,6 +19,7 @@ interface AuthState {
 interface AuthContextType extends AuthState {
     loginWithWorldApp: () => Promise<void>;
     completeEmailLink: (email: string) => Promise<{ success: boolean; error?: string }>;
+    skipEmailLink: () => void;
     logout: () => Promise<void>;
 }
 
@@ -225,6 +226,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, [state.walletAddress, state.isVerifiedHuman]);
 
+    // Skip email linking - proceed without email
+    const skipEmailLink = useCallback(() => {
+        setState(prev => ({
+            ...prev,
+            isAuthenticated: true,
+            pendingEmailLink: false,
+        }));
+    }, []);
+
     // Logout - Removes from Supabase
     const logout = useCallback(async () => {
         try {
@@ -265,6 +275,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             ...state,
             loginWithWorldApp,
             completeEmailLink,
+            skipEmailLink,
             logout,
         }}>
             {children}

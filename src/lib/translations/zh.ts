@@ -105,6 +105,8 @@ export const zh: Translations = {
         connectedWallet: '已连接的钱包',
         emailRequired: '邮箱是账户恢复所必需的',
         changeEmail: '更改邮箱',
+        optionalMessage: '可选但推荐',
+        skipButton: '暂时跳过',
     },
     swap: {
         comingSoon: '即将推出！',
@@ -120,6 +122,10 @@ export const zh: Translations = {
         followX: '在X上关注我们',
         followXDesc: '获取最新消息',
         followCta: '关注 @OrbIdLabs',
+        emailOptional: '邮箱现在是可选的',
+        emailOptionalDesc: '我们重视您的隐私。仅在需要通知时关联您的邮箱。',
+        oidTokens: '领取$OID代币',
+        oidTokensDesc: '即将可以通过使用OrbId钱包领取$OID代币。',
     },
     notifications: {
         title: '通知',
@@ -198,6 +204,10 @@ export const zh: Translations = {
         poweredBy: '由Worldcoin提供支持',
         gateway: '您通往World App的门户',
         connectWithWorldApp: '使用World App连接',
+        termsNotice: '连接即表示您同意我们的',
+        termsLink: '服务条款',
+        and: '和',
+        privacyLink: '隐私政策',
     },
     worldId: {
         title: 'World ID验证',

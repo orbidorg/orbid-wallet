@@ -105,6 +105,8 @@ export const ja: Translations = {
         connectedWallet: '接続済みウォレット',
         emailRequired: 'アカウント復旧にはメールが必要です',
         changeEmail: 'メールを変更',
+        optionalMessage: '任意ですが推奨',
+        skipButton: '今はスキップ',
     },
     swap: {
         comingSoon: '近日公開！',
@@ -120,6 +122,10 @@ export const ja: Translations = {
         followX: 'Xでフォロー',
         followXDesc: '最新ニュースをチェック',
         followCta: '@OrbIdLabsをフォロー',
+        emailOptional: 'メールは任意になりました',
+        emailOptionalDesc: 'あなたのプライバシーを大切にしています。通知が必要な場合のみメールをリンクしてください。',
+        oidTokens: '$OIDトークンを請求',
+        oidTokensDesc: 'まもなくOrbId Walletの利用で$OIDトークンを請求できます。',
     },
     notifications: {
         title: '通知',
@@ -198,6 +204,10 @@ export const ja: Translations = {
         poweredBy: 'Worldcoinが提供',
         gateway: 'World Appへのゲートウェイ',
         connectWithWorldApp: 'World Appで接続',
+        termsNotice: '接続することで、当社の',
+        termsLink: '利用規約',
+        and: 'および',
+        privacyLink: 'プライバシーポリシー',
     },
     worldId: {
         title: 'World ID認証',
@@ -252,3 +262,4 @@ export const ja: Translations = {
         worldChainWarning: 'このアドレスにはWorld Chain対応トークンのみを送信してください。',
     },
 };
+

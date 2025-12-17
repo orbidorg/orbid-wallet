@@ -105,6 +105,8 @@ export const ko: Translations = {
         connectedWallet: '연결된 지갑',
         emailRequired: '계정 복구를 위해 이메일이 필요합니다',
         changeEmail: '이메일 변경',
+        optionalMessage: '선택 사항이지만 권장',
+        skipButton: '지금은 건너뛰기',
     },
     swap: {
         comingSoon: '곧 출시!',
@@ -120,6 +122,10 @@ export const ko: Translations = {
         followX: 'X에서 팔로우하세요',
         followXDesc: '최신 뉴스를 확인하세요',
         followCta: '@OrbIdLabs 팔로우',
+        emailOptional: '이메일은 이제 선택 사항',
+        emailOptionalDesc: '개인 정보를 소중히 여깁니다. 알림이 필요한 경우에만 이메일을 연결하세요.',
+        oidTokens: '$OID 토큰 청구',
+        oidTokensDesc: '곧 OrbId Wallet 사용에 대해 $OID 토큰을 청구할 수 있습니다.',
     },
     notifications: {
         title: '알림',
@@ -198,6 +204,10 @@ export const ko: Translations = {
         poweredBy: 'Worldcoin 제공',
         gateway: 'World App으로 가는 관문',
         connectWithWorldApp: 'World App으로 연결',
+        termsNotice: '연결하면 당사의',
+        termsLink: '서비스 이용약관',
+        and: '및',
+        privacyLink: '개인정보 처리방침',
     },
     worldId: {
         title: 'World ID 인증',
@@ -252,3 +262,4 @@ export const ko: Translations = {
         worldChainWarning: '이 주소로는 World Chain 호환 토큰만 보내세요.',
     },
 };
+
