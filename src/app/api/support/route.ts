@@ -15,6 +15,14 @@ function getSupabase(): SupabaseClient | null {
 
 const ADMIN_SECRET = process.env.ADMIN_SECRET;
 
+export interface HistoryEntry {
+    type: 'user_message' | 'admin_reply' | 'status_change' | 'note';
+    content: string;
+    attachments?: string[];
+    author?: string;
+    timestamp: string;
+}
+
 export interface SupportTicket {
     id: string;
     ticket_id: string;
@@ -28,6 +36,7 @@ export interface SupportTicket {
     internal_notes?: string;
     admin_reply?: string;
     attachments?: string[];
+    history?: HistoryEntry[];
     created_at: string;
     updated_at: string;
     resolved_at?: string;
@@ -333,6 +342,15 @@ export async function POST(request: NextRequest) {
         const lang = getLanguage(request);
         const ticketId = generateTicketId();
 
+        // Initialize history with user's first message
+        const initialHistory: HistoryEntry[] = [{
+            type: 'user_message',
+            content: message,
+            attachments: attachments.length > 0 ? attachments : undefined,
+            author: email,
+            timestamp: new Date().toISOString()
+        }];
+
         const { error } = await db.from('support_tickets').insert({
             ticket_id: ticketId,
             email,
@@ -341,7 +359,8 @@ export async function POST(request: NextRequest) {
             priority,
             wallet_address: walletAddress,
             language: lang,
-            attachments: attachments
+            attachments: attachments,
+            history: initialHistory
         });
 
         if (error) {
@@ -401,10 +420,10 @@ export async function PATCH(request: NextRequest) {
             return NextResponse.json({ error: 'Ticket ID required' }, { status: 400 });
         }
 
-        // Get current ticket for email
+        // Get current ticket for email and history
         const { data: current } = await db
             .from('support_tickets')
-            .select('email, language, status')
+            .select('email, language, status, history')
             .eq('ticket_id', ticketId)
             .single();
 
@@ -414,14 +433,40 @@ export async function PATCH(request: NextRequest) {
         if (internal_notes !== undefined) updates.internal_notes = internal_notes;
         if (admin_reply !== undefined) updates.admin_reply = admin_reply;
 
-        // Handle actions
+        // Append to history for reply/resolve actions
+        const currentHistory: HistoryEntry[] = current?.history || [];
+
         if (action === 'reply' && admin_reply) {
-            // Reply action: set to in-progress and send reply email
+            // Reply action: set to in-progress and append to history
             updates.status = 'in-progress';
+            currentHistory.push({
+                type: 'admin_reply',
+                content: admin_reply,
+                attachments: attachmentUrls.length > 0 ? attachmentUrls : undefined,
+                author: 'Thian from OrbId Labs',
+                timestamp: new Date().toISOString()
+            });
+            updates.history = currentHistory;
         } else if (action === 'resolve') {
-            // Resolve action: set to resolved
+            // Resolve action: set to resolved and append final message
             updates.status = 'resolved';
             updates.resolved_at = new Date().toISOString();
+            if (admin_reply) {
+                currentHistory.push({
+                    type: 'admin_reply',
+                    content: admin_reply,
+                    attachments: attachmentUrls.length > 0 ? attachmentUrls : undefined,
+                    author: 'Thian from OrbId Labs',
+                    timestamp: new Date().toISOString()
+                });
+            }
+            currentHistory.push({
+                type: 'status_change',
+                content: 'Ticket marked as resolved',
+                author: 'System',
+                timestamp: new Date().toISOString()
+            });
+            updates.history = currentHistory;
         } else if (status === 'resolved' || status === 'closed') {
             updates.resolved_at = new Date().toISOString();
         }

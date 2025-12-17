@@ -4,6 +4,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
+interface HistoryEntry {
+    type: 'user_message' | 'admin_reply' | 'status_change' | 'note';
+    content: string;
+    attachments?: string[];
+    author?: string;
+    timestamp: string;
+}
+
 interface SupportTicket {
     id: string;
     ticket_id: string;
@@ -17,6 +25,7 @@ interface SupportTicket {
     internal_notes?: string;
     admin_reply?: string;
     attachments?: string[];
+    history?: HistoryEntry[];
     created_at: string;
     updated_at: string;
     resolved_at?: string;
@@ -309,44 +318,75 @@ export default function TicketDetailPage() {
             <div className="max-w-6xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Main Content */}
                 <div className="lg:col-span-2 space-y-6">
-                    {/* User Message */}
+                    {/* Conversation Timeline */}
                     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center">
-                                <span className="text-blue-400">👤</span>
-                            </div>
-                            <div>
-                                <p className="font-medium">{ticket.email}</p>
-                                <p className="text-xs text-zinc-500">{formatDate(ticket.created_at)}</p>
-                            </div>
-                        </div>
-                        <div className="bg-zinc-800 rounded-lg p-4">
-                            <p className="text-zinc-300 whitespace-pre-wrap">{ticket.message}</p>
-                        </div>
+                        <h3 className="font-semibold mb-4 flex items-center gap-2">
+                            <span>💬</span> Historial de Conversación
+                        </h3>
 
-                        {/* User Attachments */}
-                        {ticket.attachments && ticket.attachments.length > 0 && (
-                            <div className="mt-4">
-                                <p className="text-xs text-zinc-500 mb-2">📎 Imágenes adjuntas</p>
-                                <div className="flex gap-2 flex-wrap">
-                                    {ticket.attachments.map((url, index) => (
-                                        <a
-                                            key={index}
-                                            href={url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="block"
-                                        >
-                                            <img
-                                                src={url}
-                                                alt={`Attachment ${index + 1}`}
-                                                className="w-24 h-24 object-cover rounded-lg border border-zinc-700 hover:border-pink-500 transition-colors"
-                                            />
-                                        </a>
-                                    ))}
+                        <div className="space-y-4">
+                            {/* If no history, show legacy message */}
+                            {(!ticket.history || ticket.history.length === 0) ? (
+                                <div className="flex gap-3">
+                                    <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <span className="text-blue-400">👤</span>
+                                    </div>
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <p className="font-medium text-sm">{ticket.email}</p>
+                                            <span className="text-xs text-zinc-500">{formatDate(ticket.created_at)}</span>
+                                        </div>
+                                        <div className="bg-zinc-800 rounded-lg p-3">
+                                            <p className="text-zinc-300 text-sm whitespace-pre-wrap">{ticket.message}</p>
+                                        </div>
+                                        {ticket.attachments && ticket.attachments.length > 0 && (
+                                            <div className="flex gap-2 mt-2 flex-wrap">
+                                                {ticket.attachments.map((url, i) => (
+                                                    <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                                                        <img src={url} alt="" className="w-16 h-16 object-cover rounded-lg border border-zinc-700" />
+                                                    </a>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            ) : (
+                                /* Full timeline from history */
+                                ticket.history.map((entry, index) => (
+                                    <div key={index} className={`flex gap-3 ${entry.type === 'admin_reply' ? 'flex-row-reverse' : ''}`}>
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${entry.type === 'user_message' ? 'bg-blue-500/20' :
+                                                entry.type === 'admin_reply' ? 'bg-pink-500/20' :
+                                                    'bg-zinc-700'
+                                            }`}>
+                                            <span>{entry.type === 'user_message' ? '👤' : entry.type === 'admin_reply' ? '🎧' : '⚙️'}</span>
+                                        </div>
+                                        <div className={`flex-1 max-w-[80%] ${entry.type === 'admin_reply' ? 'text-right' : ''}`}>
+                                            <div className={`flex items-center gap-2 mb-1 ${entry.type === 'admin_reply' ? 'justify-end' : ''}`}>
+                                                <p className="font-medium text-sm text-zinc-400">{entry.author || 'Unknown'}</p>
+                                                <span className="text-xs text-zinc-600">{formatDate(entry.timestamp)}</span>
+                                            </div>
+                                            {entry.type === 'status_change' ? (
+                                                <p className="text-xs text-zinc-500 italic">{entry.content}</p>
+                                            ) : (
+                                                <div className={`rounded-lg p-3 ${entry.type === 'admin_reply' ? 'bg-pink-500/10 ml-auto' : 'bg-zinc-800'
+                                                    }`}>
+                                                    <p className="text-zinc-300 text-sm whitespace-pre-wrap">{entry.content}</p>
+                                                </div>
+                                            )}
+                                            {entry.attachments && entry.attachments.length > 0 && (
+                                                <div className={`flex gap-2 mt-2 flex-wrap ${entry.type === 'admin_reply' ? 'justify-end' : ''}`}>
+                                                    {entry.attachments.map((url, i) => (
+                                                        <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                                                            <img src={url} alt="" className="w-16 h-16 object-cover rounded-lg border border-zinc-700" />
+                                                        </a>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
                     </div>
 
                     {/* Admin Reply Section */}
