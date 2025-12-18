@@ -226,7 +226,7 @@ export default function WalletApp() {
             </motion.header>
 
             {/* Main Content */}
-            <main className="px-4 py-3 max-w-md mx-auto">
+            <main className="px-4 py-4 max-w-md mx-auto">
                 <AnimatePresence mode="wait">
                     {activeTab === 'wallet' && (
                         <motion.div
@@ -235,7 +235,7 @@ export default function WalletApp() {
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: 20 }}
                             transition={{ duration: 0.2 }}
-                            className="flex flex-col gap-4"
+                            className="flex flex-col gap-8" /* 32px gap between main sections */
                         >
                             <ProfileCard
                                 address={walletAddress!}
@@ -253,8 +253,11 @@ export default function WalletApp() {
                                 onReceive={() => setShowReceiveModal(true)}
                                 onBuy={() => setShowBuyModal(true)}
                             />
-                            <WorldIDVerify />
-                            <SocialLinks />
+                            <div className="flex flex-col gap-4"> {/* 16px gap between secondary items */}
+                                <WorldIDVerify />
+                                <SocialLinks />
+                                <div className="h-4" /> {/* Extra buffer before BottomNav */}
+                            </div>
                         </motion.div>
                     )}
                     {activeTab === 'swap' && (

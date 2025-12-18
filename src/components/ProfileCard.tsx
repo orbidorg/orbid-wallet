@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MdVerified } from 'react-icons/md';
+import { MiniKit } from '@worldcoin/minikit-js';
 import Identicon from './Identicon';
 import { AnimatedButton, FadeIn } from './ui/Motion';
 import { useI18n } from '@/lib/i18n';
@@ -30,6 +31,25 @@ export default function ProfileCard({
     const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     const handleDisconnect = async () => {
+        if (isLoggingOut) return;
+
+        // Security optimization: Verify identity before disconnecting if in World App
+        if (MiniKit.isInstalled()) {
+            try {
+                const { finalPayload } = await MiniKit.commandsAsync.verify({
+                    action: 'disconnect-wallet',
+                    signal: address,
+                });
+
+                if (finalPayload.status !== 'success') {
+                    return; // User cancelled or verification failed
+                }
+            } catch (error) {
+                console.error('Verification failed:', error);
+                return;
+            }
+        }
+
         setIsLoggingOut(true);
         // Wait for animation to complete before disconnecting
         await new Promise(resolve => setTimeout(resolve, 800));
@@ -175,8 +195,8 @@ export default function ProfileCard({
                                         onClick={handleDisconnect}
                                         disabled={isLoggingOut}
                                         className={`shrink-0 flex items-center justify-center gap-1.5 p-2.5 glass rounded-xl transition-colors ${isLoggingOut
-                                                ? 'text-red-400 bg-red-500/20 cursor-not-allowed'
-                                                : 'text-zinc-400 hover:text-red-400 hover:bg-red-500/10'
+                                            ? 'text-red-400 bg-red-500/20 cursor-not-allowed'
+                                            : 'text-zinc-400 hover:text-red-400 hover:bg-red-500/10'
                                             }`}
                                         title={t.profile.disconnect}
                                     >

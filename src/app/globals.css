@@ -16,6 +16,11 @@
   --accent-pink: #f472b6;
   --accent-purple: #a855f7;
   --accent-gradient: linear-gradient(135deg, #ec4899, #8b5cf6);
+
+  /* World App Spacing Standards */
+  --spacing-section: 32px;
+  --spacing-content: 16px;
+  --spacing-tight: 8px;
 }
 
 @theme inline {
@@ -27,8 +32,12 @@
 
 html,
 body {
-  min-height: 100vh;
-  min-height: 100dvh;
+  width: 100vw;
+  height: 100vh;
+  /* Prevent iOS scroll bounce as per World App guidelines */
+  overscroll-behavior: none;
+  overflow: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 body {
