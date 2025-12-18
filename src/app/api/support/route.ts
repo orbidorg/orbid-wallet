@@ -29,7 +29,7 @@ export interface SupportTicket {
     email: string;
     topic: string;
     message: string;
-    status: 'new' | 'in-progress' | 'resolved' | 'closed';
+    status: 'new' | 'in-progress' | 'resolved' | 'closed' | 're-opened';
     priority: 'low' | 'medium' | 'high';
     wallet_address?: string;
     language: string;

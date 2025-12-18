@@ -9,7 +9,7 @@ interface SupportTicket {
     email: string;
     topic: string;
     message: string;
-    status: 'new' | 'in-progress' | 'resolved' | 'closed';
+    status: 'new' | 'in-progress' | 'resolved' | 'closed' | 're-opened';
     priority: 'low' | 'medium' | 'high';
     wallet_address?: string;
     language: string;
@@ -25,6 +25,7 @@ const STATUS_CONFIG = {
     'in-progress': { label: 'En Curso', color: 'bg-yellow-500' },
     'resolved': { label: 'Resuelto', color: 'bg-emerald-500' },
     'closed': { label: 'Cerrado', color: 'bg-zinc-500' },
+    're-opened': { label: 'Re-abierto', color: 'bg-violet-500' },
 };
 
 const PRIORITY_CONFIG = {
@@ -110,6 +111,7 @@ export default function AdminTicketsPage() {
         new: tickets.filter(t => t.status === 'new').length,
         inProgress: tickets.filter(t => t.status === 'in-progress').length,
         resolved: tickets.filter(t => t.status === 'resolved').length,
+        reOpened: tickets.filter(t => t.status === 're-opened').length,
     };
 
     const timeAgo = (date: string) => {
@@ -172,7 +174,7 @@ export default function AdminTicketsPage() {
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-4 gap-3 mb-6">
+                <div className="grid grid-cols-5 gap-3 mb-6">
                     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
                         <p className="text-zinc-400 text-xs">Total</p>
                         <p className="text-2xl font-bold">{stats.total}</p>
@@ -180,6 +182,10 @@ export default function AdminTicketsPage() {
                     <div className="bg-zinc-900 border border-blue-900/50 rounded-xl p-4">
                         <p className="text-blue-400 text-xs">Nuevos</p>
                         <p className="text-2xl font-bold text-blue-400">{stats.new}</p>
+                    </div>
+                    <div className="bg-zinc-900 border border-violet-900/50 rounded-xl p-4">
+                        <p className="text-violet-400 text-xs">Re-abiertos</p>
+                        <p className="text-2xl font-bold text-violet-400">{stats.reOpened}</p>
                     </div>
                     <div className="bg-zinc-900 border border-yellow-900/50 rounded-xl p-4">
                         <p className="text-yellow-400 text-xs">En Curso</p>
@@ -201,7 +207,7 @@ export default function AdminTicketsPage() {
                         className="flex-1 px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:border-pink-500 focus:outline-none"
                     />
                     <div className="flex gap-1">
-                        {['all', 'new', 'in-progress', 'resolved', 'closed'].map((s) => (
+                        {['all', 'new', 'in-progress', 'resolved', 're-opened', 'closed'].map((s) => (
                             <button
                                 key={s}
                                 onClick={() => setFilter(s)}

@@ -18,7 +18,7 @@ interface SupportTicket {
     email: string;
     topic: string;
     message: string;
-    status: 'new' | 'in-progress' | 'resolved' | 'closed';
+    status: 'new' | 'in-progress' | 'resolved' | 'closed' | 're-opened';
     priority: 'low' | 'medium' | 'high';
     wallet_address?: string;
     language: string;
@@ -36,6 +36,7 @@ const STATUS_CONFIG = {
     'in-progress': { label: 'En Curso', color: 'bg-yellow-500', textColor: 'text-yellow-400' },
     'resolved': { label: 'Resuelto', color: 'bg-emerald-500', textColor: 'text-emerald-400' },
     'closed': { label: 'Cerrado', color: 'bg-zinc-500', textColor: 'text-zinc-400' },
+    're-opened': { label: 'Re-abierto', color: 'bg-violet-500', textColor: 'text-violet-400' },
 };
 
 const PRIORITY_CONFIG = {
@@ -355,8 +356,8 @@ export default function TicketDetailPage() {
                                 ticket.history.map((entry, index) => (
                                     <div key={index} className={`flex gap-3 ${entry.type === 'admin_reply' ? 'flex-row-reverse' : ''}`}>
                                         <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${entry.type === 'user_message' ? 'bg-blue-500/20' :
-                                                entry.type === 'admin_reply' ? 'bg-pink-500/20' :
-                                                    'bg-zinc-700'
+                                            entry.type === 'admin_reply' ? 'bg-pink-500/20' :
+                                                'bg-zinc-700'
                                             }`}>
                                             <span>{entry.type === 'user_message' ? '👤' : entry.type === 'admin_reply' ? '🎧' : '⚙️'}</span>
                                         </div>
@@ -529,6 +530,7 @@ export default function TicketDetailPage() {
                             <option value="new">🔵 Nuevo</option>
                             <option value="in-progress">🟡 En Curso</option>
                             <option value="resolved">🟢 Resuelto</option>
+                            <option value="re-opened">🟣 Re-abierto</option>
                             <option value="closed">⚫ Cerrado</option>
                         </select>
                     </div>
