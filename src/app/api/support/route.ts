@@ -635,7 +635,7 @@ export async function PATCH(request: NextRequest) {
         // Get current ticket for email and history
         const { data: current } = await db
             .from('support_tickets')
-            .select('email, language, status, history')
+            .select('email, language, status, priority, history')
             .eq('ticket_id', ticketId)
             .single();
 
@@ -681,6 +681,35 @@ export async function PATCH(request: NextRequest) {
             updates.history = currentHistory;
         } else if (status === 'resolved' || status === 'closed') {
             updates.resolved_at = new Date().toISOString();
+        }
+
+        // Detect manual status/priority changes (if no specific action)
+        if (!action && current) {
+            let historyUpdated = false;
+
+            if (status && status !== current.status) {
+                currentHistory.push({
+                    type: 'status_change',
+                    content: `Status updated to '${status}'`,
+                    author: 'System',
+                    timestamp: new Date().toISOString()
+                });
+                historyUpdated = true;
+            }
+
+            if (priority && priority !== current.priority) {
+                currentHistory.push({
+                    type: 'status_change',
+                    content: `Priority updated to '${priority}'`,
+                    author: 'System',
+                    timestamp: new Date().toISOString()
+                });
+                historyUpdated = true;
+            }
+
+            if (historyUpdated) {
+                updates.history = currentHistory;
+            }
         }
 
         const { data, error } = await db
