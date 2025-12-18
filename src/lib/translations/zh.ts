@@ -107,6 +107,7 @@ export const zh: Translations = {
         changeEmail: '更改邮箱',
         optionalMessage: '可选但推荐',
         skipButton: '暂时跳过',
+        checkSpam: '找不到邮件？请检查您的垃圾邮件文件夹并将其标记为非垃圾邮件。',
     },
     swap: {
         comingSoon: '即将推出！',

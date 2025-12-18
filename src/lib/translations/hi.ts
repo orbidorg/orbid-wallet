@@ -107,6 +107,7 @@ export const hi: Translations = {
         changeEmail: 'ईमेल बदलें',
         optionalMessage: 'वैकल्पिक लेकिन अनुशंसित',
         skipButton: 'अभी के लिए छोड़ें',
+        checkSpam: 'ईमेल नहीं मिल रहा? अपना स्पैम फ़ोल्डर जांचें और इसे स्पैम नहीं के रूप में चिह्नित करें।',
     },
     swap: {
         comingSoon: 'जल्द आ रहा है!',

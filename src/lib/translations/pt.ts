@@ -107,6 +107,7 @@ export const pt: Translations = {
         changeEmail: 'Alterar Email',
         optionalMessage: 'Opcional mas recomendado',
         skipButton: 'Pular por enquanto',
+        checkSpam: 'Não encontrou o email? Verifique sua pasta de spam e marque como não spam.',
     },
     swap: {
         comingSoon: 'Em Breve!',

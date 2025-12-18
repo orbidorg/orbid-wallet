@@ -141,6 +141,7 @@ export interface Translations {
         changeEmail: string;
         optionalMessage: string;
         skipButton: string;
+        checkSpam: string;
     };
     // Swap
     swap: {

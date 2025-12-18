@@ -198,8 +198,11 @@ export default function EmailLinkingStep({ username, walletAddress, onComplete, 
                             <h3 className="text-lg font-semibold text-white mb-2">
                                 {t.email.enterCode}
                             </h3>
-                            <p className="text-zinc-400 text-sm mb-6">
+                            <p className="text-zinc-400 text-sm mb-2">
                                 {t.email.codeSent}: <span className="text-white">{email}</span>
+                            </p>
+                            <p className="text-amber-400/80 text-xs mb-6">
+                                ⚠️ {t.email.checkSpam}
                             </p>
 
                             <div className="space-y-4">

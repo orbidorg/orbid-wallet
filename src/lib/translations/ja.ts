@@ -107,6 +107,7 @@ export const ja: Translations = {
         changeEmail: 'メールを変更',
         optionalMessage: '任意ですが推奨',
         skipButton: '今はスキップ',
+        checkSpam: 'メールが見つかりませんか？迷惑メールフォルダを確認し、迷惑メールではないとマークしてください。',
     },
     swap: {
         comingSoon: '近日公開！',

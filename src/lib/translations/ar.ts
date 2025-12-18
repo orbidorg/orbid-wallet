@@ -107,6 +107,7 @@ export const ar: Translations = {
         changeEmail: 'تغيير البريد الإلكتروني',
         optionalMessage: 'اختياري لكن موصى به',
         skipButton: 'تخطى الآن',
+        checkSpam: 'لم تجد البريد الإلكتروني؟ تحقق من مجلد البريد العشوائي وحدده كغير عشوائي.',
     },
     swap: {
         comingSoon: 'قريباً!',

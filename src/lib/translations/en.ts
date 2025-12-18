@@ -107,6 +107,7 @@ export const en: Translations = {
         changeEmail: 'Change Email',
         optionalMessage: 'Optional but recommended',
         skipButton: 'Skip for now',
+        checkSpam: "Can't find the email? Check your spam folder and mark it as not spam.",
     },
     swap: {
         comingSoon: 'Coming Soon!',

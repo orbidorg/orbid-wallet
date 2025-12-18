@@ -107,6 +107,7 @@ export const ko: Translations = {
         changeEmail: '이메일 변경',
         optionalMessage: '선택 사항이지만 권장',
         skipButton: '지금은 건너뛰기',
+        checkSpam: '이메일을 찾을 수 없나요? 스팸 폴더를 확인하고 스팸이 아닌 것으로 표시하세요.',
     },
     swap: {
         comingSoon: '곧 출시!',
