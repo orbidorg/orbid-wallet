@@ -24,6 +24,14 @@ export default function AdminDashboard() {
     const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState('');
+    const [showExportModal, setShowExportModal] = useState(false);
+    const [exportConfig, setExportConfig] = useState({
+        email: true,
+        wallet: true,
+        country: true,
+        logins: true,
+        joined: true
+    });
 
     useEffect(() => {
         passwordRef.current = password;
@@ -90,6 +98,48 @@ export default function AdminDashboard() {
         setAuthenticated(false);
         setPassword('');
         passwordRef.current = '';
+    };
+
+    const downloadCSV = () => {
+        if (!stats?.recentUsers) return;
+
+        const headers = [];
+        if (exportConfig.email) headers.push('Email');
+        if (exportConfig.wallet) headers.push('Wallet');
+        if (exportConfig.country) headers.push('Country');
+        if (exportConfig.logins) headers.push('Logins');
+        if (exportConfig.joined) headers.push('Joined Date');
+
+        const rows = stats.recentUsers.map(user => {
+            const row = [];
+            if (exportConfig.email) row.push(`"${user.email || ''}"`);
+            if (exportConfig.wallet) row.push(`"${user.wallet || ''}"`);
+            if (exportConfig.country) row.push(`"${user.country || ''}"`);
+            if (exportConfig.logins) row.push(user.logins || 0);
+            if (exportConfig.joined) row.push(`"${user.created || ''}"`);
+            return row.join(',');
+        });
+
+        const csvContent = [headers.join(','), ...rows].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `orbid-users-${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setShowExportModal(false);
+    };
+
+    const toggleAllExport = (checked: boolean) => {
+        setExportConfig({
+            email: checked,
+            wallet: checked,
+            country: checked,
+            logins: checked,
+            joined: checked
+        });
     };
 
     // Login Screen
@@ -324,9 +374,18 @@ export default function AdminDashboard() {
 
                 {/* All Users Table */}
                 <div className="bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-2xl p-4 md:p-6 flex flex-col h-[500px]">
-                    <div className="flex items-center gap-2 mb-4 shrink-0">
-                        <UsersIcon className="w-5 h-5 text-purple-400" />
-                        <h2 className="text-lg font-semibold text-white">All Users ({stats?.recentUsers.length || 0})</h2>
+                    <div className="flex items-center justify-between mb-4 shrink-0">
+                        <div className="flex items-center gap-2">
+                            <UsersIcon className="w-5 h-5 text-purple-400" />
+                            <h2 className="text-lg font-semibold text-white">All Users ({stats?.recentUsers.length || 0})</h2>
+                        </div>
+                        <button
+                            onClick={() => setShowExportModal(true)}
+                            className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white text-sm rounded-lg border border-zinc-700 transition-colors flex items-center gap-2"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                            Export CSV
+                        </button>
                     </div>
                     <div className="overflow-auto custom-scrollbar flex-1 -mr-2 pr-2">
                         <table className="w-full text-sm">
@@ -371,6 +430,60 @@ export default function AdminDashboard() {
                     </div>
                 </div>
             </div>
+
+            {/* Export Modal */}
+            {showExportModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
+                    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+                        <h3 className="text-xl font-bold text-white mb-4">Export Users CSV</h3>
+                        <div className="space-y-4 mb-6">
+                            <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
+                                <span className="text-zinc-400 text-sm">Select Columns</span>
+                                <button
+                                    onClick={() => {
+                                        const allSelected = Object.values(exportConfig).every(Boolean);
+                                        toggleAllExport(!allSelected);
+                                    }}
+                                    className="text-pink-400 text-sm hover:underline"
+                                >
+                                    {Object.values(exportConfig).every(Boolean) ? 'Deselect All' : 'Select All'}
+                                </button>
+                            </div>
+                            <div className="space-y-2">
+                                {Object.entries(exportConfig).map(([key, value]) => (
+                                    <label key={key} className="flex items-center gap-3 cursor-pointer group">
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${value ? 'bg-pink-500 border-pink-500' : 'border-zinc-600 group-hover:border-zinc-500'}`}>
+                                            {value && <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                                        </div>
+                                        <input
+                                            type="checkbox"
+                                            className="hidden"
+                                            checked={value}
+                                            onChange={(e) => setExportConfig(prev => ({ ...prev, [key]: e.target.checked }))}
+                                        />
+                                        <span className="text-zinc-300 capitalize">{key}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowExportModal(false)}
+                                className="flex-1 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={downloadCSV}
+                                disabled={!Object.values(exportConfig).some(Boolean)}
+                                className="flex-1 py-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50"
+                            >
+                                Download
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
