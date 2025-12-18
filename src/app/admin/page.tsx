@@ -339,13 +339,13 @@ export default function AdminDashboard() {
                     />
                 </div>
 
-                {/* Recent Users Table */}
-                <div className="bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-2xl p-4 md:p-6">
-                    <div className="flex items-center gap-2 mb-4">
+                {/* All Users Table */}
+                <div className="bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-2xl p-4 md:p-6 flex flex-col h-[500px]">
+                    <div className="flex items-center gap-2 mb-4 shrink-0">
                         <UsersIcon className="w-5 h-5 text-purple-400" />
-                        <h2 className="text-lg font-semibold text-white">Recent Users</h2>
+                        <h2 className="text-lg font-semibold text-white">All Users ({stats?.recentUsers.length || 0})</h2>
                     </div>
-                    <div className="overflow-x-auto">
+                    <div className="overflow-auto custom-scrollbar flex-1 -mr-2 pr-2">
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="text-zinc-400 border-b border-zinc-800">
@@ -357,7 +357,7 @@ export default function AdminDashboard() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {(stats?.recentUsers || []).slice(0, 10).map((user, i) => (
+                                {(stats?.recentUsers || []).map((user, i) => (
                                     <tr
                                         key={i}
                                         className="border-b border-zinc-800/50 hover:bg-zinc-800/30"
