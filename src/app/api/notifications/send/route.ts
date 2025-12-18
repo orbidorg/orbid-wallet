@@ -6,9 +6,9 @@ const NOTIFICATION_TRANSLATIONS = {
     tx_received: {
         en: { title: 'Payment Received', message: 'Hey ${username}! You received ${amount} ${token}' },
         es: { title: 'Pago Recibido', message: '¡Hola ${username}! Recibiste ${amount} ${token}' },
-        es_419: { title: 'Pago Recibido', message: '¡Hola ${username}! Recibiste ${amount} ${token}' },
-        zh_CN: { title: '收到付款', message: '${username}，您收到了 ${amount} ${token}' },
-        zh_TW: { title: '收到付款', message: '${username}，您收到了 ${amount} ${token}' },
+        'es-419': { title: 'Pago Recibido', message: '¡Hola ${username}! Recibiste ${amount} ${token}' },
+        'zh-CN': { title: '收到付款', message: '${username}，您收到了 ${amount} ${token}' },
+        'zh-TW': { title: '收到付款', message: '${username}，您收到了 ${amount} ${token}' },
         hi: { title: 'भुगतान प्राप्त', message: '${username}, आपको ${amount} ${token} प्राप्त हुआ' },
         pt: { title: 'Pagamento Recebido', message: 'Olá ${username}! Você recebeu ${amount} ${token}' },
         fr: { title: 'Paiement Reçu', message: 'Salut ${username}! Vous avez reçu ${amount} ${token}' },
@@ -24,9 +24,9 @@ const NOTIFICATION_TRANSLATIONS = {
     tx_sent: {
         en: { title: 'Transaction Sent', message: '${username}, you sent ${amount} ${token}' },
         es: { title: 'Transacción Enviada', message: '${username}, enviaste ${amount} ${token}' },
-        es_419: { title: 'Transacción Enviada', message: '${username}, enviaste ${amount} ${token}' },
-        zh_CN: { title: '交易已发送', message: '${username}，您已发送 ${amount} ${token}' },
-        zh_TW: { title: '交易已發送', message: '${username}，您已發送 ${amount} ${token}' },
+        'es-419': { title: 'Transacción Enviada', message: '${username}, enviaste ${amount} ${token}' },
+        'zh-CN': { title: '交易已发送', message: '${username}，您已发送 ${amount} ${token}' },
+        'zh-TW': { title: '交易已發送', message: '${username}，您已發送 ${amount} ${token}' },
         hi: { title: 'लेनदेन भेजा गया', message: '${username}, आपने ${amount} ${token} भेजा' },
         pt: { title: 'Transação Enviada', message: '${username}, você enviou ${amount} ${token}' },
         fr: { title: 'Transaction Envoyée', message: '${username}, vous avez envoyé ${amount} ${token}' },
@@ -42,7 +42,7 @@ const NOTIFICATION_TRANSLATIONS = {
 };
 
 type NotificationType = keyof typeof NOTIFICATION_TRANSLATIONS;
-type SupportedLanguage = 'en' | 'es' | 'zh_CN' | 'hi' | 'pt' | 'fr' | 'de' | 'ja' | 'ko' | 'ca' | 'id' | 'ms' | 'pl' | 'es_419' | 'th' | 'zh_TW';
+type SupportedLanguage = 'en' | 'es' | 'zh-CN' | 'hi' | 'pt' | 'fr' | 'de' | 'ja' | 'ko' | 'ca' | 'id' | 'ms' | 'pl' | 'es-419' | 'th' | 'zh-TW';
 
 interface SendNotificationRequest {
     walletAddresses: string[];
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
         }
 
         const apiKey = process.env.WORLD_APP_API_KEY;
-        const appId = process.env.NEXT_PUBLIC_WORLD_APP_ID;
+        const appId = process.env.NEXT_PUBLIC_WLD_APP_ID || process.env.NEXT_PUBLIC_WORLD_APP_ID;
 
         if (!apiKey) {
             console.error('WORLD_APP_API_KEY not configured');
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
         }
 
         if (!appId) {
-            console.error('NEXT_PUBLIC_WORLD_APP_ID not configured');
+            console.error('App ID not configured');
             return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
         }
 
@@ -91,9 +91,8 @@ export async function POST(request: NextRequest) {
 
         // Build the deep link path as per World App documentation
         // Format: worldapp://mini-app?app_id=[app_id]&path=[path] (path is optional)
-        const deepLinkPath = miniAppPath === '/'
-            ? `worldapp://mini-app?app_id=${appId}`
-            : `worldapp://mini-app?app_id=${appId}&path=${encodeURIComponent(miniAppPath)}`;
+        const formattedPath = miniAppPath.startsWith('/') ? miniAppPath : `/${miniAppPath}`;
+        const deepLinkPath = `worldapp://mini-app?app_id=${appId}&path=${encodeURIComponent(formattedPath)}`;
 
         // Send to World App API
         const response = await fetch('https://developer.worldcoin.org/api/v2/minikit/send-notification', {

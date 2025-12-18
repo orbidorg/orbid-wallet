@@ -33,10 +33,12 @@
 html,
 body {
   width: 100vw;
-  height: 100vh;
-  /* Prevent iOS scroll bounce as per World App guidelines */
-  overscroll-behavior: none;
-  overflow: hidden;
+  min-height: 100vh;
+  /* Prevent iOS horizontal bounce and help with vertical control */
+  overscroll-behavior-x: none;
+  /* Allow vertical scrolling but provide hooks for preventing bounce if needed */
+  overflow-x: hidden;
+  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
 

@@ -44,7 +44,8 @@ export async function POST(request: NextRequest) {
 
         // Get env vars
         const apiKey = process.env.WORLD_APP_API_KEY;
-        const appId = process.env.NEXT_PUBLIC_WORLD_APP_ID;
+        // Use NEXT_PUBLIC_WLD_APP_ID as primary, fallback to others
+        const appId = process.env.NEXT_PUBLIC_WLD_APP_ID || process.env.NEXT_PUBLIC_WORLD_APP_ID;
 
         if (!apiKey) {
             console.error('WORLD_APP_API_KEY not configured');
@@ -52,14 +53,14 @@ export async function POST(request: NextRequest) {
         }
 
         if (!appId) {
-            console.error('NEXT_PUBLIC_WORLD_APP_ID not configured');
-            return NextResponse.json({ error: 'NEXT_PUBLIC_WORLD_APP_ID not configured' }, { status: 500 });
+            console.error('App ID not configured (NEXT_PUBLIC_WLD_APP_ID or NEXT_PUBLIC_WORLD_APP_ID)');
+            return NextResponse.json({ error: 'App ID not configured' }, { status: 500 });
         }
 
         // Build the deep link path
-        const deepLinkPath = miniAppPath === '/'
-            ? `worldapp://mini-app?app_id=${appId}`
-            : `worldapp://mini-app?app_id=${appId}&path=${encodeURIComponent(miniAppPath)}`;
+        // Ensure path starts with / and is encoded
+        const formattedPath = miniAppPath.startsWith('/') ? miniAppPath : `/${miniAppPath}`;
+        const deepLinkPath = `worldapp://mini-app?app_id=${appId}&path=${encodeURIComponent(formattedPath)}`;
 
         // Send to World App API
         const response = await fetch('https://developer.worldcoin.org/api/v2/minikit/send-notification', {

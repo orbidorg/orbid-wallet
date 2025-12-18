@@ -11,7 +11,18 @@ const APP_ID = process.env.NEXT_PUBLIC_WLD_APP_ID || 'app_920c1c9a0cb3aaa68e626f
 
 // Initialize MiniKit SYNCHRONOUSLY at module load (before any React renders)
 if (typeof window !== 'undefined') {
-    MiniKit.install(APP_ID);
+    // Only attempt installation if not in admin path and not explicitly disabled
+    const isLoginPage = window.location.pathname.startsWith('/admin');
+    if (!isLoginPage) {
+        try {
+            MiniKit.install(APP_ID);
+        } catch (e) {
+            // Silently fail or log quietly if not in World App
+            if (process.env.NODE_ENV === 'development') {
+                console.log('MiniKit installation skipped or failed (not in World App environment)');
+            }
+        }
+    }
 }
 
 // Context to track MiniKit readiness
