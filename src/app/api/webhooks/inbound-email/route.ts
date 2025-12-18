@@ -14,6 +14,12 @@ export async function POST(request: NextRequest) {
     console.log('📨 Inbound Email Webhook Triggered');
 
     try {
+        // Security check: Match MAILER_SECRET
+        const authHeader = request.headers.get("Authorization");
+        if (authHeader !== `Bearer ${process.env.MAILER_SECRET}`) {
+            return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+        }
+
         const body = await request.json();
 
         // Brevo/Sendinblue Inbound Parse payload usually has 'items' array or direct fields depending on config

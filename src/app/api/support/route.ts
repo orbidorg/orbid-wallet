@@ -55,11 +55,35 @@ function getLanguage(request: NextRequest): string {
     return acceptLang.startsWith('es') ? 'es' : 'en';
 }
 
+/** Helper to send email via Cloudflare Worker */
+async function sendEmailViaWorker(email: string, subject: string, html: string, from?: string, fromName?: string) {
+    const workerUrl = process.env.MAILER_WORKER_URL;
+    const secret = process.env.MAILER_SECRET;
+    if (!workerUrl || !secret) {
+        console.error('Mailer environment variables missing (MAILER_WORKER_URL or MAILER_SECRET)');
+        return;
+    }
+
+    try {
+        await fetch(workerUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${secret}`
+            },
+            body: JSON.stringify({
+                to: email,
+                subject,
+                htmlContent: html,
+                from: from || 'support@mail.orbidwallet.com',
+                fromName: fromName || 'OrbId Wallet Support'
+            })
+        });
+    } catch (e) { console.error('Worker Email error:', e); }
+}
+
 /** Send confirmation email */
 async function sendConfirmationEmail(email: string, ticketId: string, topic: string, lang: string) {
-    const apiKey = process.env.BREVO_API_KEY;
-    const senderEmail = process.env.BREVO_SENDER_EMAIL;
-    if (!apiKey || !senderEmail) return;
 
     const t = lang === 'es' ? {
         title: 'Ticket Recibido',
@@ -179,25 +203,12 @@ async function sendConfirmationEmail(email: string, ticketId: string, topic: str
 </body>
 </html>`;
 
-    try {
-        await fetch('https://api.brevo.com/v3/smtp/email', {
-            method: 'POST',
-            headers: { 'accept': 'application/json', 'api-key': apiKey, 'content-type': 'application/json' },
-            body: JSON.stringify({
-                sender: { name: 'OrbId Wallet', email: senderEmail },
-                to: [{ email }],
-                subject: lang === 'es' ? `Ticket #${ticketId} - Recibido` : `Ticket #${ticketId} - Received`,
-                htmlContent: html
-            })
-        });
-    } catch (e) { console.error('Email error:', e); }
+    const subject = lang === 'es' ? `Ticket #${ticketId} - Recibido` : `Ticket #${ticketId} - Received`;
+    await sendEmailViaWorker(email, subject, html, 'support@mail.orbidwallet.com', 'OrbId Wallet Support');
 }
 
 /** Send resolved email */
 async function sendResolvedEmail(email: string, ticketId: string, adminReply: string | null, lang: string, attachmentUrls: string[] = []) {
-    const apiKey = process.env.BREVO_API_KEY;
-    const senderEmail = process.env.BREVO_SENDER_EMAIL;
-    if (!apiKey || !senderEmail) return;
 
     const t = lang === 'es' ? {
         title: 'Ticket Resuelto',
@@ -314,25 +325,12 @@ async function sendResolvedEmail(email: string, ticketId: string, adminReply: st
 </body>
 </html>`;
 
-    try {
-        await fetch('https://api.brevo.com/v3/smtp/email', {
-            method: 'POST',
-            headers: { 'accept': 'application/json', 'api-key': apiKey, 'content-type': 'application/json' },
-            body: JSON.stringify({
-                sender: { name: 'OrbId Wallet', email: senderEmail },
-                to: [{ email }],
-                subject: lang === 'es' ? `Ticket #${ticketId} - Resuelto ✓` : `Ticket #${ticketId} - Resolved ✓`,
-                htmlContent: html
-            })
-        });
-    } catch (e) { console.error('Email error:', e); }
+    const subject = lang === 'es' ? `Ticket #${ticketId} - Resuelto ✓` : `Ticket #${ticketId} - Resolved ✓`;
+    await sendEmailViaWorker(email, subject, html, 'support@mail.orbidwallet.com', 'OrbId Wallet Support');
 }
 
 /** Send reply email (for in-progress tickets) */
 async function sendReplyEmail(email: string, ticketId: string, replyMessage: string, lang: string, attachmentUrls: string[] = []) {
-    const apiKey = process.env.BREVO_API_KEY;
-    const senderEmail = process.env.BREVO_SENDER_EMAIL;
-    if (!apiKey || !senderEmail) return;
 
     const t = lang === 'es' ? {
         title: 'Nueva Respuesta',
@@ -458,18 +456,8 @@ async function sendReplyEmail(email: string, ticketId: string, replyMessage: str
 </body>
 </html>`;
 
-    try {
-        await fetch('https://api.brevo.com/v3/smtp/email', {
-            method: 'POST',
-            headers: { 'accept': 'application/json', 'api-key': apiKey, 'content-type': 'application/json' },
-            body: JSON.stringify({
-                sender: { name: 'OrbId', email: senderEmail },
-                to: [{ email }],
-                subject: lang === 'es' ? `Re: Ticket ${ticketId}` : `Re: Ticket ${ticketId}`,
-                htmlContent: html
-            })
-        });
-    } catch (e) { console.error('Email error:', e); }
+    const subject = lang === 'es' ? `Re: Ticket ${ticketId}` : `Re: Ticket ${ticketId}`;
+    await sendEmailViaWorker(email, subject, html, 'support@mail.orbidwallet.com', 'OrbId Wallet Support');
 }
 
 

@@ -11,29 +11,27 @@ interface SendEmailOptions {
 }
 
 export async function sendEmail({ to, subject, htmlContent }: SendEmailOptions): Promise<boolean> {
-    const apiKey = process.env.BREVO_API_KEY;
-    const senderEmail = process.env.BREVO_SENDER_EMAIL;
-    const senderName = process.env.BREVO_SENDER_NAME || 'OrbId Wallet';
+    const workerUrl = process.env.MAILER_WORKER_URL;
+    const secret = process.env.MAILER_SECRET;
+    const senderEmail = 'no-reply@mail.orbidwallet.com';
+    const senderName = 'OrbId Wallet';
 
-    if (!apiKey || !senderEmail) {
-        console.error('Brevo not configured: missing API key or sender email');
+    if (!workerUrl || !secret) {
+        console.error('Mailer not configured: missing Worker URL or Secret');
         return false;
     }
 
     try {
-        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+        const response = await fetch(workerUrl, {
             method: 'POST',
             headers: {
-                'accept': 'application/json',
-                'api-key': apiKey,
-                'content-type': 'application/json',
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${secret}`
             },
             body: JSON.stringify({
-                sender: {
-                    name: senderName,
-                    email: senderEmail,
-                },
-                to: [{ email: to }],
+                to,
+                from: senderEmail,
+                fromName: senderName,
                 subject,
                 htmlContent,
             }),
@@ -41,13 +39,13 @@ export async function sendEmail({ to, subject, htmlContent }: SendEmailOptions):
 
         if (!response.ok) {
             const error = await response.text();
-            console.error('Brevo API error:', error);
+            console.error('Mailer Worker error:', error);
             return false;
         }
 
         return true;
     } catch (error) {
-        console.error('Failed to send email:', error);
+        console.error('Failed to send email via worker:', error);
         return false;
     }
 }
