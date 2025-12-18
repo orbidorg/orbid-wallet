@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 interface DashboardStats {
     totalUsers: number;
@@ -97,21 +96,12 @@ export default function AdminDashboard() {
     if (!authenticated) {
         return (
             <div className="min-h-screen bg-black flex items-center justify-center p-4">
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="w-full max-w-md"
-                >
+                <div className="w-full max-w-md">
                     <div className="bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-2xl p-8 shadow-2xl">
                         <div className="text-center mb-8">
-                            <motion.div
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                transition={{ type: 'spring', delay: 0.1 }}
-                                className="w-16 h-16 bg-gradient-to-br from-pink-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4"
-                            >
+                            <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
                                 <LockIcon className="w-8 h-8 text-white" />
-                            </motion.div>
+                            </div>
                             <h1 className="text-2xl font-bold text-white">OrbId Wallet Admin</h1>
                             <p className="text-zinc-400 mt-2">Analytics Dashboard</p>
                         </div>
@@ -125,18 +115,11 @@ export default function AdminDashboard() {
                                 placeholder="Admin Secret"
                                 className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-pink-500 transition-colors"
                             />
-                            <AnimatePresence>
-                                {error && (
-                                    <motion.p
-                                        initial={{ opacity: 0, height: 0 }}
-                                        animate={{ opacity: 1, height: 'auto' }}
-                                        exit={{ opacity: 0, height: 0 }}
-                                        className="text-red-400 text-sm text-center"
-                                    >
-                                        {error}
-                                    </motion.p>
-                                )}
-                            </AnimatePresence>
+                            {error && (
+                                <p className="text-red-400 text-sm text-center">
+                                    {error}
+                                </p>
+                            )}
                             <button
                                 onClick={authenticate}
                                 disabled={loading || !password}
@@ -146,12 +129,12 @@ export default function AdminDashboard() {
                             </button>
                         </div>
                     </div>
-                </motion.div>
+                </div>
             </div>
         );
     }
 
-    // Loading state after auth (simple, no animation)
+    // Loading state after auth
     if (!stats) {
         return (
             <div className="min-h-screen bg-black flex items-center justify-center">
@@ -395,29 +378,21 @@ export default function AdminDashboard() {
 // Components
 function StatCard({ title, value, icon, color, subtitle }: { title: string; value: number; icon: React.ReactNode; color: string; subtitle?: string }) {
     return (
-        <motion.div
-            whileHover={{ scale: 1.02 }}
-            className="bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-2xl p-4 md:p-6 relative overflow-hidden"
-        >
+        <div className="bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-2xl p-4 md:p-6 relative overflow-hidden transition-transform hover:scale-[1.02]">
             <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${color} opacity-10 rounded-full -translate-y-1/2 translate-x-1/2`} />
             <div className="flex items-start justify-between">
                 <div>
                     <p className="text-zinc-400 text-sm">{title}</p>
-                    <motion.p
-                        key={value}
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        className="text-2xl md:text-3xl font-bold text-white mt-1"
-                    >
+                    <p className="text-2xl md:text-3xl font-bold text-white mt-1">
                         {value.toLocaleString()}
-                    </motion.p>
+                    </p>
                     {subtitle && <p className="text-zinc-500 text-xs mt-1">{subtitle}</p>}
                 </div>
                 <div className={`w-10 h-10 bg-gradient-to-br ${color} rounded-xl flex items-center justify-center text-white`}>
                     {icon}
                 </div>
             </div>
-        </motion.div>
+        </div>
     );
 }
 
@@ -431,26 +406,21 @@ function DistributionCard({ title, icon, data, color }: { title: string; icon: R
             </div>
             <div className="space-y-3">
                 {data.map((item, i) => (
-                    <motion.div
+                    <div
                         key={i}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.05 }}
                         className="flex items-center justify-between"
                     >
                         <span className="text-white capitalize text-sm">{item.name}</span>
                         <div className="flex items-center gap-2">
                             <div className="w-20 h-2 bg-zinc-800 rounded-full overflow-hidden">
-                                <motion.div
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${(item.count / max) * 100}%` }}
-                                    transition={{ delay: i * 0.05 + 0.2 }}
-                                    className={`h-full bg-gradient-to-r ${color}`}
+                                <div
+                                    style={{ width: `${(item.count / max) * 100}%` }}
+                                    className={`h-full bg-gradient-to-r ${color} transition-all duration-500`}
                                 />
                             </div>
                             <span className="text-zinc-400 text-sm w-8 text-right">{item.count}</span>
                         </div>
-                    </motion.div>
+                    </div>
                 ))}
                 {data.length === 0 && <p className="text-zinc-500 text-center py-4">No data</p>}
             </div>
@@ -490,6 +460,7 @@ function getFlagEmoji(countryName: string): string {
     const code = countryToCodes[countryName];
     if (code) {
         const codePoints = [...code.toUpperCase()].map(c => 0x1F1E6 + c.charCodeAt(0) - 65);
+        // eslint-disable-next-line
         return String.fromCodePoint(...codePoints);
     }
     return '🌍';
