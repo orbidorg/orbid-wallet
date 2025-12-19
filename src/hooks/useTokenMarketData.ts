@@ -81,12 +81,6 @@ async function fetchMarketData(symbol: string, period: ChartPeriod): Promise<Tok
             volume24h = bestPair.volume?.h24 || 0;
         }
 
-        // Hardcode stablecoin price as safety net
-        if (symbol === 'USDC' && (price < 0.9 || price > 1.1)) {
-            price = 1.0;
-            change24h = 0;
-        }
-
         // Fetch chart data from GeckoTerminal
         let priceHistory: PricePoint[] = [];
         try {

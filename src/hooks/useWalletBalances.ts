@@ -95,7 +95,7 @@ async function getTokenPrices(): Promise<Record<string, TokenPrice>> {
                             if (basePrice > 0) {
                                 prices[token.symbol] = {
                                     usd: parseFloat(bestPair.priceUsd || '0') / basePrice,
-                                    usd_24h_change: -(bestPair.priceChange?.h24 || 0) // Inverse change
+                                    usd_24h_change: -(bestPair.priceChange?.h24 || 0)
                                 };
                             }
                         }
@@ -104,18 +104,12 @@ async function getTokenPrices(): Promise<Record<string, TokenPrice>> {
             }
         }
 
-        // Hardcode stablecoin prices as safety net
-        if (!prices['USDC'] || prices['USDC'].usd < 0.9 || prices['USDC'].usd > 1.1) {
-            prices['USDC'] = { usd: 1.0, usd_24h_change: 0 };
-        }
-
         return prices;
     } catch (error) {
         console.error('Failed to fetch prices from DEX Screener:', error);
         return prices;
     }
 }
-
 
 function formatBalance(balance: bigint, decimals: number): string {
     const divisor = BigInt(10 ** decimals);
