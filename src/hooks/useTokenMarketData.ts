@@ -90,7 +90,7 @@ async function fetchMarketData(symbol: string, period: ChartPeriod): Promise<Tok
         // Fetch chart data from GeckoTerminal
         let priceHistory: PricePoint[] = [];
         try {
-            const poolsRes = await fetch(`https://api.geckoterminal.com/api/v2/networks/worldchain/tokens/${token.address}/pools`, {
+            const poolsRes = await fetch(`https://api.geckoterminal.com/api/v2/networks/world-chain/tokens/${token.address}/pools`, {
                 headers: { 'Accept': 'application/json;version=20230203' }
             });
 
@@ -110,7 +110,7 @@ async function fetchMarketData(symbol: string, period: ChartPeriod): Promise<Tok
                     else if (period === 'max') { tf = 'day'; limit = 1000; }
 
                     const ohlcvRes = await fetch(
-                        `https://api.geckoterminal.com/api/v2/networks/worldchain/pools/${poolAddress}/ohlcv/${tf}?limit=${limit}`,
+                        `https://api.geckoterminal.com/api/v2/networks/world-chain/pools/${poolAddress}/ohlcv/${tf}?limit=${limit}`,
                         { headers: { 'Accept': 'application/json;version=20230203' } }
                     );
 
