@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import type { TokenBalance } from '@/lib/types';
-import { WORLD_CHAIN_TOKENS, COINGECKO_IDS } from '@/lib/tokens';
+import { WORLD_CHAIN_TOKENS } from '@/lib/tokens';
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const ALCHEMY_RPC = `https://worldchain-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
@@ -47,8 +47,7 @@ async function getTokenPrices(): Promise<Record<string, TokenPrice>> {
     const prices: Record<string, TokenPrice> = {};
 
     try {
-        // 1. Fetch from DEX Screener for ALL World Chain tokens by address
-        // This is now our PRIMARY source for accuracy on World Chain
+        // Fetch from DEX Screener for ALL World Chain tokens by address
         const allAddresses = WORLD_CHAIN_TOKENS.map(t => t.address).join(',');
 
         if (allAddresses) {
@@ -60,15 +59,24 @@ async function getTokenPrices(): Promise<Record<string, TokenPrice>> {
                 const dexData = await dexResponse.json();
                 if (dexData.pairs) {
                     WORLD_CHAIN_TOKENS.forEach(token => {
-                        // Find the best pair for this token SPECIFICALLY on World Chain
-                        const pairs = dexData.pairs.filter((p: any) =>
+                        const tokenAddr = token.address.toLowerCase();
+
+                        // Find pairs where this token is the BASE token on World Chain
+                        const basePairs = dexData.pairs.filter((p: any) =>
                             p.chainId === 'worldchain' &&
-                            p.baseToken.address.toLowerCase() === token.address.toLowerCase()
+                            p.baseToken?.address?.toLowerCase() === tokenAddr
                         );
 
-                        if (pairs.length > 0) {
-                            // Sort by liquidity to get THE most reliable and current price (matching DEX Screener)
-                            const bestPair = pairs.sort((a: any, b: any) =>
+                        // Find pairs where this token is the QUOTE token on World Chain
+                        const quotePairs = dexData.pairs.filter((p: any) =>
+                            p.chainId === 'worldchain' &&
+                            p.quoteToken?.address?.toLowerCase() === tokenAddr
+                        );
+
+                        // Prefer base pairs, but use quote pairs if no base pairs exist
+                        if (basePairs.length > 0) {
+                            // Sort by liquidity for best price
+                            const bestPair = basePairs.sort((a: any, b: any) =>
                                 (parseFloat(b.liquidity?.usd || '0')) - (parseFloat(a.liquidity?.usd || '0'))
                             )[0];
 
@@ -76,45 +84,38 @@ async function getTokenPrices(): Promise<Record<string, TokenPrice>> {
                                 usd: parseFloat(bestPair.priceUsd || '0'),
                                 usd_24h_change: bestPair.priceChange?.h24 || 0
                             };
+                        } else if (quotePairs.length > 0) {
+                            // Token is the quote token - calculate inverse price
+                            const bestPair = quotePairs.sort((a: any, b: any) =>
+                                (parseFloat(b.liquidity?.usd || '0')) - (parseFloat(a.liquidity?.usd || '0'))
+                            )[0];
+
+                            // Price of quote token = 1 / (base price in quote)
+                            const basePrice = parseFloat(bestPair.priceNative || '0');
+                            if (basePrice > 0) {
+                                prices[token.symbol] = {
+                                    usd: parseFloat(bestPair.priceUsd || '0') / basePrice,
+                                    usd_24h_change: -(bestPair.priceChange?.h24 || 0) // Inverse change
+                                };
+                            }
                         }
                     });
                 }
             }
         }
 
-        // 2. Fallback to CoinGecko only for tokens missing from DEX Screener (if any)
-        // or for those with established IDs where we want to cross-reference
-        const missingSymbols = WORLD_CHAIN_TOKENS.filter(t => !prices[t.symbol]);
-        const geckoIdsToFetch = missingSymbols
-            .map(t => COINGECKO_IDS[t.symbol])
-            .filter(Boolean)
-            .join(',');
-
-        if (geckoIdsToFetch) {
-            const geckoResponse = await fetch(
-                `https://api.coingecko.com/api/v3/simple/price?ids=${geckoIdsToFetch}&vs_currencies=usd&include_24hr_change=true`
-            );
-
-            if (geckoResponse.ok) {
-                const geckoData = await geckoResponse.json();
-                missingSymbols.forEach(token => {
-                    const geckoId = COINGECKO_IDS[token.symbol];
-                    if (geckoId && geckoData[geckoId]) {
-                        prices[token.symbol] = {
-                            usd: geckoData[geckoId].usd || 0,
-                            usd_24h_change: geckoData[geckoId].usd_24h_change || 0
-                        };
-                    }
-                });
-            }
+        // Hardcode stablecoin prices as safety net
+        if (!prices['USDC'] || prices['USDC'].usd < 0.9 || prices['USDC'].usd > 1.1) {
+            prices['USDC'] = { usd: 1.0, usd_24h_change: 0 };
         }
 
         return prices;
     } catch (error) {
-        console.error('Failed to fetch prices from primary sources:', error);
+        console.error('Failed to fetch prices from DEX Screener:', error);
         return prices;
     }
 }
+
 
 function formatBalance(balance: bigint, decimals: number): string {
     const divisor = BigInt(10 ** decimals);

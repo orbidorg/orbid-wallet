@@ -117,20 +117,3 @@ export const WORLD_CHAIN_TOKENS: Token[] = [
     //     logoURI: 'https://cdn.dexscreener.com/cms/images/6b364af0717941d3bbab268fd40e6eb424671813008662b76c16921e25bc1d27?width=64&height=64&fit=crop&quality=95&format=auto',
     // },
 ];
-
-// CoinGecko IDs for price fetching
-export const COINGECKO_IDS: Record<string, string> = {
-    WLD: 'worldcoin-wld',
-    USDC: 'usd-coin',
-    WETH: 'ethereum',
-    WBTC: 'bitcoin',
-    LINK: 'chainlink',
-    uSOL: 'solana',
-    uXRP: 'ripple',
-    uDOGE: 'dogecoin',
-    FOOTBALL: 'crazyfootball-token',
-    ORO: 'oro-2',
-    sDAI: 'savings-dai',
-    uSUI: 'sui',
-    uPEPE: 'pepe',
-};

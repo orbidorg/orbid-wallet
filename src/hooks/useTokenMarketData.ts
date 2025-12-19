@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { WORLD_CHAIN_TOKENS, COINGECKO_IDS } from '@/lib/tokens';
+import { WORLD_CHAIN_TOKENS } from '@/lib/tokens';
 
 export type ChartPeriod = '1d' | '7d' | '30d' | '365d' | 'max';
 
@@ -23,174 +23,141 @@ export interface TokenMarketData {
     priceHistory: PricePoint[];
 }
 
-const PERIOD_TO_DAYS: Record<ChartPeriod, string> = {
-    '1d': '1',
-    '7d': '7',
-    '30d': '30',
-    '365d': '365',
-    'max': 'max'
-};
-
-/** Fetch market data from DEX Screener, GeckoTerminal or CoinGecko (fallback) */
+/** Fetch market data from DEX Screener and GeckoTerminal only */
 async function fetchMarketData(symbol: string, period: ChartPeriod): Promise<TokenMarketData> {
     const token = WORLD_CHAIN_TOKENS.find(t => t.symbol === symbol);
-    const days = PERIOD_TO_DAYS[period];
-    const geckoId = COINGECKO_IDS[symbol];
 
-    // Priority 1: DEX Screener (Stats) + GeckoTerminal (Charts) for World Chain Native
-    if (token?.address) {
-        try {
-            const dexResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${token.address}`);
-            const dexData = await dexResponse.json();
-
-            // Find the best pair specifically on World Chain with highest liquidity
-            const pairs = dexData.pairs?.filter((p: any) =>
-                p.chainId === 'worldchain' &&
-                p.baseToken.address.toLowerCase() === token.address.toLowerCase()
-            ) || [];
-
-            const pair = pairs.sort((a: any, b: any) =>
-                (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0)
-            )[0] || dexData.pairs?.[0];
-
-            if (pair) {
-                let priceHistory: PricePoint[] = [];
-
-                // Always try GeckoTerminal first for Chart Data on World Chain
-                try {
-                    const poolsRes = await fetch(`https://api.geckoterminal.com/api/v2/networks/worldchain/tokens/${token.address}/pools`, {
-                        headers: { 'Accept': 'application/json;version=20230203' }
-                    });
-
-                    if (poolsRes.ok) {
-                        const poolsData = await poolsRes.json();
-                        const pool = poolsData.data?.[0];
-
-                        if (pool) {
-                            const poolAddress = pool.attributes.address;
-
-                            // Highly accurate timeframes & limits
-                            let tf = 'day';
-                            let limit = 30;
-
-                            if (period === '1d') { tf = 'hour'; limit = 24; }
-                            else if (period === '7d') { tf = 'hour'; limit = 168; } // 7 days * 24h
-                            else if (period === '30d') { tf = 'day'; limit = 30; }
-                            else if (period === '365d') { tf = 'day'; limit = 365; }
-                            else if (period === 'max') { tf = 'day'; limit = 1000; }
-
-                            const ohlcvRes = await fetch(
-                                `https://api.geckoterminal.com/api/v2/networks/worldchain/pools/${poolAddress}/ohlcv/${tf}?limit=${limit}`,
-                                { headers: { 'Accept': 'application/json;version=20230203' } }
-                            );
-
-                            if (ohlcvRes.ok) {
-                                const ohlcvData = await ohlcvRes.json();
-                                const ohlcvList = ohlcvData.data?.attributes?.ohlcv_list || [];
-
-                                priceHistory = ohlcvList.map(([ts, o, h, l, c, v]: [number, number, number, number, number, number]) => ({
-                                    timestamp: ts * 1000,
-                                    price: c,
-                                    volume: v
-                                })).reverse();
-                            }
-                        }
-                    }
-                } catch (ce) {
-                    console.warn(`GeckoTerminal chart fallback for ${symbol}`, ce);
-                }
-
-                // ... (CoinGecko chart fallback remains same)
-                if (priceHistory.length === 0 && geckoId) {
-                    try {
-                        const chartRes = await fetch(`https://api.coingecko.com/api/v3/coins/${geckoId}/market_chart?vs_currency=usd&days=${days}`);
-                        if (chartRes.ok) {
-                            const chartData = await chartRes.json();
-                            priceHistory = (chartData.prices || []).map(([timestamp, price]: [number, number], index: number) => ({
-                                timestamp,
-                                price,
-                                volume: chartData.total_volumes?.[index]?.[1] || 0
-                            }));
-                        }
-                    } catch (ge) {
-                        console.warn(`CoinGecko chart fallback for ${symbol}`, ge);
-                    }
-                }
-
-                // Calculate 7d change from history if possible
-                let change7d = 0;
-                if (priceHistory.length >= 7) {
-                    const latestPrice = priceHistory[priceHistory.length - 1].price;
-                    const oldPrice = priceHistory[0].price;
-                    change7d = ((latestPrice - oldPrice) / oldPrice) * 100;
-                }
-
-                return {
-                    price: parseFloat(pair.priceUsd || '0'),
-                    change24h: pair.priceChange?.h24 || 0,
-                    change7d,
-                    volume24h: pair.volume?.h24 || 0,
-                    marketCap: pair.marketCap || 0,
-                    fdv: pair.fdv || 0,
-                    high24h: 0,
-                    low24h: 0,
-                    priceHistory
-                };
-            }
-        } catch (e) {
-            console.error(`DEX Screener primary failed for ${symbol}`, e);
-        }
+    if (!token?.address) {
+        return {
+            price: 0, change24h: 0, change7d: 0, volume24h: 0,
+            marketCap: 0, fdv: 0, high24h: 0, low24h: 0, priceHistory: []
+        };
     }
 
-    // Priority 2: CoinGecko (only for non-World Chain logic or major fallback)
-    if (geckoId) {
-        try {
-            const [marketRes, chartRes] = await Promise.all([
-                fetch(`https://api.coingecko.com/api/v3/coins/${geckoId}?localization=false&tickers=false&community_data=false&developer_data=false`),
-                fetch(`https://api.coingecko.com/api/v3/coins/${geckoId}/market_chart?vs_currency=usd&days=${days}`)
-            ]);
+    try {
+        const dexResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${token.address}`);
+        const dexData = await dexResponse.json();
+        const tokenAddr = token.address.toLowerCase();
 
-            if (marketRes.ok) {
-                const marketData = await marketRes.json();
-                let priceHistory: PricePoint[] = [];
+        // Find pairs where this token is the BASE token on World Chain
+        const basePairs = (dexData.pairs || []).filter((p: any) =>
+            p.chainId === 'worldchain' &&
+            p.baseToken?.address?.toLowerCase() === tokenAddr
+        );
 
-                if (chartRes.ok) {
-                    const chartData = await chartRes.json();
-                    priceHistory = (chartData.prices || []).map(([timestamp, price]: [number, number], index: number) => ({
-                        timestamp,
-                        price,
-                        volume: chartData.total_volumes?.[index]?.[1] || 0
-                    }));
-                }
+        // Find pairs where this token is the QUOTE token on World Chain
+        const quotePairs = (dexData.pairs || []).filter((p: any) =>
+            p.chainId === 'worldchain' &&
+            p.quoteToken?.address?.toLowerCase() === tokenAddr
+        );
 
-                return {
-                    price: marketData.market_data?.current_price?.usd || 0,
-                    change24h: marketData.market_data?.price_change_percentage_24h || 0,
-                    change7d: marketData.market_data?.price_change_percentage_7d || 0,
-                    volume24h: marketData.market_data?.total_volume?.usd || 0,
-                    marketCap: marketData.market_data?.market_cap?.usd || 0,
-                    fdv: marketData.market_data?.fully_diluted_valuation?.usd || 0,
-                    high24h: marketData.market_data?.high_24h?.usd || 0,
-                    low24h: marketData.market_data?.low_24h?.usd || 0,
-                    priceHistory
-                };
+        let price = 0;
+        let change24h = 0;
+        let volume24h = 0;
+        let marketCap = 0;
+        let fdv = 0;
+
+        if (basePairs.length > 0) {
+            const bestPair = basePairs.sort((a: any, b: any) =>
+                (parseFloat(b.liquidity?.usd || '0')) - (parseFloat(a.liquidity?.usd || '0'))
+            )[0];
+
+            price = parseFloat(bestPair.priceUsd || '0');
+            change24h = bestPair.priceChange?.h24 || 0;
+            volume24h = bestPair.volume?.h24 || 0;
+            marketCap = bestPair.marketCap || 0;
+            fdv = bestPair.fdv || 0;
+        } else if (quotePairs.length > 0) {
+            const bestPair = quotePairs.sort((a: any, b: any) =>
+                (parseFloat(b.liquidity?.usd || '0')) - (parseFloat(a.liquidity?.usd || '0'))
+            )[0];
+
+            // Calculate price from inverse
+            const basePrice = parseFloat(bestPair.priceNative || '0');
+            if (basePrice > 0) {
+                price = parseFloat(bestPair.priceUsd || '0') / basePrice;
             }
-        } catch (e) {
-            console.warn(`CoinGecko final fallback failed for ${symbol}`, e);
+            change24h = -(bestPair.priceChange?.h24 || 0);
+            volume24h = bestPair.volume?.h24 || 0;
         }
-    }
 
-    return {
-        price: 0,
-        change24h: 0,
-        change7d: 0,
-        volume24h: 0,
-        marketCap: 0,
-        fdv: 0,
-        high24h: 0,
-        low24h: 0,
-        priceHistory: []
-    };
+        // Hardcode stablecoin price as safety net
+        if (symbol === 'USDC' && (price < 0.9 || price > 1.1)) {
+            price = 1.0;
+            change24h = 0;
+        }
+
+        // Fetch chart data from GeckoTerminal
+        let priceHistory: PricePoint[] = [];
+        try {
+            const poolsRes = await fetch(`https://api.geckoterminal.com/api/v2/networks/worldchain/tokens/${token.address}/pools`, {
+                headers: { 'Accept': 'application/json;version=20230203' }
+            });
+
+            if (poolsRes.ok) {
+                const poolsData = await poolsRes.json();
+                const pool = poolsData.data?.[0];
+
+                if (pool) {
+                    const poolAddress = pool.attributes.address;
+
+                    let tf = 'day';
+                    let limit = 30;
+                    if (period === '1d') { tf = 'hour'; limit = 24; }
+                    else if (period === '7d') { tf = 'hour'; limit = 168; }
+                    else if (period === '30d') { tf = 'day'; limit = 30; }
+                    else if (period === '365d') { tf = 'day'; limit = 365; }
+                    else if (period === 'max') { tf = 'day'; limit = 1000; }
+
+                    const ohlcvRes = await fetch(
+                        `https://api.geckoterminal.com/api/v2/networks/worldchain/pools/${poolAddress}/ohlcv/${tf}?limit=${limit}`,
+                        { headers: { 'Accept': 'application/json;version=20230203' } }
+                    );
+
+                    if (ohlcvRes.ok) {
+                        const ohlcvData = await ohlcvRes.json();
+                        const ohlcvList = ohlcvData.data?.attributes?.ohlcv_list || [];
+
+                        priceHistory = ohlcvList.map(([ts, o, h, l, c, v]: [number, number, number, number, number, number]) => ({
+                            timestamp: ts * 1000,
+                            price: c,
+                            volume: v
+                        })).reverse();
+                    }
+                }
+            }
+        } catch (ce) {
+            console.warn(`GeckoTerminal chart failed for ${symbol}`, ce);
+        }
+
+        // Calculate 7d change from history
+        let change7d = 0;
+        if (priceHistory.length >= 7) {
+            const latestPrice = priceHistory[priceHistory.length - 1].price;
+            const oldPrice = priceHistory[0].price;
+            if (oldPrice > 0) {
+                change7d = ((latestPrice - oldPrice) / oldPrice) * 100;
+            }
+        }
+
+        return {
+            price,
+            change24h,
+            change7d,
+            volume24h,
+            marketCap,
+            fdv,
+            high24h: 0,
+            low24h: 0,
+            priceHistory
+        };
+    } catch (e) {
+        console.error(`Failed to fetch market data for ${symbol}`, e);
+        return {
+            price: 0, change24h: 0, change7d: 0, volume24h: 0,
+            marketCap: 0, fdv: 0, high24h: 0, low24h: 0, priceHistory: []
+        };
+    }
 }
 
 /** Hook for fetching token market data with caching */
