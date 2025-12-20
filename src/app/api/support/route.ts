@@ -66,7 +66,7 @@ function getLanguage(request: NextRequest, bodyLang?: string): SupportedLanguage
 }
 
 /** Helper to send email via Brevo */
-async function sendEmailViaBREVO(email: string, subject: string, html: string) {
+async function sendEmailViaBREVO(email: string, subject: string, html: string, headers?: Record<string, string>) {
     const apiKey = process.env.BREVO_API_KEY;
     const senderEmail = 'support@mail.orbidwallet.com';
     if (!apiKey) {
@@ -82,7 +82,8 @@ async function sendEmailViaBREVO(email: string, subject: string, html: string) {
                 sender: { name: 'OrbId Wallet Support', email: senderEmail },
                 to: [{ email }],
                 subject,
-                htmlContent: html
+                htmlContent: html,
+                headers: headers
             })
         });
     } catch (e) { console.error('Brevo Email error:', e); }
@@ -196,7 +197,8 @@ async function sendConfirmationEmail(email: string, ticketId: string, topic: str
 </html>`;
 
     const subject = `${t.subject} #${ticketId}`;
-    await sendEmailViaBREVO(email, subject, html);
+    const messageId = `<${ticketId}@mail.orbidwallet.com>`;
+    await sendEmailViaBREVO(email, subject, html, { 'Message-ID': messageId });
 }
 
 /** Send resolved email */
@@ -306,7 +308,11 @@ async function sendResolvedEmail(email: string, ticketId: string, adminReply: st
 </html>`;
 
     const subject = `${t.subject} #${ticketId} ✓`;
-    await sendEmailViaBREVO(email, subject, html);
+    const initialMessageId = `<${ticketId}@mail.orbidwallet.com>`;
+    await sendEmailViaBREVO(email, subject, html, {
+        'In-Reply-To': initialMessageId,
+        'References': initialMessageId
+    });
 }
 
 /** Send reply email (for in-progress tickets) */
@@ -425,7 +431,11 @@ async function sendReplyEmail(email: string, ticketId: string, replyMessage: str
 </html>`;
 
     const subject = `${t.subject} #${ticketId}`;
-    await sendEmailViaBREVO(email, subject, html);
+    const initialMessageId = `<${ticketId}@mail.orbidwallet.com>`;
+    await sendEmailViaBREVO(email, subject, html, {
+        'In-Reply-To': initialMessageId,
+        'References': initialMessageId
+    });
 }
 
 
