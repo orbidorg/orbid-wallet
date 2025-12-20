@@ -283,33 +283,47 @@ export default function TokenDetailModal({ tokenBalance, isOpen, onClose, onSend
                                     strokeLinejoin="round"
                                 />
 
-                                {/* Sweep Animation Line */}
-                                <motion.g
-                                    initial={{ x: padding }}
-                                    animate={{ x: width - padding }}
-                                    transition={{
-                                        duration: 3,
-                                        repeat: Infinity,
-                                        ease: "linear"
-                                    }}
-                                >
-                                    <rect
-                                        x="-10"
-                                        y={padding}
-                                        width="20"
-                                        height={height - 2 * padding}
-                                        fill="url(#scanner-gradient)"
-                                    />
-                                    <line
-                                        x1="0"
-                                        y1={padding}
-                                        x2="0"
-                                        y2={height - padding}
-                                        stroke={chartColor}
-                                        strokeWidth="1"
-                                        strokeOpacity="0.8"
-                                    />
-                                </motion.g>
+                                {/* Sweep Animation (Path Following Dot) */}
+                                {!hoveredPoint && chartData && chartData.points.length > 1 && (
+                                    <motion.g
+                                        animate={{
+                                            transition: {
+                                                duration: 4,
+                                                repeat: Infinity,
+                                                ease: "linear"
+                                            }
+                                        }}
+                                    >
+                                        <motion.circle
+                                            r="3"
+                                            fill={chartColor}
+                                            filter="drop-shadow(0 0 4px #ec4899)"
+                                            animate={{
+                                                x: chartData.points.map(p => p.x),
+                                                y: chartData.points.map(p => p.y),
+                                            }}
+                                            transition={{
+                                                duration: 4,
+                                                repeat: Infinity,
+                                                ease: "linear"
+                                            }}
+                                        />
+                                        <motion.circle
+                                            r="8"
+                                            fill={chartColor}
+                                            opacity="0.15"
+                                            animate={{
+                                                x: chartData.points.map(p => p.x),
+                                                y: chartData.points.map(p => p.y),
+                                            }}
+                                            transition={{
+                                                duration: 4,
+                                                repeat: Infinity,
+                                                ease: "linear"
+                                            }}
+                                        />
+                                    </motion.g>
+                                )}
 
                                 {/* Hover crosshair */}
                                 {hoverX !== null && hoveredPoint && (
