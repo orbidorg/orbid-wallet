@@ -67,6 +67,14 @@ const TOKEN_COLORS: Record<string, string> = {
     // World Chain specific
     'ORO': '#ffd700',      // ORO - Gold
     'FOOTBALL': '#00a651', // Football - Green
+    'PUF': '#ff4d00',      // PUF - Bright Orange
+    'ORB': '#7c3aed',      // ORB - Vivid Purple
+    'SUSHI': '#fa52a0',    // Sushi - Pink
+    'uSUI': '#6fbcf0',     // SUI - Light Blue
+    'uXRP': '#23292f',     // XRP - Dark Grey/Black
+    'uDOGE': '#c2a633',    // Dogecoin - Tan/Gold
+    'uPEPE': '#3c7e00',    // PEPE - Dark Green
+    'PEPE': '#3c7e00',     // PEPE - Dark Green
     // Fallback for unknown tokens
     'DEFAULT': '#ec4899',  // Pink (app theme)
 };
