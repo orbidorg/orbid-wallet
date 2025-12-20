@@ -78,10 +78,6 @@ async function fetchMarketData(symbol: string, period: ChartPeriod): Promise<Tok
         const pairs = await dexResponse.json()
         const tokenAddr = token.address.toLowerCase()
 
-        if (!Array.isArray(pairs) || pairs.length === 0) {
-            return emptyData
-        }
-
         let bestPair = pairs
             .filter((p: any) => p.baseToken?.address?.toLowerCase() === tokenAddr)
             .sort(
@@ -144,10 +140,31 @@ async function fetchMarketData(symbol: string, period: ChartPeriod): Promise<Tok
             }
 
             if (poolAddress) {
+                const poolInfoRes = await fetch(
+                    `https://api.geckoterminal.com/api/v2/networks/${GECKO_TERMINAL_NETWORK}/pools/${poolAddress}`,
+                    { headers: { Accept: "application/json;version=20230302" } },
+                )
+
+                let tokenParam = "base" // default
+
+                if (poolInfoRes.ok) {
+                    const poolInfo = await poolInfoRes.json()
+                    const baseTokenAddress = poolInfo.data?.attributes?.base_token_address?.toLowerCase()
+                    const quoteTokenAddress = poolInfo.data?.attributes?.quote_token_address?.toLowerCase()
+                    const ourTokenAddress = token.address.toLowerCase()
+
+                    // Determinar si nuestro token es base o quote EN GECKOTERMINAL
+                    if (quoteTokenAddress === ourTokenAddress) {
+                        tokenParam = "quote"
+                    } else if (baseTokenAddress === ourTokenAddress) {
+                        tokenParam = "base"
+                    }
+                }
+
                 const { timeframe, limit } = getOHLCVParams(period)
 
                 const ohlcvRes = await fetch(
-                    `https://api.geckoterminal.com/api/v2/networks/${GECKO_TERMINAL_NETWORK}/pools/${poolAddress}/ohlcv/${timeframe}?limit=${limit}&token=${isQuoteToken ? "quote" : "base"}`,
+                    `https://api.geckoterminal.com/api/v2/networks/${GECKO_TERMINAL_NETWORK}/pools/${poolAddress}/ohlcv/${timeframe}?limit=${limit}&token=${tokenParam}`,
                     { headers: { Accept: "application/json;version=20230302" } },
                 )
 
