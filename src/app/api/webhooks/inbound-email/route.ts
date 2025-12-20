@@ -46,8 +46,14 @@ export async function POST(request: NextRequest) {
     try {
         // Security check: Match MAILER_SECRET
         const authHeader = request.headers.get("Authorization");
-        if (authHeader !== `Bearer ${process.env.MAILER_SECRET}`) {
+        const expectedSecret = process.env.MAILER_SECRET;
+        const expectedHeader = `Bearer ${expectedSecret}`;
+
+        if (!authHeader || authHeader.trim() !== expectedHeader.trim()) {
             console.error('❌ Unauthorized webhook attempt');
+            console.log(`Diagnostic - Header present: ${!!authHeader}`);
+            console.log(`Diagnostic - Received length: ${authHeader?.length}`);
+            console.log(`Diagnostic - Expected length: ${expectedHeader.length}`);
             return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
         }
 
