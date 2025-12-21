@@ -376,7 +376,7 @@ export default function TicketDetailPage() {
 
                         <div className="space-y-1">
                             <p className="text-[10px] text-zinc-500 uppercase font-black tracking-tight">Email del Usuario</p>
-                            <p className="text-sm font-medium text-pink-400 break-all select-all">{ticket.email}</p>
+                            <p className="text-sm font-medium text-pink-400 break-all select-all">{ticket.email.toLowerCase()}</p>
                         </div>
 
                         {ticket.wallet_address && (
@@ -479,7 +479,7 @@ export default function TicketDetailPage() {
                                     </div>
                                     <div className="flex-1 space-y-2">
                                         <div className="flex items-center gap-3">
-                                            <p className="font-bold text-sm text-zinc-100">{ticket.email}</p>
+                                            <p className="font-bold text-sm text-zinc-100">{ticket.email.toLowerCase()}</p>
                                             <span className="text-[10px] uppercase font-bold text-zinc-600 tracking-wider bg-zinc-800 px-2 py-0.5 rounded-full">{formatDate(ticket.created_at)}</span>
                                         </div>
                                         <div className="bg-zinc-800/80 rounded-2xl rounded-tl-none p-4 border border-zinc-700/50">

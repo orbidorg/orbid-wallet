@@ -248,7 +248,7 @@ export default function AdminTicketsPage() {
                                         <div className="flex items-center gap-3">
                                             <span className="text-xl">{TOPIC_ICONS[ticket.topic] || '📝'}</span>
                                             <div>
-                                                <p className="font-medium text-white">{ticket.email}</p>
+                                                <p className="font-medium text-white">{ticket.email.toLowerCase()}</p>
                                                 <p className="text-xs text-zinc-500">
                                                     {ticket.ticket_id} • {LANGUAGE_FLAGS[ticket.language] || '🌐'} {ticket.language.toUpperCase()} • {timeAgo(ticket.created_at)}
                                                 </p>

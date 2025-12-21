@@ -59,3 +59,13 @@ Thumbs.db
 # Misc
 *.pem
 .turbo/
+
+# Residual and Meta files
+.git/
+.git-rewrite/
+.git_bak/
+*.bak
+*.tmp
+*.old
+.npm/
+.node_repl_history
