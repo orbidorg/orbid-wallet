@@ -94,13 +94,6 @@ export const WORLD_CHAIN_TOKENS: Token[] = [
         decimals: 18,
         logoURI: 'https://assets.coingecko.com/coins/images/29850/standard/pepe-token.jpeg',
     },
-    {
-        symbol: 'OID',
-        name: 'OrbID Token',
-        address: '0x0000000000000000000000000000000000000000',
-        decimals: 18,
-        logoURI: 'https://magenta-wrong-impala-427.mypinata.cloud/ipfs/bafkreibwb3ywvgfi3j2zh2ywa4ano47cvm5gwlp2batrizolk6wqn7oogy',
-    },
     // TODO: Uncomment when added to developer portal
     // {
     //     symbol: 'SUSHI',
