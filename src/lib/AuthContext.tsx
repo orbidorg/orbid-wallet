@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { MiniKit } from '@worldcoin/minikit-js';
 import { useMiniKit } from '@/components/Providers';
 import Analytics, { setAnalyticsUser } from './analytics';
@@ -21,12 +21,11 @@ interface AuthContextType extends AuthState {
     updateNewsletterSubscription: (email: string) => Promise<void>;
     closeNewsletter: () => void;
     setVerifiedHuman: (verified: boolean) => void;
-    logout: () => Promise<void>;
+    logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// Temporary local cache for wallet (needed since MiniKit doesn't persist wallet)
 const WALLET_CACHE_KEY = 'orbid_wallet_cache';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -42,13 +41,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     const { isReady: miniKitReady, isInstalled: isInWorldApp } = useMiniKit();
 
-    // Track if user explicitly logged out to prevent auto-reconnection
-    const hasLoggedOutRef = useRef(false);
-
-    // Initialize auth state - Uses Supabase as source of truth
+    // Initialize auth state from localStorage only
     const initAuth = useCallback(async () => {
         try {
-            // Try to get cached wallet address
             const cached = localStorage.getItem(WALLET_CACHE_KEY);
             const cachedWallet = cached ? JSON.parse(cached) : null;
 
@@ -67,12 +62,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 return;
             }
 
-            // Check Supabase for user session
+            // Verify session with backend
             const sessionRes = await fetch(`/api/auth/session?wallet=${cachedWallet.walletAddress}`);
             const sessionData = await sessionRes.json();
 
             if (!sessionData.authenticated) {
-                // User not in Supabase - clear cache and show login
                 localStorage.removeItem(WALLET_CACHE_KEY);
                 setState({
                     isReady: true,
@@ -87,9 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 return;
             }
 
-            // User exists in Supabase
             const user = sessionData.user;
-
             setState({
                 isReady: true,
                 isAuthenticated: true,
@@ -98,11 +90,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 email: user.email,
                 isInWorldApp,
                 isVerifiedHuman: user.isVerifiedHuman || false,
-                newsletterClosed: !!user.email, // If they have an email, we assume they either subbed or were asked
+                newsletterClosed: !!user.email,
             });
             setAnalyticsUser(user.id);
         } catch (error) {
             console.error('Auth init error:', error);
+            localStorage.removeItem(WALLET_CACHE_KEY);
             setState({
                 isReady: true,
                 isAuthenticated: false,
@@ -122,7 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, [miniKitReady, initAuth]);
 
-    // Login with World App - Creates session in Supabase
+    // Login with World App - Always shows dialog
     const loginWithWorldApp = useCallback(async () => {
         if (!isInWorldApp) {
             return;
@@ -134,19 +127,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const { finalPayload } = await MiniKit.commandsAsync.walletAuth({
                 nonce,
                 statement: 'Connect to OrbId Wallet',
-                expirationTime: new Date(Date.now() + 60000), // Short expiration to force dialog
             });
 
             if (finalPayload.status === 'success') {
                 const address = finalPayload.address;
                 const username = MiniKit.user?.username || null;
 
-                // Reset the logout flag since user is logging in again
-                hasLoggedOutRef.current = false;
-
                 localStorage.setItem(WALLET_CACHE_KEY, JSON.stringify({ walletAddress: address, username }));
 
-                // Create session in Supabase
                 const res = await fetch('/api/auth/session', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -172,7 +160,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, [isInWorldApp]);
 
-    // Update newsletter subscription
     const updateNewsletterSubscription = useCallback(async (email: string) => {
         try {
             const res = await fetch('/api/analytics/user', {
@@ -206,19 +193,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setState(prev => ({ ...prev, isVerifiedHuman: verified }));
     }, []);
 
-    // Logout - Clears all local state and cache
-    const logout = useCallback(async () => {
-        // Mark that user explicitly logged out
-        hasLoggedOutRef.current = true;
-
-        // Clear all OrbId-related localStorage keys
-        localStorage.removeItem(WALLET_CACHE_KEY);
-        localStorage.removeItem('orbid_world_id_verified');
-        localStorage.removeItem('notifications_enabled');
-
-        // Clear any sessionStorage if used
+    // Logout - Simple and clean
+    const logout = useCallback(() => {
+        // Clear ALL storage
+        localStorage.clear();
         sessionStorage.clear();
 
+        // Reset state immediately
         setState({
             isReady: true,
             isAuthenticated: false,
