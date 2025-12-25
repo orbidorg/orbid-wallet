@@ -199,11 +199,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setState(prev => ({ ...prev, isVerifiedHuman: verified }));
     }, []);
 
-    // Logout - Clears local state
+    // Logout - Clears all local state and cache
     const logout = useCallback(async () => {
-        // Clear local cache
+        // Clear all OrbId-related localStorage keys
         localStorage.removeItem(WALLET_CACHE_KEY);
         localStorage.removeItem('orbid_world_id_verified');
+        localStorage.removeItem('notifications_enabled');
+
+        // Clear any sessionStorage if used
+        sessionStorage.clear();
 
         setState({
             isReady: true,
@@ -218,7 +222,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         Analytics.logout();
         setAnalyticsUser(null);
-    }, [isInWorldApp, state.walletAddress]);
+    }, [isInWorldApp]);
 
     return (
         <AuthContext.Provider value={{
