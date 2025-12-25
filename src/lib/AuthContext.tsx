@@ -41,61 +41,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     const { isReady: miniKitReady, isInstalled: isInWorldApp } = useMiniKit();
 
-    // Initialize auth state from localStorage only
-    const initAuth = useCallback(async () => {
-        try {
-            const cached = localStorage.getItem(WALLET_CACHE_KEY);
-            const cachedWallet = cached ? JSON.parse(cached) : null;
+    // Initialize auth state from localStorage ONLY - no Supabase check
+    const initAuth = useCallback(() => {
+        const cached = localStorage.getItem(WALLET_CACHE_KEY);
+        const cachedWallet = cached ? JSON.parse(cached) : null;
 
-            if (!cachedWallet?.walletAddress) {
-                // No cached wallet - user needs to connect
-                setState({
-                    isReady: true,
-                    isAuthenticated: false,
-                    walletAddress: null,
-                    username: null,
-                    email: null,
-                    isInWorldApp,
-                    isVerifiedHuman: false,
-                    newsletterClosed: false,
-                });
-                return;
-            }
-
-            // Verify session with backend
-            const sessionRes = await fetch(`/api/auth/session?wallet=${cachedWallet.walletAddress}`);
-            const sessionData = await sessionRes.json();
-
-            if (!sessionData.authenticated) {
-                localStorage.removeItem(WALLET_CACHE_KEY);
-                setState({
-                    isReady: true,
-                    isAuthenticated: false,
-                    walletAddress: null,
-                    username: null,
-                    email: null,
-                    isInWorldApp,
-                    isVerifiedHuman: false,
-                    newsletterClosed: false,
-                });
-                return;
-            }
-
-            const user = sessionData.user;
-            setState({
-                isReady: true,
-                isAuthenticated: true,
-                walletAddress: user.walletAddress,
-                username: user.username || cachedWallet.username,
-                email: user.email,
-                isInWorldApp,
-                isVerifiedHuman: user.isVerifiedHuman || false,
-                newsletterClosed: !!user.email,
-            });
-            setAnalyticsUser(user.id);
-        } catch (error) {
-            console.error('Auth init error:', error);
-            localStorage.removeItem(WALLET_CACHE_KEY);
+        if (!cachedWallet?.walletAddress) {
+            // No cached wallet - user needs to connect
             setState({
                 isReady: true,
                 isAuthenticated: false,
@@ -106,7 +58,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 isVerifiedHuman: false,
                 newsletterClosed: false,
             });
+            return;
         }
+
+        // Use cached data directly - no Supabase verification
+        setState({
+            isReady: true,
+            isAuthenticated: true,
+            walletAddress: cachedWallet.walletAddress,
+            username: cachedWallet.username || null,
+            email: cachedWallet.email || null,
+            isInWorldApp,
+            isVerifiedHuman: cachedWallet.isVerifiedHuman || false,
+            newsletterClosed: cachedWallet.newsletterClosed || false,
+        });
     }, [isInWorldApp]);
 
     useEffect(() => {
@@ -115,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, [miniKitReady, initAuth]);
 
-    // Login with World App - Always shows dialog
+    // Login with World App - Creates session in Supabase AFTER MiniKit dialog
     const loginWithWorldApp = useCallback(async () => {
         if (!isInWorldApp) {
             return;
@@ -133,8 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const address = finalPayload.address;
                 const username = MiniKit.user?.username || null;
 
-                localStorage.setItem(WALLET_CACHE_KEY, JSON.stringify({ walletAddress: address, username }));
-
+                // Save to Supabase
                 const res = await fetch('/api/auth/session', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -142,17 +106,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 });
                 const data = await res.json();
 
-                if (data.success) {
-                    setState(prev => ({
-                        ...prev,
-                        isAuthenticated: true,
-                        walletAddress: address,
-                        username,
-                        isVerifiedHuman: data.isVerifiedHuman || false,
-                        newsletterClosed: !!data.email,
-                    }));
-                    Analytics.login('worldapp');
+                // Cache everything locally
+                const cacheData = {
+                    walletAddress: address,
+                    username,
+                    email: data.email || null,
+                    isVerifiedHuman: data.isVerifiedHuman || false,
+                    newsletterClosed: !!data.email,
+                };
+                localStorage.setItem(WALLET_CACHE_KEY, JSON.stringify(cacheData));
+
+                setState(prev => ({
+                    ...prev,
+                    isAuthenticated: true,
+                    walletAddress: address,
+                    username,
+                    isVerifiedHuman: data.isVerifiedHuman || false,
+                    newsletterClosed: !!data.email,
+                }));
+
+                if (data.userId) {
+                    setAnalyticsUser(data.userId);
                 }
+                Analytics.login('worldapp');
             }
         } catch (error) {
             console.error('World App login error:', error);
@@ -174,6 +150,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const result = await res.json();
 
             if (result.success) {
+                // Update local cache
+                const cached = localStorage.getItem(WALLET_CACHE_KEY);
+                if (cached) {
+                    const cacheData = JSON.parse(cached);
+                    cacheData.email = email;
+                    cacheData.newsletterClosed = true;
+                    localStorage.setItem(WALLET_CACHE_KEY, JSON.stringify(cacheData));
+                }
+
                 setState(prev => ({
                     ...prev,
                     email,
@@ -186,20 +171,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, [state.walletAddress, state.isVerifiedHuman]);
 
     const closeNewsletter = useCallback(() => {
+        // Update local cache
+        const cached = localStorage.getItem(WALLET_CACHE_KEY);
+        if (cached) {
+            const cacheData = JSON.parse(cached);
+            cacheData.newsletterClosed = true;
+            localStorage.setItem(WALLET_CACHE_KEY, JSON.stringify(cacheData));
+        }
         setState(prev => ({ ...prev, newsletterClosed: true }));
     }, []);
 
     const setVerifiedHuman = useCallback((verified: boolean) => {
+        // Update local cache
+        const cached = localStorage.getItem(WALLET_CACHE_KEY);
+        if (cached) {
+            const cacheData = JSON.parse(cached);
+            cacheData.isVerifiedHuman = verified;
+            localStorage.setItem(WALLET_CACHE_KEY, JSON.stringify(cacheData));
+        }
         setState(prev => ({ ...prev, isVerifiedHuman: verified }));
     }, []);
 
-    // Logout - Simple and clean
+    // Logout - Clear everything
     const logout = useCallback(() => {
-        // Clear ALL storage
         localStorage.clear();
         sessionStorage.clear();
 
-        // Reset state immediately
         setState({
             isReady: true,
             isAuthenticated: false,
