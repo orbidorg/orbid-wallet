@@ -13,7 +13,7 @@ interface DashboardStats {
     devices: { device: string; count: number }[];
     browsers: { browser: string; count: number }[];
     os: { os: string; count: number }[];
-    recentUsers: { email: string; wallet: string; country: string; created: string; logins: number }[];
+    recentUsers: { email: string; wallet: string; username: string; isVerified: boolean; country: string; created: string; logins: number }[];
 }
 
 export default function AdminDashboard() {
@@ -28,6 +28,8 @@ export default function AdminDashboard() {
     const [exportConfig, setExportConfig] = useState({
         email: true,
         wallet: true,
+        username: true,
+        verified: true,
         country: true,
         logins: true,
         joined: true
@@ -106,6 +108,8 @@ export default function AdminDashboard() {
         const headers = [];
         if (exportConfig.email) headers.push('Email');
         if (exportConfig.wallet) headers.push('Wallet');
+        if (exportConfig.username) headers.push('Username');
+        if (exportConfig.verified) headers.push('Verified');
         if (exportConfig.country) headers.push('Country');
         if (exportConfig.logins) headers.push('Logins');
         if (exportConfig.joined) headers.push('Joined Date');
@@ -114,6 +118,8 @@ export default function AdminDashboard() {
             const row = [];
             if (exportConfig.email) row.push(`"${user.email || ''}"`);
             if (exportConfig.wallet) row.push(`"${user.wallet || ''}"`);
+            if (exportConfig.username) row.push(`"${user.username || ''}"`);
+            if (exportConfig.verified) row.push(user.isVerified ? 'Yes' : 'No');
             if (exportConfig.country) row.push(`"${user.country || ''}"`);
             if (exportConfig.logins) row.push(user.logins || 0);
             if (exportConfig.joined) row.push(`"${user.created || ''}"`);
@@ -136,6 +142,8 @@ export default function AdminDashboard() {
         setExportConfig({
             email: checked,
             wallet: checked,
+            username: checked,
+            verified: checked,
             country: checked,
             logins: checked,
             joined: checked
@@ -397,10 +405,12 @@ export default function AdminDashboard() {
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="text-zinc-400 border-b border-zinc-800">
-                                    <th className="text-left py-2 px-2">Email</th>
+                                    <th className="text-left py-2 px-2">User</th>
                                     <th className="text-left py-2 px-2">Wallet</th>
+                                    <th className="text-left py-2 px-2">Email</th>
                                     <th className="text-left py-2 px-2">Country</th>
                                     <th className="text-left py-2 px-2">Logins</th>
+                                    <th className="text-left py-2 px-2 font-medium">Verified</th>
                                     <th className="text-left py-2 px-2">Joined</th>
                                 </tr>
                             </thead>
@@ -410,20 +420,32 @@ export default function AdminDashboard() {
                                         key={i}
                                         className="border-b border-zinc-800/50 hover:bg-zinc-800/30"
                                     >
-                                        <td className="py-2 px-2 text-white">{user.email || '—'}</td>
+                                        <td className="py-2 px-2">
+                                            <div className="flex flex-col">
+                                                <span className="text-white font-medium">{user.username || 'Anonymous'}</span>
+                                            </div>
+                                        </td>
                                         <td className="py-2 px-2 text-zinc-400 font-mono text-xs">
                                             {user.wallet ? `${user.wallet.slice(0, 6)}...${user.wallet.slice(-4)}` : '—'}
                                         </td>
+                                        <td className="py-2 px-2 text-zinc-500 text-xs truncate max-w-[120px]">{user.email || '—'}</td>
                                         <td className="py-2 px-2">
                                             {user.country ? (
                                                 <span className="flex items-center gap-1">
                                                     <span>{getFlagEmoji(user.country)}</span>
-                                                    <span className="text-zinc-400">{user.country}</span>
+                                                    <span className="text-zinc-400 text-xs">{user.country}</span>
                                                 </span>
                                             ) : '—'}
                                         </td>
-                                        <td className="py-2 px-2 text-zinc-400">{user.logins || 1}</td>
-                                        <td className="py-2 px-2 text-zinc-500">{formatDate(user.created)}</td>
+                                        <td className="py-2 px-2 text-zinc-400 text-xs text-center">{user.logins || 1}</td>
+                                        <td className="py-2 px-2">
+                                            {user.isVerified ? (
+                                                <span className="px-2 py-0.5 bg-green-500/10 text-green-400 text-[10px] font-bold rounded-full border border-green-500/20 uppercase tracking-tighter">Verified</span>
+                                            ) : (
+                                                <span className="px-2 py-0.5 bg-zinc-800 text-zinc-500 text-[10px] font-bold rounded-full border border-zinc-700/50 uppercase tracking-tighter">Standard</span>
+                                            )}
+                                        </td>
+                                        <td className="py-2 px-2 text-zinc-500 text-xs">{formatDate(user.created)}</td>
                                     </tr>
                                 ))}
                                 {(!stats?.recentUsers || stats.recentUsers.length === 0) && (
@@ -555,26 +577,60 @@ function formatDate(dateStr: string): string {
 
 function getFlagEmoji(countryName: string): string {
     const countryToCodes: Record<string, string> = {
-        'United States': 'US', 'Canada': 'CA', 'Mexico': 'MX', 'Brazil': 'BR',
-        'Argentina': 'AR', 'Colombia': 'CO', 'Chile': 'CL', 'Peru': 'PE',
-        'Venezuela': 'VE', 'Ecuador': 'EC', 'Bolivia': 'BO', 'Paraguay': 'PY',
-        'Uruguay': 'UY', 'Costa Rica': 'CR', 'Panama': 'PA', 'Guatemala': 'GT',
-        'Honduras': 'HN', 'El Salvador': 'SV', 'Nicaragua': 'NI', 'Cuba': 'CU',
-        'Dominican Republic': 'DO', 'Puerto Rico': 'PR', 'Jamaica': 'JM', 'Haiti': 'HT',
-        'United Kingdom': 'GB', 'Germany': 'DE', 'France': 'FR', 'Italy': 'IT',
-        'Spain': 'ES', 'Portugal': 'PT', 'Netherlands': 'NL', 'Belgium': 'BE',
-        'Switzerland': 'CH', 'Austria': 'AT', 'Sweden': 'SE', 'Norway': 'NO',
-        'Denmark': 'DK', 'Finland': 'FI', 'Ireland': 'IE', 'Poland': 'PL',
-        'Czech Republic': 'CZ', 'Czechia': 'CZ', 'Greece': 'GR', 'Hungary': 'HU',
-        'Romania': 'RO', 'Bulgaria': 'BG', 'Croatia': 'HR', 'Slovakia': 'SK',
-        'Slovenia': 'SI', 'Serbia': 'RS', 'Ukraine': 'UA', 'Russia': 'RU',
-        'China': 'CN', 'Japan': 'JP', 'South Korea': 'KR', 'Korea, Republic of': 'KR',
-        'India': 'IN', 'Indonesia': 'ID', 'Thailand': 'TH', 'Vietnam': 'VN',
-        'Philippines': 'PH', 'Malaysia': 'MY', 'Singapore': 'SG', 'Taiwan': 'TW',
-        'Hong Kong': 'HK', 'Pakistan': 'PK', 'Bangladesh': 'BD', 'Turkey': 'TR',
-        'Israel': 'IL', 'Saudi Arabia': 'SA', 'United Arab Emirates': 'AE',
-        'South Africa': 'ZA', 'Nigeria': 'NG', 'Egypt': 'EG', 'Kenya': 'KE',
-        'Australia': 'AU', 'New Zealand': 'NZ'
+        "Afghanistan": "AF", "Åland Islands": "AX", "Albania": "AL", "Algeria": "DZ", "American Samoa": "AS",
+        "Andorra": "AD", "Angola": "AO", "Anguilla": "AI", "Antarctica": "AQ", "Antigua and Barbuda": "AG",
+        "Argentina": "AR", "Armenia": "AM", "Aruba": "AW", "Australia": "AU", "Austria": "AT",
+        "Azerbaijan": "AZ", "Bahamas": "BS", "Bahrain": "BH", "Bangladesh": "BD", "Barbados": "BB",
+        "Belarus": "BY", "Belgium": "BE", "Belize": "BZ", "Benin": "BJ", "Bermuda": "BM",
+        "Bhutan": "BT", "Bolivia": "BO", "Bolivia, Plurinational State of": "BO", "Bonaire, Sint Eustatius and Saba": "BQ", "Bosnia and Herzegovina": "BA",
+        "Botswana": "BW", "Bouvet Island": "BV", "Brazil": "BR", "British Indian Ocean Territory": "IO", "Brunei Darussalam": "BN",
+        "Bulgaria": "BG", "Burkina Faso": "BF", "Burundi": "BI", "Cabo Verde": "CV", "Cambodia": "KH",
+        "Cameroon": "CM", "Canada": "CA", "Cayman Islands": "KY", "Central African Republic": "CF", "Chad": "TD",
+        "Chile": "CL", "China": "CN", "Christmas Island": "CX", "Cocos (Keeling) Islands": "CC", "Colombia": "CO",
+        "Comoros": "KM", "Congo": "CG", "Congo, Democratic Republic of the": "CD", "Cook Islands": "CK", "Costa Rica": "CR",
+        "Côte d'Ivoire": "CI", "Croatia": "HR", "Cuba": "CU", "Curaçao": "CW", "Cyprus": "CY",
+        "Czech Republic": "CZ", "Czechia": "CZ", "Denmark": "DK", "Djibouti": "DJ", "Dominica": "DM",
+        "Dominican Republic": "DO", "Ecuador": "EC", "Egypt": "EG", "El Salvador": "SV", "Equatorial Guinea": "GQ",
+        "Eritrea": "ER", "Estonia": "EE", "Eswatini": "SZ", "Ethiopia": "ET", "Falkland Islands (Malvinas)": "FK",
+        "Faroe Islands": "FO", "Fiji": "FJ", "Finland": "FI", "France": "FR", "French Guiana": "GF",
+        "French Polynesia": "PF", "French Southern Territories": "TF", "Gabon": "GA", "Gambia": "GM", "Georgia": "GE",
+        "Germany": "DE", "Ghana": "GH", "Gibraltar": "GI", "Greece": "GR", "Greenland": "GL",
+        "Grenada": "GD", "Guadeloupe": "GP", "Guam": "GU", "Guatemala": "GT", "Guernsey": "GG",
+        "Guinea": "GN", "Guinea-Bissau": "GW", "Guyana": "GY", "Haiti": "HT", "Heard Island and McDonald Islands": "HM",
+        "Holy See": "VA", "Honduras": "HN", "Hong Kong": "HK", "Hungary": "HU", "Iceland": "IS",
+        "India": "IN", "Indonesia": "ID", "Iran": "IR", "Iran, Islamic Republic of": "IR", "Iraq": "IQ",
+        "Ireland": "IE", "Isle of Man": "IM", "Israel": "IL", "Italy": "IT", "Jamaica": "JM",
+        "Japan": "JP", "Jersey": "JE", "Jordan": "JO", "Kazakhstan": "KZ", "Kenya": "KE",
+        "Kiribati": "KI", "Korea, Democratic People's Republic of": "KP", "Korea, Republic of": "KR", "South Korea": "KR", "Kuwait": "KW",
+        "Kyrgyzstan": "KG", "Lao People's Democratic Republic": "LA", "Laos": "LA", "Latvia": "LV", "Lebanon": "LB",
+        "Lesotho": "LS", "Liberia": "LR", "Libya": "LY", "Liechtenstein": "LI", "Lithuania": "LT",
+        "Luxembourg": "LU", "Macao": "MO", "Madagascar": "MG", "Malawi": "MW", "Malaysia": "MY",
+        "Maldives": "MV", "Mali": "ML", "Malta": "MT", "Marshall Islands": "MH", "Martinique": "MQ",
+        "Mauritania": "MR", "Mauritius": "MU", "Mayotte": "YT", "Mexico": "MX", "Micronesia, Federated States of": "FM",
+        "Moldova, Republic of": "MD", "Monaco": "MC", "Mongolia": "MN", "Montenegro": "ME", "Montserrat": "MS",
+        "Morocco": "MA", "Mozambique": "MZ", "Myanmar": "MM", "Namibia": "NA", "Nauru": "NR",
+        "Nepal": "NP", "Netherlands": "NL", "Netherlands, Kingdom of the": "NL", "New Caledonia": "NC", "New Zealand": "NZ",
+        "Nicaragua": "NI", "Niger": "NE", "Nigeria": "NG", "Niue": "NU", "Norfolk Island": "NF",
+        "North Macedonia": "MK", "Northern Mariana Islands": "MP", "Norway": "NO", "Oman": "OM", "Pakistan": "PK",
+        "Palau": "PW", "Palestine, State of": "PS", "Panama": "PA", "Papua New Guinea": "PG", "Paraguay": "PY",
+        "Peru": "PE", "Philippines": "PH", "Pitcairn": "PN", "Poland": "PL", "Portugal": "PT",
+        "Puerto Rico": "PR", "Qatar": "QA", "Réunion": "RE", "Romania": "RO", "Russia": "RU",
+        "Russian Federation": "RU", "Rwanda": "RW", "Saint Barthélemy": "BL", "Saint Helena, Ascension and Tristan da Cunha": "SH",
+        "Saint Kitts and Nevis": "KN", "Saint Lucia": "LC", "Saint Martin (French part)": "MF", "Saint Pierre and Miquelon": "PM",
+        "Saint Vincent and the Grenadines": "VC", "Samoa": "WS", "San Marino": "SM", "Sao Tome and Principe": "ST",
+        "Saudi Arabia": "SA", "Senegal": "SN", "Serbia": "RS", "Seychelles": "SC", "Sierra Leone": "SL",
+        "Singapore": "SG", "Sint Maarten (Dutch part)": "SX", "Slovakia": "SK", "Slovenia": "SI", "Solomon Islands": "SB",
+        "Somalia": "SO", "South Africa": "ZA", "South Georgia and the South Sandwich Islands": "GS", "South Sudan": "SS", "Spain": "ES",
+        "Sri Lanka": "LK", "Sudan": "SD", "Suriname": "SR", "Svalbard and Jan Mayen": "SJ", "Sweden": "SE",
+        "Switzerland": "CH", "Syrian Arab Republic": "SY", "Syria": "SY", "Taiwan": "TW", "Taiwan, Province of China": "TW",
+        "Tajikistan": "TJ", "Tanzania": "TZ", "Tanzania, United Republic of": "TZ", "Thailand": "TH", "Timor-Leste": "TL",
+        "Togo": "TG", "Tokelau": "TK", "Tonga": "TO", "Trinidad and Tobago": "TT", "Tunisia": "TN",
+        "Turkey": "TR", "Türkiye": "TR", "Turkmenistan": "TM", "Turks and Caicos Islands": "TC", "Tuvalu": "TV",
+        "Uganda": "UG", "Ukraine": "UA", "United Arab Emirates": "AE", "United Kingdom": "GB", "United Kingdom of Great Britain and Northern Ireland": "GB",
+        "United States": "US", "United States of America": "US", "United States Minor Outlying Islands": "UM", "Uruguay": "UY", "Uzbekistan": "UZ",
+        "Vanuatu": "VU", "Venezuela": "VE", "Venezuela, Bolivarian Republic of": "VE", "Viet Nam": "VN", "Vietnam": "VN",
+        "Virgin Islands (British)": "VG", "Virgin Islands (U.S.)": "VI", "Wallis and Futuna": "WF", "Western Sahara": "EH", "Yemen": "YE",
+        "Zambia": "ZM", "Zimbabwe": "ZW"
     };
     const code = countryToCodes[countryName];
     if (code) {

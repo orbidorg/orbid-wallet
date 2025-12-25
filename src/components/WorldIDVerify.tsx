@@ -6,6 +6,7 @@ import { MiniKit, VerifyCommandInput, VerificationLevel } from '@worldcoin/minik
 import { AnimatedButton, FadeIn } from './ui/Motion';
 import { createOrUpdateUser } from '@/lib/analytics';
 import { useI18n } from '@/lib/i18n';
+import { useAuth } from '@/lib/AuthContext';
 
 const VERIFIED_STORAGE_KEY = 'orbid_world_id_verified';
 
@@ -19,20 +20,14 @@ export default function WorldIDVerify({
     onVerificationError
 }: WorldIDVerifyProps) {
     const { t } = useI18n();
+    const { isVerifiedHuman, setVerifiedHuman } = useAuth();
     const [isVerifying, setIsVerifying] = useState(false);
-    const [isVerified, setIsVerified] = useState(false);
     const [showAlreadyVerified, setShowAlreadyVerified] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        const verified = localStorage.getItem(VERIFIED_STORAGE_KEY);
-        if (verified === 'true') {
-            setIsVerified(true);
-        }
-    }, []);
 
     const handleVerify = async () => {
-        if (isVerified) {
+        if (isVerifiedHuman) {
             setShowAlreadyVerified(true);
             setTimeout(() => setShowAlreadyVerified(false), 3000);
             return;
@@ -68,12 +63,9 @@ export default function WorldIDVerify({
                 const backendData = await backendRes.json();
 
                 // Continue regardless of backend result - MiniKit proof is valid
-                if (!backendRes.ok && backendData.code !== 'already_verified') {
-                    console.warn('[WorldIDVerify] Backend verification failed:', backendData.error);
-                }
-
-                setIsVerified(true);
+                // CONTINUE
                 localStorage.setItem(VERIFIED_STORAGE_KEY, 'true');
+                setVerifiedHuman(true);
 
                 // Update user as verified in Supabase
                 const stored = localStorage.getItem('orbid_wallet_cache');
@@ -97,7 +89,7 @@ export default function WorldIDVerify({
     };
 
     // Verified state
-    if (isVerified) {
+    if (isVerifiedHuman) {
         return (
             <FadeIn>
                 <motion.button

@@ -245,23 +245,39 @@ export default function AdminTicketsPage() {
                                     className="block p-4 hover:bg-white/5 transition-colors"
                                 >
                                     <div className="flex items-start justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-xl">{TOPIC_ICONS[ticket.topic] || '📝'}</span>
-                                            <div>
-                                                <p className="font-medium text-white">{ticket.email.toLowerCase()}</p>
-                                                <p className="text-xs text-zinc-500">
-                                                    {ticket.ticket_id} • {LANGUAGE_FLAGS[ticket.language] || '🌐'} {ticket.language.toUpperCase()} • {timeAgo(ticket.created_at)}
-                                                </p>
+                                        <div className="flex items-start gap-4">
+                                            <span className="text-2xl mt-1">{TOPIC_ICONS[ticket.topic] || '📝'}</span>
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-pink-500 font-mono text-[10px] font-bold tracking-wider">{ticket.ticket_id}</span>
+                                                    <span className="text-zinc-600">•</span>
+                                                    <span className="text-zinc-400 text-xs">
+                                                        {LANGUAGE_FLAGS[ticket.language] || '🌐'} {ticket.language.toUpperCase()}
+                                                    </span>
+                                                </div>
+                                                <h3 className="text-white font-semibold">
+                                                    {ticket.wallet_address ? (
+                                                        <span className="flex items-center gap-2">
+                                                            <span className="font-mono text-zinc-200">{`${ticket.wallet_address.slice(0, 6)}...${ticket.wallet_address.slice(-4)}`}</span>
+                                                            <span className="text-zinc-500 text-xs font-normal">({ticket.email})</span>
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-zinc-200">{ticket.email}</span>
+                                                    )}
+                                                </h3>
+                                                <p className="text-xs text-zinc-500">{timeAgo(ticket.created_at)}</p>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className={`text-xs ${PRIORITY_CONFIG[ticket.priority].color}`}>
-                                                {ticket.priority === 'high' ? '🔴' : ticket.priority === 'medium' ? '🟡' : '⚪'}
-                                            </span>
-                                            <span className={`px-2 py-0.5 rounded text-xs ${STATUS_CONFIG[ticket.status].color}/20 text-white`}>
-                                                {STATUS_CONFIG[ticket.status].label}
-                                            </span>
-                                            <span className="text-zinc-600">→</span>
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex flex-col items-end gap-1.5">
+                                                <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold ${STATUS_CONFIG[ticket.status].color} text-white`}>
+                                                    {STATUS_CONFIG[ticket.status].label}
+                                                </span>
+                                                <span className={`text-[10px] font-bold uppercase tracking-tight ${PRIORITY_CONFIG[ticket.priority].color}`}>
+                                                    {PRIORITY_CONFIG[ticket.priority].label}
+                                                </span>
+                                            </div>
+                                            <span className="text-zinc-600 text-lg">→</span>
                                         </div>
                                     </div>
                                     <p className="mt-2 text-xs text-zinc-400 line-clamp-1">{ticket.message}</p>

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AnimatedButton, ModalBackdrop, ModalContent, FadeIn, Pressable } from '../ui/Motion';
 import { useToast } from '@/lib/ToastContext';
 import { useI18n } from '@/lib/i18n';
+import { useAuth } from '@/lib/AuthContext';
 
 interface HelpModalProps {
     isOpen: boolean;
@@ -23,6 +24,7 @@ interface TicketStatus {
 export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
     const { showToast } = useToast();
     const { t, lang } = useI18n();
+    const { walletAddress } = useAuth();
     const [view, setView] = useState<View>('topics');
     const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
     const [email, setEmail] = useState('');
@@ -155,6 +157,7 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
                     message,
                     attachments: uploadedUrls,
                     language: lang,
+                    walletAddress,
                 })
             });
 

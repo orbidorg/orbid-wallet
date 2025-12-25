@@ -140,22 +140,13 @@ export async function POST(request: NextRequest) {
                 .maybeSingle();
 
             if (existingByWallet) {
-                // Check email conflict
-                if (email && existingByWallet.email && existingByWallet.email !== email) {
-                    return NextResponse.json({
-                        error: 'wallet_already_linked',
-                        message: 'This World ID is linked to another email',
-                        linkedEmail: maskEmail(existingByWallet.email)
-                    }, { status: 409 });
-                }
-
-                // Update existing user
+                // Update existing user - overwrite email if provided (new behavior for optional newsletter)
                 const updateData = {
                     last_login_at: new Date().toISOString(),
                     updated_at: new Date().toISOString(),
                     total_logins: (existingByWallet.total_logins || 0) + 1,
                     ...trackingData,
-                    ...(email && !existingByWallet.email && { email }),
+                    ...(email && { email }),
                     ...(isVerifiedHuman === true && { is_verified_human: true })
                 };
 
@@ -173,14 +164,7 @@ export async function POST(request: NextRequest) {
                     .maybeSingle();
 
                 if (existingByEmail) {
-                    if (existingByEmail.wallet_address && existingByEmail.wallet_address !== walletAddress) {
-                        return NextResponse.json({
-                            error: 'email_already_linked',
-                            message: 'This email is linked to a different World ID'
-                        }, { status: 409 });
-                    }
-
-                    // Add wallet to email user
+                    // Update existing email user with wallet
                     await supabase.from('analytics_users').update({
                         wallet_address: walletAddress,
                         last_login_at: new Date().toISOString(),

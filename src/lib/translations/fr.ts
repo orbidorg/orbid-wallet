@@ -93,22 +93,7 @@ export const fr: Translations = {
         version: 'Version',
         tagline: 'Votre portail sécurisé vers l\'écosystème World App.',
     },
-    email: {
-        linkEmail: 'Lier l\'Email',
-        enterEmail: 'Entrez votre email',
-        sendCode: 'Envoyer le Code',
-        enterCode: 'Entrez le code de vérification',
-        verifyCode: 'Vérifier et Continuer',
-        codeSent: 'Code envoyé à votre email',
-        invalidCode: 'Code invalide, veuillez réessayer',
-        welcome: 'Bienvenue sur OrbId Wallet',
-        connectedWallet: 'Portefeuille Connecté',
-        emailRequired: 'L\'email est nécessaire pour la récupération du compte',
-        changeEmail: 'Changer d\'Email',
-        optionalMessage: 'Optionnel mais recommandé',
-        skipButton: 'Passer pour l\'instant',
-        checkSpam: 'Vous ne trouvez pas l\'email? Vérifiez votre dossier spam.',
-    },
+
     swap: {
         comingSoon: 'Bientôt Disponible!',
         underDevelopment: 'En Développement',
@@ -123,8 +108,7 @@ export const fr: Translations = {
         followX: 'Suivez-nous sur X',
         followXDesc: 'Restez informé des dernières nouvelles',
         followCta: 'Suivre @OrbIdLabs',
-        emailOptional: 'L\'Email est Maintenant Optionnel',
-        emailOptionalDesc: 'Nous respectons votre vie privée. Liez votre email uniquement si vous voulez des notifications.',
+
         oidTokens: 'Réclamez des Tokens $OID',
         oidTokensDesc: 'Bientôt vous pourrez réclamer des tokens $OID en utilisant OrbId Wallet.',
     },
@@ -137,6 +121,12 @@ export const fr: Translations = {
         transactionReceived: 'Paiement reçu',
         transactionSent: 'Transaction envoyée',
         notSupported: 'Notifications non supportées',
+    },
+    newsletter: {
+        title: 'Rejoignez la Communauté',
+        description: 'Obtenez un accès anticipat aux nouvelles fonctionnalités, aux mises à jour de l\'écosystème et aux drops exclusifs d\'OID.',
+        button: 'S\'abonner Maintenant',
+        skip: 'Plus tard',
     },
     common: {
         loading: 'Chargement...',
@@ -253,11 +243,7 @@ export const fr: Translations = {
     },
     validation: {
         invalidEmail: 'Veuillez entrer un email valide',
-        walletAlreadyLinked: 'Ce World ID est déjà lié à un autre email. Veuillez utiliser cet email pour vous connecter.',
-        emailAlreadyLinked: 'Cet email est lié à un autre World ID.',
         connectionError: 'Erreur de connexion. Veuillez réessayer.',
-        enter6DigitCode: 'Veuillez entrer le code à 6 chiffres',
-        failedToComplete: "Échec de l'inscription",
     },
     receive: {
         worldChainWarning: 'Envoyez uniquement des tokens compatibles World Chain à cette adresse.',

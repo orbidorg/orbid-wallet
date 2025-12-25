@@ -199,18 +199,22 @@ export async function GET(request: NextRequest) {
         if (stat === 'recent') {
             const { data } = await supabaseAdmin
                 .from('analytics_users')
-                .select('email, wallet_address, country, created_at, total_logins')
+                .select('id, email, wallet_address, username, is_verified_human, country, created_at, total_logins')
                 .order('created_at', { ascending: false }); // Removed limit to show all users
 
             const users = (data || []).map((row: {
                 email: string | null;
                 wallet_address: string | null;
+                username: string | null;
+                is_verified_human: boolean;
                 country: string | null;
                 created_at: string;
                 total_logins: number | null;
             }) => ({
                 email: row.email || null,
                 wallet: row.wallet_address || null,
+                username: row.username || null,
+                isVerified: row.is_verified_human || false,
                 country: row.country || null,
                 created: row.created_at,
                 logins: row.total_logins || 1

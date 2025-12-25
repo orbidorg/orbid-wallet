@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
         // Check if user exists
         const { data: existingUser } = await supabase
             .from('analytics_users')
-            .select('id')
+            .select('id, is_verified_human, email, username')
             .eq('wallet_address', walletLower)
             .single();
 
@@ -78,7 +78,14 @@ export async function POST(request: NextRequest) {
                 })
                 .eq('wallet_address', walletLower);
 
-            return NextResponse.json({ success: true, userId: existingUser.id, isNew: false });
+            return NextResponse.json({
+                success: true,
+                userId: existingUser.id,
+                isNew: false,
+                isVerifiedHuman: existingUser.is_verified_human,
+                email: existingUser.email,
+                username: existingUser.username
+            });
         } else {
             // Create new user
             const { data: newUser, error } = await supabase
@@ -106,32 +113,3 @@ export async function POST(request: NextRequest) {
     }
 }
 
-// DELETE: Remove user session (logout)
-export async function DELETE(request: NextRequest) {
-    try {
-        const body = await request.json();
-        const { walletAddress } = body;
-
-        if (!walletAddress) {
-            return NextResponse.json({ success: false, error: 'Missing wallet address' }, { status: 400 });
-        }
-
-        const supabase = getSupabaseAdmin();
-
-        // Delete user from analytics_users
-        const { error } = await supabase
-            .from('analytics_users')
-            .delete()
-            .eq('wallet_address', walletAddress.toLowerCase());
-
-        if (error) {
-            console.error('[Session API] Delete error:', error);
-            return NextResponse.json({ success: false, error: 'Failed to delete user' }, { status: 500 });
-        }
-
-        return NextResponse.json({ success: true });
-    } catch (error) {
-        console.error('[Session API] DELETE error:', error);
-        return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
-    }
-}

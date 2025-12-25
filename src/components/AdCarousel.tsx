@@ -7,8 +7,8 @@ import { useI18n } from '@/lib/i18n';
 
 interface Ad {
     id: string;
-    titleKey: 'orbidLive' | 'followX' | 'emailOptional' | 'oidTokens';
-    descKey: 'orbidLiveDesc' | 'followXDesc' | 'emailOptionalDesc' | 'oidTokensDesc';
+    titleKey: 'orbidLive' | 'followX' | 'oidTokens';
+    descKey: 'orbidLiveDesc' | 'followXDesc' | 'oidTokensDesc';
     icon?: 'rocket' | 'gift' | 'star' | 'bell' | 'x' | 'shield' | 'coin';
     image?: string;
     gradient: string;
@@ -18,14 +18,7 @@ interface Ad {
 }
 
 const SAMPLE_ADS: Ad[] = [
-    {
-        id: '1',
-        titleKey: 'emailOptional',
-        descKey: 'emailOptionalDesc',
-        icon: 'shield',
-        gradient: 'from-emerald-500 to-teal-600',
-        emoji: '🔒'
-    },
+
     {
         id: '2',
         titleKey: 'oidTokens',

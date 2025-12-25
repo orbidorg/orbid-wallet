@@ -12,8 +12,8 @@ import SwapInterface from './SwapInterface';
 import ActivityList from './ActivityList';
 import WorldIDVerify from './WorldIDVerify';
 import ProfileCard from './ProfileCard';
-import EmailLinkingStep from './EmailLinkingStep';
 import SocialLinks from './SocialLinks';
+import NewsletterModal from './modals/NewsletterModal';
 import { AnimatedButton, FadeIn } from './ui/Motion';
 import { QRCodeSVG } from 'qrcode.react';
 import { useI18n } from '@/lib/i18n';
@@ -42,10 +42,7 @@ export default function WalletApp() {
         username,
         isVerifiedHuman,
         isInWorldApp,
-        pendingEmailLink,
         loginWithWorldApp,
-        completeEmailLink,
-        skipEmailLink,
         logout,
     } = useAuth();
     const { t } = useI18n();
@@ -77,18 +74,6 @@ export default function WalletApp() {
                     <p className="text-zinc-500 text-sm">{t.common.loading}</p>
                 </motion.div>
             </div>
-        );
-    }
-
-    // Email linking step - after World ID auth, before wallet access
-    if (pendingEmailLink && walletAddress) {
-        return (
-            <EmailLinkingStep
-                username={username}
-                walletAddress={walletAddress}
-                onComplete={completeEmailLink}
-                onSkip={skipEmailLink}
-            />
         );
     }
 
@@ -339,6 +324,8 @@ export default function WalletApp() {
                         onClose={() => setShowSettingsModal(false)}
                     />
                 )}
+
+                <NewsletterModal />
             </Suspense>
         </div>
     );

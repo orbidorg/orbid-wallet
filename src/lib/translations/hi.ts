@@ -93,22 +93,6 @@ export const hi: Translations = {
         version: 'संस्करण',
         tagline: 'World App इकोसिस्टम का आपका सुरक्षित द्वार।',
     },
-    email: {
-        linkEmail: 'ईमेल लिंक करें',
-        enterEmail: 'अपना ईमेल दर्ज करें',
-        sendCode: 'कोड भेजें',
-        enterCode: 'सत्यापन कोड दर्ज करें',
-        verifyCode: 'सत्यापित करें और जारी रखें',
-        codeSent: 'कोड आपके ईमेल पर भेजा गया',
-        invalidCode: 'अमान्य कोड, कृपया पुनः प्रयास करें',
-        welcome: 'OrbId वॉलेट में आपका स्वागत है',
-        connectedWallet: 'कनेक्टेड वॉलेट',
-        emailRequired: 'खाता पुनर्प्राप्ति के लिए ईमेल आवश्यक है',
-        changeEmail: 'ईमेल बदलें',
-        optionalMessage: 'वैकल्पिक लेकिन अनुशंसित',
-        skipButton: 'अभी के लिए छोड़ें',
-        checkSpam: 'ईमेल नहीं मिल रहा? अपना स्पैम फ़ोल्डर जांचें और इसे स्पैम नहीं के रूप में चिह्नित करें।',
-    },
     swap: {
         comingSoon: 'जल्द आ रहा है!',
         underDevelopment: 'विकास में',
@@ -123,8 +107,6 @@ export const hi: Translations = {
         followX: 'X पर हमें फॉलो करें',
         followXDesc: 'नवीनतम समाचारों से अपडेट रहें',
         followCta: '@OrbIdLabs को फॉलो करें',
-        emailOptional: 'ईमेल अब वैकल्पिक है',
-        emailOptionalDesc: 'हम आपकी गोपनीयता की परवाह करते हैं। सूचनाएं चाहिए तभी ईमेल लिंक करें।',
         oidTokens: '$OID टोकन प्राप्त करें',
         oidTokensDesc: 'जल्द ही आप OrbId Wallet इस्तेमाल करने के लिए $OID टोकन प्राप्त कर सकेंगे।',
     },
@@ -137,6 +119,12 @@ export const hi: Translations = {
         transactionReceived: 'भुगतान प्राप्त',
         transactionSent: 'लेनदेन भेजा गया',
         notSupported: 'सूचनाएं समर्थित नहीं',
+    },
+    newsletter: {
+        title: 'कम्युनिटी में शामिल हों',
+        description: 'नई सुविधाओं, इकोसिस्टम अपडेट और विशेष OID ड्रॉप्स तक जल्दी पहुंच प्राप्त करें।',
+        button: 'अभी सब्सक्राइब करें',
+        skip: 'बाद में',
     },
     common: {
         loading: 'लोड हो रहा है...',
@@ -226,7 +214,7 @@ export const hi: Translations = {
         comingSoon: 'जल्द आ रहा है!',
         description: 'जल्द ही आप अपने OrbId Wallet से सीधे क्रिप्टो खरीद सकेंगे।',
         whatscoming: 'क्या आ रहा है',
-        cardPayments: 'क्रेडिट और डेबिट कार्ड भुगतान',
+        cardPayments: 'क्रेडिट और डेबิต कार्ड भुगतान',
         bankTransfers: 'बैंक ट्रांसफर',
         instantPurchases: 'World Chain पर तुरंत खरीदारी',
         gotIt: 'समझ गया!',
@@ -253,14 +241,9 @@ export const hi: Translations = {
     },
     validation: {
         invalidEmail: 'कृपया एक मान्य ईमेल दर्ज करें',
-        walletAlreadyLinked: 'यह World ID पहले से किसी अन्य ईमेल से जुड़ा है। कृपया उस ईमेल से लॉगिन करें।',
-        emailAlreadyLinked: 'यह ईमेल किसी अन्य World ID से जुड़ा है।',
         connectionError: 'कनेक्शन त्रुटि। कृपया पुनः प्रयास करें।',
-        enter6DigitCode: 'कृपया 6-अंकीय कोड दर्ज करें',
-        failedToComplete: 'पंजीकरण पूरा करने में विफल',
     },
     receive: {
         worldChainWarning: 'केवल World Chain संगत टोकन इस पते पर भेजें।',
     },
 };
-

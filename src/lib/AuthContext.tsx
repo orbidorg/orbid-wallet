@@ -12,14 +12,15 @@ interface AuthState {
     username: string | null;
     email: string | null;
     isInWorldApp: boolean;
-    pendingEmailLink: boolean;
     isVerifiedHuman: boolean;
+    newsletterClosed: boolean;
 }
 
 interface AuthContextType extends AuthState {
     loginWithWorldApp: () => Promise<void>;
-    completeEmailLink: (email: string) => Promise<{ success: boolean; error?: string }>;
-    skipEmailLink: () => void;
+    updateNewsletterSubscription: (email: string) => Promise<void>;
+    closeNewsletter: () => void;
+    setVerifiedHuman: (verified: boolean) => void;
     logout: () => Promise<void>;
 }
 
@@ -36,8 +37,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         username: null,
         email: null,
         isInWorldApp: false,
-        pendingEmailLink: false,
         isVerifiedHuman: false,
+        newsletterClosed: false,
     });
     const { isReady: miniKitReady, isInstalled: isInWorldApp } = useMiniKit();
 
@@ -57,8 +58,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     username: null,
                     email: null,
                     isInWorldApp,
-                    pendingEmailLink: false,
                     isVerifiedHuman: false,
+                    newsletterClosed: false,
                 });
                 return;
             }
@@ -77,8 +78,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     username: null,
                     email: null,
                     isInWorldApp,
-                    pendingEmailLink: false,
                     isVerifiedHuman: false,
+                    newsletterClosed: false,
                 });
                 return;
             }
@@ -86,37 +87,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // User exists in Supabase
             const user = sessionData.user;
 
-            // Check email session
-            const emailRes = await fetch('/api/auth/me');
-            const emailData = await emailRes.json();
-            const hasEmail = emailData.authenticated && emailData.email;
-
-            if (hasEmail) {
-                // Fully authenticated
-                setState({
-                    isReady: true,
-                    isAuthenticated: true,
-                    walletAddress: user.walletAddress,
-                    username: user.username || cachedWallet.username,
-                    email: emailData.email,
-                    isInWorldApp,
-                    pendingEmailLink: false,
-                    isVerifiedHuman: user.isVerifiedHuman || false,
-                });
-                setAnalyticsUser(user.id);
-            } else {
-                // Has wallet in Supabase but no email session
-                setState({
-                    isReady: true,
-                    isAuthenticated: false,
-                    walletAddress: user.walletAddress,
-                    username: user.username || cachedWallet.username,
-                    email: null,
-                    isInWorldApp,
-                    pendingEmailLink: true,
-                    isVerifiedHuman: user.isVerifiedHuman || false,
-                });
-            }
+            setState({
+                isReady: true,
+                isAuthenticated: true,
+                walletAddress: user.walletAddress,
+                username: user.username || cachedWallet.username,
+                email: user.email,
+                isInWorldApp,
+                isVerifiedHuman: user.isVerifiedHuman || false,
+                newsletterClosed: !!user.email, // If they have an email, we assume they either subbed or were asked
+            });
+            setAnalyticsUser(user.id);
         } catch (error) {
             console.error('Auth init error:', error);
             setState({
@@ -126,8 +107,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 username: null,
                 email: null,
                 isInWorldApp,
-                pendingEmailLink: false,
                 isVerifiedHuman: false,
+                newsletterClosed: false,
             });
         }
     }, [isInWorldApp]);
@@ -169,9 +150,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 if (data.success) {
                     setState(prev => ({
                         ...prev,
+                        isAuthenticated: true,
                         walletAddress: address,
                         username,
-                        pendingEmailLink: true,
+                        isVerifiedHuman: data.isVerifiedHuman || false,
+                        newsletterClosed: !!data.email,
                     }));
                     Analytics.login('worldapp');
                 }
@@ -182,10 +165,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, [isInWorldApp]);
 
-    // Complete email linking
-    const completeEmailLink = useCallback(async (email: string): Promise<{ success: boolean; error?: string }> => {
+    // Update newsletter subscription
+    const updateNewsletterSubscription = useCallback(async (email: string) => {
         try {
-            // Update user in Supabase with email
             const res = await fetch('/api/analytics/user', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -197,60 +179,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             });
             const result = await res.json();
 
-            if (!result.success) {
-                if (result.error === 'wallet_already_linked') {
-                    // Clear cache
-                    localStorage.removeItem(WALLET_CACHE_KEY);
-                    return {
-                        success: false,
-                        error: `This World ID is already linked to another email (${result.linkedEmail || 'unknown'}).`
-                    };
-                }
-                return { success: false, error: result.error || 'Failed to link email' };
+            if (result.success) {
+                setState(prev => ({
+                    ...prev,
+                    email,
+                    newsletterClosed: true,
+                }));
             }
-
-            setState(prev => ({
-                ...prev,
-                isAuthenticated: true,
-                email,
-                pendingEmailLink: false,
-            }));
-
-            setAnalyticsUser(result.userId || null);
-            Analytics.verifyWorldId(true);
-
-            return { success: true };
         } catch (error) {
-            console.error('Email link error:', error);
-            return { success: false, error: 'Server error' };
+            console.error('Newsletter sub error:', error);
         }
     }, [state.walletAddress, state.isVerifiedHuman]);
 
-    // Skip email linking - proceed without email
-    const skipEmailLink = useCallback(() => {
-        setState(prev => ({
-            ...prev,
-            isAuthenticated: true,
-            pendingEmailLink: false,
-        }));
+    const closeNewsletter = useCallback(() => {
+        setState(prev => ({ ...prev, newsletterClosed: true }));
     }, []);
 
-    // Logout - Removes from Supabase
+    const setVerifiedHuman = useCallback((verified: boolean) => {
+        setState(prev => ({ ...prev, isVerifiedHuman: verified }));
+    }, []);
+
+    // Logout - Clears local state
     const logout = useCallback(async () => {
-        try {
-            // Remove from email session
-            await fetch('/api/auth/logout', { method: 'POST' });
-
-            // Remove from Supabase session
-            if (state.walletAddress) {
-                await fetch('/api/auth/session', {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ walletAddress: state.walletAddress }),
-                });
-            }
-        } catch { }
-
         // Clear local cache
         localStorage.removeItem(WALLET_CACHE_KEY);
         localStorage.removeItem('orbid_world_id_verified');
@@ -262,8 +212,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             username: null,
             email: null,
             isInWorldApp,
-            pendingEmailLink: false,
             isVerifiedHuman: false,
+            newsletterClosed: false,
         });
 
         Analytics.logout();
@@ -274,8 +224,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         <AuthContext.Provider value={{
             ...state,
             loginWithWorldApp,
-            completeEmailLink,
-            skipEmailLink,
+            updateNewsletterSubscription,
+            closeNewsletter,
+            setVerifiedHuman,
             logout,
         }}>
             {children}

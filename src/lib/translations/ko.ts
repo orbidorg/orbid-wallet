@@ -93,22 +93,7 @@ export const ko: Translations = {
         version: '버전',
         tagline: 'World App 생태계로 가는 안전한 관문.',
     },
-    email: {
-        linkEmail: '이메일 연결',
-        enterEmail: '이메일 입력',
-        sendCode: '코드 보내기',
-        enterCode: '인증 코드 입력',
-        verifyCode: '확인 및 계속',
-        codeSent: '이메일로 코드가 전송되었습니다',
-        invalidCode: '잘못된 코드입니다. 다시 시도해주세요',
-        welcome: 'OrbId Wallet에 오신 것을 환영합니다',
-        connectedWallet: '연결된 지갑',
-        emailRequired: '계정 복구를 위해 이메일이 필요합니다',
-        changeEmail: '이메일 변경',
-        optionalMessage: '선택 사항이지만 권장',
-        skipButton: '지금은 건너뛰기',
-        checkSpam: '이메일을 찾을 수 없나요? 스팸 폴더를 확인하고 스팸이 아닌 것으로 표시하세요.',
-    },
+
     swap: {
         comingSoon: '곧 출시!',
         underDevelopment: '개발 중',
@@ -123,8 +108,7 @@ export const ko: Translations = {
         followX: 'X에서 팔로우하세요',
         followXDesc: '최신 뉴스를 확인하세요',
         followCta: '@OrbIdLabs 팔로우',
-        emailOptional: '이메일은 이제 선택 사항',
-        emailOptionalDesc: '개인 정보를 소중히 여깁니다. 알림이 필요한 경우에만 이메일을 연결하세요.',
+
         oidTokens: '$OID 토큰 청구',
         oidTokensDesc: '곧 OrbId Wallet 사용에 대해 $OID 토큰을 청구할 수 있습니다.',
     },
@@ -137,6 +121,12 @@ export const ko: Translations = {
         transactionReceived: '결제 수신됨',
         transactionSent: '거래 전송됨',
         notSupported: '알림이 지원되지 않습니다',
+    },
+    newsletter: {
+        title: '커뮤니티 가입',
+        description: '새로운 기능, 생태계 업데이트 및 독점 OID 드롭에 대한 조기 액세스 권한을 받으세요.',
+        button: '지금 구독하기',
+        skip: '나중에',
     },
     common: {
         loading: '로딩 중...',
@@ -253,14 +243,9 @@ export const ko: Translations = {
     },
     validation: {
         invalidEmail: '유효한 이메일을 입력해주세요',
-        walletAlreadyLinked: '이 World ID는 이미 다른 이메일에 연결되어 있습니다. 해당 이메일로 로그인해주세요.',
-        emailAlreadyLinked: '이 이메일은 다른 World ID에 연결되어 있습니다.',
         connectionError: '연결 오류. 다시 시도해주세요.',
-        enter6DigitCode: '6자리 코드를 입력해주세요',
-        failedToComplete: '등록 완료 실패',
     },
     receive: {
         worldChainWarning: '이 주소로는 World Chain 호환 토큰만 보내세요.',
     },
 };
-

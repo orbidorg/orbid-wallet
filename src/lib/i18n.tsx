@@ -133,23 +133,6 @@ export interface Translations {
         version: string;
         tagline: string;
     };
-    // Email Linking
-    email: {
-        linkEmail: string;
-        enterEmail: string;
-        sendCode: string;
-        enterCode: string;
-        verifyCode: string;
-        codeSent: string;
-        invalidCode: string;
-        welcome: string;
-        connectedWallet: string;
-        emailRequired: string;
-        changeEmail: string;
-        optionalMessage: string;
-        skipButton: string;
-        checkSpam: string;
-    };
     // Swap
     swap: {
         comingSoon: string;
@@ -166,8 +149,6 @@ export interface Translations {
         followX: string;
         followXDesc: string;
         followCta: string;
-        emailOptional: string;
-        emailOptionalDesc: string;
         oidTokens: string;
         oidTokensDesc: string;
     };
@@ -181,6 +162,13 @@ export interface Translations {
         transactionReceived: string;
         transactionSent: string;
         notSupported: string;
+    };
+    // Newsletter
+    newsletter: {
+        title: string;
+        description: string;
+        button: string;
+        skip: string;
     };
     // Common
     common: {
@@ -306,11 +294,7 @@ export interface Translations {
     // Validation errors
     validation: {
         invalidEmail: string;
-        walletAlreadyLinked: string;
-        emailAlreadyLinked: string;
         connectionError: string;
-        enter6DigitCode: string;
-        failedToComplete: string;
     };
     // Receive Modal specific
     receive: {

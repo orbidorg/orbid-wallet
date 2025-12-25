@@ -93,22 +93,7 @@ export const ja: Translations = {
         version: 'バージョン',
         tagline: 'World Appエコシステムへの安全なゲートウェイ。',
     },
-    email: {
-        linkEmail: 'メールをリンク',
-        enterEmail: 'メールを入力',
-        sendCode: 'コードを送信',
-        enterCode: '確認コードを入力',
-        verifyCode: '確認して続ける',
-        codeSent: 'メールにコードを送信しました',
-        invalidCode: '無効なコードです。再試行してください',
-        welcome: 'OrbId Walletへようこそ',
-        connectedWallet: '接続済みウォレット',
-        emailRequired: 'アカウント復旧にはメールが必要です',
-        changeEmail: 'メールを変更',
-        optionalMessage: '任意ですが推奨',
-        skipButton: '今はスキップ',
-        checkSpam: 'メールが見つかりませんか？迷惑メールフォルダを確認し、迷惑メールではないとマークしてください。',
-    },
+
     swap: {
         comingSoon: '近日公開！',
         underDevelopment: '開発中',
@@ -123,8 +108,7 @@ export const ja: Translations = {
         followX: 'Xでフォロー',
         followXDesc: '最新ニュースをチェック',
         followCta: '@OrbIdLabsをフォロー',
-        emailOptional: 'メールは任意になりました',
-        emailOptionalDesc: 'あなたのプライバシーを大切にしています。通知が必要な場合のみメールをリンクしてください。',
+
         oidTokens: '$OIDトークンを請求',
         oidTokensDesc: 'まもなくOrbId Walletの利用で$OIDトークンを請求できます。',
     },
@@ -137,6 +121,12 @@ export const ja: Translations = {
         transactionReceived: '支払いを受け取りました',
         transactionSent: '取引が送信されました',
         notSupported: '通知はサポートされていません',
+    },
+    newsletter: {
+        title: 'コミュニティに参加する',
+        description: '新機能、エコシステムのアップデート、限定OIDドロップへの早期アクセスを入手してください。',
+        button: '今すぐ購読',
+        skip: '後で',
     },
     common: {
         loading: '読み込み中...',
@@ -253,11 +243,7 @@ export const ja: Translations = {
     },
     validation: {
         invalidEmail: '有効なメールアドレスを入力してください',
-        walletAlreadyLinked: 'このWorld IDは既に別のメールにリンクされています。そのメールでログインしてください。',
-        emailAlreadyLinked: 'このメールは別のWorld IDにリンクされています。',
         connectionError: '接続エラー。もう一度お試しください。',
-        enter6DigitCode: '6桁のコードを入力してください',
-        failedToComplete: '登録の完了に失敗しました',
     },
     receive: {
         worldChainWarning: 'このアドレスにはWorld Chain対応トークンのみを送信してください。',
