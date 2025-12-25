@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { MiniKit } from '@worldcoin/minikit-js';
 import { useMiniKit } from '@/components/Providers';
 import Analytics, { setAnalyticsUser } from './analytics';
@@ -41,6 +41,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         newsletterClosed: false,
     });
     const { isReady: miniKitReady, isInstalled: isInWorldApp } = useMiniKit();
+
+    // Track if user explicitly logged out to prevent auto-reconnection
+    const hasLoggedOutRef = useRef(false);
 
     // Initialize auth state - Uses Supabase as source of truth
     const initAuth = useCallback(async () => {
@@ -131,11 +134,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const { finalPayload } = await MiniKit.commandsAsync.walletAuth({
                 nonce,
                 statement: 'Connect to OrbId Wallet',
+                expirationTime: new Date(Date.now() + 60000), // Short expiration to force dialog
             });
 
             if (finalPayload.status === 'success') {
                 const address = finalPayload.address;
                 const username = MiniKit.user?.username || null;
+
+                // Reset the logout flag since user is logging in again
+                hasLoggedOutRef.current = false;
 
                 localStorage.setItem(WALLET_CACHE_KEY, JSON.stringify({ walletAddress: address, username }));
 
@@ -201,6 +208,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Logout - Clears all local state and cache
     const logout = useCallback(async () => {
+        // Mark that user explicitly logged out
+        hasLoggedOutRef.current = true;
+
         // Clear all OrbId-related localStorage keys
         localStorage.removeItem(WALLET_CACHE_KEY);
         localStorage.removeItem('orbid_world_id_verified');
