@@ -69,3 +69,5 @@ Thumbs.db
 *.old
 .npm/
 .node_repl_history
+
+.vercel
