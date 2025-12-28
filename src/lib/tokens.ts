@@ -32,7 +32,7 @@ export const WORLD_CHAIN_TOKENS: Token[] = [
         logoURI: 'https://assets.coingecko.com/coins/images/1/standard/bitcoin.png',
     },
     {
-        symbol: 'LINK',
+        symbol: 'uLINK',
         name: 'Chainlink',
         address: '0x915B648e994D5f31059B38223B9fBE98aE185473',
         decimals: 18,
