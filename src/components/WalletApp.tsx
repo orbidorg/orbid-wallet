@@ -128,8 +128,8 @@ export default function WalletApp() {
                             {t.wallet.poweredBy}
                         </p>
 
-                        {/* Developer Bypass - only in development */}
-                        {process.env.NODE_ENV === 'development' && (
+                        {/* Developer Bypass - in development or Vercel preview */}
+                        {(process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview') && (
                             <button
                                 onClick={loginAsDev}
                                 className="mt-4 text-xs text-zinc-500 hover:text-pink-400 underline transition-colors"
