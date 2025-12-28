@@ -44,6 +44,7 @@ export default function WalletApp() {
         isInWorldApp,
         loginWithWorldApp,
         logout,
+        loginAsDev,
     } = useAuth();
     const { t } = useI18n();
     const [activeTab, setActiveTab] = useState<TabType>('wallet');
@@ -126,6 +127,16 @@ export default function WalletApp() {
                         <p className="mt-8 text-xs text-zinc-600">
                             {t.wallet.poweredBy}
                         </p>
+
+                        {/* Developer Bypass - only in development */}
+                        {process.env.NODE_ENV === 'development' && (
+                            <button
+                                onClick={loginAsDev}
+                                className="mt-4 text-xs text-zinc-500 hover:text-pink-400 underline transition-colors"
+                            >
+                                Connect for Devs
+                            </button>
+                        )}
                     </div>
                 </div>
             );

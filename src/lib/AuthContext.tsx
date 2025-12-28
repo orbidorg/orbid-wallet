@@ -22,6 +22,7 @@ interface AuthContextType extends AuthState {
     closeNewsletter: () => void;
     setVerifiedHuman: (verified: boolean) => void;
     logout: () => void;
+    loginAsDev: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -151,6 +152,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, [isInWorldApp]);
 
+    // Developer Bypass - For testing on Desktop/Preview
+    const loginAsDev = useCallback(async () => {
+        const address = '0x71C7656EC7ab88b098defB751B7401B5f6d8976F';
+        const username = 'dev_user';
+        const isVerifiedHuman = true;
+
+        try {
+            await fetch('/api/auth/session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ walletAddress: address, username }),
+            });
+        } catch (error) {
+            console.error('Failed to save dev session:', error);
+        }
+
+        const cacheData = {
+            walletAddress: address,
+            username,
+            isVerifiedHuman,
+            newsletterClosed: false,
+        };
+        localStorage.setItem(WALLET_CACHE_KEY, JSON.stringify(cacheData));
+
+        setState(prev => ({
+            ...prev,
+            isAuthenticated: true,
+            walletAddress: address,
+            username,
+            isVerifiedHuman,
+            newsletterClosed: false,
+        }));
+
+        Analytics.login('developer_bypass');
+    }, []);
+
     const updateNewsletterSubscription = useCallback(async (email: string) => {
         try {
             const res = await fetch('/api/analytics/user', {
@@ -237,6 +274,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             closeNewsletter,
             setVerifiedHuman,
             logout,
+            loginAsDev,
         }}>
             {children}
         </AuthContext.Provider>
