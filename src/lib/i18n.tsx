@@ -141,6 +141,21 @@ export interface Translations {
         description: string;
         followUpdates: string;
         swapFrom: string;
+        from: string;
+        to: string;
+        amount: string;
+        youReceive: string;
+        selectToken: string;
+        enterAmount: string;
+        swapButton: string;
+        swapping: string;
+        fetchingQuote: string;
+        noLiquidity: string;
+        rate: string;
+        fee: string;
+        minimumReceived: string;
+        priceImpact: string;
+        route: string;
     };
     // Ads
     ads: {

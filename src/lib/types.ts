@@ -6,6 +6,7 @@ export interface Token {
     decimals: number;
     logoURI: string;
     isNative?: boolean; // true for WLD (direct transfer), false/undefined for ERC-20 (Permit2)
+    pools?: string[]; // GeckoTerminal pool addresses for chart data
 }
 
 export interface TokenBalance {

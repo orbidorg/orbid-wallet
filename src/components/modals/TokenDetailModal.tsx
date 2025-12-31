@@ -382,7 +382,7 @@ export default function TokenDetailModal({ tokenBalance, isOpen, onClose, onSend
                     <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-3">{t.tokenDetail.marketStats}</h3>
                     {isLoading && !marketData ? (
                         <StatsSkeleton />
-                    ) : marketData && marketData.marketCap > 0 ? (
+                    ) : marketData && (marketData.price > 0 || marketData.marketCap > 0) ? (
                         <div className="grid grid-cols-2 gap-3">
                             <div className="glass rounded-xl p-3">
                                 <p className="text-[10px] text-zinc-500 mb-1">{t.tokenDetail.marketCap}</p>

@@ -37,7 +37,9 @@ function generateStablecoinHistory(period: ChartPeriod): PricePoint[] {
 }
 
 async function fetchMarketData(symbol: string, period: ChartPeriod): Promise<TokenMarketData> {
+    console.log(`[MarketData] fetchMarketData called for ${symbol}`);
     const token = WORLD_CHAIN_TOKENS.find((t) => t.symbol === symbol);
+    console.log(`[MarketData] Token found:`, token?.symbol, "pools:", token?.pools);
 
     const emptyData: TokenMarketData = {
         price: 0,
@@ -52,6 +54,7 @@ async function fetchMarketData(symbol: string, period: ChartPeriod): Promise<Tok
     };
 
     if (!token?.address) {
+        console.log(`[MarketData] No address for ${symbol}, returning empty`);
         return emptyData;
     }
 
@@ -69,8 +72,11 @@ async function fetchMarketData(symbol: string, period: ChartPeriod): Promise<Tok
         const pairs = await dexResponse.json();
         const tokenAddr = token.address.toLowerCase();
 
-        if (!Array.isArray(pairs) || pairs.length === 0) {
-            // Fallback for stablecoins if no pairs found
+        // Note: Even if no pairs from DEX Screener, we continue to try GeckoTerminal for chart data
+        let hasDexScreenerData = Array.isArray(pairs) && pairs.length > 0;
+
+        if (!hasDexScreenerData && !token.pools?.length) {
+            // No DEX Screener data AND no configured pools - return empty for non-stablecoins
             if (STABLECOIN_SYMBOLS.includes(symbol)) {
                 return {
                     ...emptyData,
@@ -80,10 +86,14 @@ async function fetchMarketData(symbol: string, period: ChartPeriod): Promise<Tok
                     priceHistory: generateStablecoinHistory(period),
                 };
             }
-            return emptyData;
+            console.log(`[MarketData] No DEX Screener data and no pools for ${symbol}`);
+            // Don't return early - continue to try chart fetch with configured pools
         }
 
-        let bestPair = pairs
+        // Safely handle pairs array - may be empty if DEX Screener has no data
+        const safePairs = Array.isArray(pairs) ? pairs : [];
+
+        let bestPair = safePairs
             .filter((p: any) => p.baseToken?.address?.toLowerCase() === tokenAddr)
             .sort(
                 (a: any, b: any) => Number.parseFloat(b.liquidity?.usd || "0") - Number.parseFloat(a.liquidity?.usd || "0"),
@@ -104,7 +114,7 @@ async function fetchMarketData(symbol: string, period: ChartPeriod): Promise<Tok
             fdv = Number.parseFloat(bestPair.fdv || "0");
             pairAddress = bestPair.pairAddress || "";
         } else {
-            bestPair = pairs
+            bestPair = safePairs
                 .filter((p: any) => p.quoteToken?.address?.toLowerCase() === tokenAddr)
                 .sort(
                     (a: any, b: any) => Number.parseFloat(b.liquidity?.usd || "0") - Number.parseFloat(a.liquidity?.usd || "0"),
@@ -126,8 +136,18 @@ async function fetchMarketData(symbol: string, period: ChartPeriod): Promise<Tok
         // 2. Fetch chart data from GeckoTerminal
         let priceHistory: PricePoint[] = [];
         try {
-            let poolAddress = pairAddress;
+            let poolAddress = "";
 
+            // PRIORITY: Use predefined pools from token config first
+            if (token.pools && token.pools.length > 0) {
+                poolAddress = token.pools[0];
+            }
+            // Fallback to DEX Screener pair address
+            else if (pairAddress) {
+                poolAddress = pairAddress;
+            }
+
+            // Fallback to dynamic pool discovery
             if (!poolAddress) {
                 const poolsRes = await fetch(
                     `https://api.geckoterminal.com/api/v2/networks/${GECKO_TERMINAL_NETWORK}/tokens/${token.address}/pools?page=1`,
@@ -142,12 +162,14 @@ async function fetchMarketData(symbol: string, period: ChartPeriod): Promise<Tok
             }
 
             if (poolAddress) {
+                console.log(`[MarketData] Using pool ${poolAddress} for ${symbol}`);
                 let tokenParam = "base";
                 try {
                     const poolInfoRes = await fetch(
                         `https://api.geckoterminal.com/api/v2/networks/${GECKO_TERMINAL_NETWORK}/pools/${poolAddress}`,
                         { headers: { Accept: "application/json;version=20230302" } },
                     );
+                    console.log(`[MarketData] Pool info response status: ${poolInfoRes.status}`);
 
                     if (poolInfoRes.ok) {
                         const poolInfo = await poolInfoRes.json();
@@ -156,11 +178,31 @@ async function fetchMarketData(symbol: string, period: ChartPeriod): Promise<Tok
 
                         const baseAddr = baseTokenInfo?.split("_")[1]?.toLowerCase();
                         const quoteAddr = quoteTokenInfo?.split("_")[1]?.toLowerCase();
+                        console.log(`[MarketData] baseAddr: ${baseAddr}, quoteAddr: ${quoteAddr}, tokenAddr: ${tokenAddr}`);
 
                         if (quoteAddr === tokenAddr) {
                             tokenParam = "quote";
+                            // Get price from GeckoTerminal if no DEX Screener data
+                            if (price === 0) {
+                                price = Number.parseFloat(poolInfo.data?.attributes?.quote_token_price_usd || "0");
+                                volume24h = Number.parseFloat(poolInfo.data?.attributes?.volume_usd?.h24 || "0");
+                                const priceChangePct = poolInfo.data?.attributes?.price_change_percentage;
+                                // Invert change since we're looking at quote token
+                                change24h = priceChangePct?.h24 ? -Number.parseFloat(priceChangePct.h24) : 0;
+                                console.log(`[MarketData] Got price from GeckoTerminal (quote): $${price}, vol: ${volume24h}`);
+                            }
                         } else if (baseAddr === tokenAddr) {
                             tokenParam = "base";
+                            // Get price from GeckoTerminal if no DEX Screener data
+                            if (price === 0) {
+                                price = Number.parseFloat(poolInfo.data?.attributes?.base_token_price_usd || "0");
+                                volume24h = Number.parseFloat(poolInfo.data?.attributes?.volume_usd?.h24 || "0");
+                                const priceChangePct = poolInfo.data?.attributes?.price_change_percentage;
+                                change24h = priceChangePct?.h24 ? Number.parseFloat(priceChangePct.h24) : 0;
+                                console.log(`[MarketData] Got price from GeckoTerminal (base): $${price}, vol: ${volume24h}`);
+                            }
+                        } else {
+                            console.log(`[MarketData] Token address not found in pool base/quote`);
                         }
                     }
                 } catch (e) {
