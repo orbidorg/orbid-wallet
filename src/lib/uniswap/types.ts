@@ -22,7 +22,7 @@ export interface SwapQuote {
 export interface SwapRoute {
     path: Token[];
     pools: PoolInfo[];
-    version: 'v3' | 'v4';
+    version: 'v2' | 'v3' | 'v4';
 }
 
 export interface PoolInfo {

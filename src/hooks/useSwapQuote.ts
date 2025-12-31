@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { getSwapQuote } from '@/lib/uniswap/quoter';
+import { getSwapQuote, PoolPreferences } from '@/lib/uniswap/quoter';
 import type { Token, SwapQuote } from '@/lib/uniswap/types';
 
 interface UseSwapQuoteParams {
@@ -9,6 +9,7 @@ interface UseSwapQuoteParams {
     tokenOut: Token | null;
     amountIn: string;
     rpcUrl: string;
+    poolPreferences?: PoolPreferences;
 }
 
 interface UseSwapQuoteResult {
@@ -26,6 +27,7 @@ export function useSwapQuote({
     tokenOut,
     amountIn,
     rpcUrl,
+    poolPreferences,
 }: UseSwapQuoteParams): UseSwapQuoteResult {
     const [quote, setQuote] = useState<SwapQuote | null>(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -62,6 +64,7 @@ export function useSwapQuote({
                 tokenOut,
                 amountIn: parsedAmount,
                 rpcUrl,
+                poolPreferences,
             });
 
             if (result) {
@@ -78,7 +81,7 @@ export function useSwapQuote({
         } finally {
             setIsLoading(false);
         }
-    }, [tokenIn, tokenOut, amountIn, rpcUrl]);
+    }, [tokenIn, tokenOut, amountIn, rpcUrl, poolPreferences]);
 
     // Debounced quote fetching
     useEffect(() => {

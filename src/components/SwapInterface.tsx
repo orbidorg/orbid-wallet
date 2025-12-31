@@ -11,6 +11,7 @@ import { ORBID_SWAP_RELAY_ADDRESS, SWAP_CONFIG } from '@/lib/uniswap/config';
 import TokenSelector from './swap/TokenSelector';
 import AmountInput from './swap/AmountInput';
 import QuoteDisplay from './swap/QuoteDisplay';
+import SwapSettings from './swap/SwapSettings';
 import type { Token } from '@/lib/types';
 import type { Token as SwapToken } from '@/lib/uniswap/types';
 
@@ -29,6 +30,20 @@ export default function SwapInterface() {
     const [isSwapping, setIsSwapping] = useState(false);
     const [isInputHovered, setIsInputHovered] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
+    const [slippage, setSlippage] = useState(0.5);
+    const [deadline, setDeadline] = useState(20);
+    const [useV2, setUseV2] = useState(true);
+    const [useV3, setUseV3] = useState(true);
+    const [useV4, setUseV4] = useState(true);
+
+    const handlePoolSettingsChange = (v2: boolean, v3: boolean, v4: boolean) => {
+        // Ensure at least one pool version is always enabled
+        if (!v2 && !v3 && !v4) return;
+        setUseV2(v2);
+        setUseV3(v3);
+        setUseV4(v4);
+    };
+
 
     useEffect(() => {
         setIsMobile(window.innerWidth < 768);
@@ -60,6 +75,7 @@ export default function SwapInterface() {
         tokenOut: swapTokenOut,
         amountIn,
         rpcUrl: WORLD_CHAIN_RPC,
+        poolPreferences: { useV2, useV3, useV4 },
     });
 
     // Get balance and prices for selected tokens
@@ -116,6 +132,20 @@ export default function SwapInterface() {
         >
             {/* Main Swap Container */}
             <div className="relative flex flex-col gap-1 mt-4">
+
+                {/* Header with Settings */}
+                <div className="flex justify-end mb-2 px-1">
+                    <SwapSettings
+                        slippage={slippage}
+                        deadline={deadline}
+                        useV2={useV2}
+                        useV3={useV3}
+                        useV4={useV4}
+                        onSlippageChange={setSlippage}
+                        onDeadlineChange={setDeadline}
+                        onPoolSettingsChange={handlePoolSettingsChange}
+                    />
+                </div>
 
                 {/* Sell Card */}
                 <div
