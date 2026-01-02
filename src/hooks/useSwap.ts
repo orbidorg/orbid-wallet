@@ -2,8 +2,12 @@
 
 import { useState, useCallback } from 'react';
 import { MiniKit } from '@worldcoin/minikit-js';
-import { SWAP_CONFIG, ORBID_SWAP_RELAY_ADDRESS, UNISWAP_ADDRESSES } from '@/lib/uniswap/config';
+import { SWAP_CONFIG, ORBID_SWAP_RELAY_ADDRESS } from '@/lib/uniswap/config';
 import type { Token, SwapQuote, SwapState } from '@/lib/uniswap/types';
+import PERMIT2_ABI from '@/abi/Permit2.json';
+
+// Permit2 address on World Chain
+const PERMIT2_ADDRESS = '0x000000000022D473030F116dDEE9F6B43aC78BA3';
 
 // Contract ABI for OrbIdSwapRelay.swap function
 const SWAP_ABI = [{
@@ -19,22 +23,10 @@ const SWAP_ABI = [{
             { name: 'amountOutMin', type: 'uint256' },
             { name: 'poolFee', type: 'uint24' },
             { name: 'deadline', type: 'uint256' },
-            { name: 'version', type: 'uint8' } // SwapVersion enum: 0=V2, 1=V3, 2=V4
+            { name: 'version', type: 'uint8' }
         ]
     }],
     outputs: [{ name: 'amountOut', type: 'uint256' }],
-    stateMutability: 'nonpayable'
-}] as const;
-
-// ERC20 approve ABI
-const ERC20_APPROVE_ABI = [{
-    name: 'approve',
-    type: 'function',
-    inputs: [
-        { name: 'spender', type: 'address' },
-        { name: 'amount', type: 'uint256' }
-    ],
-    outputs: [{ name: '', type: 'bool' }],
     stateMutability: 'nonpayable'
 }] as const;
 
@@ -52,9 +44,6 @@ interface UseSwapResult {
     reset: () => void;
 }
 
-/**
- * Convert route version string to contract enum value
- */
 function getVersionEnum(version: 'v2' | 'v3' | 'v4'): 0 | 1 | 2 {
     switch (version) {
         case 'v2': return 0;
@@ -64,8 +53,26 @@ function getVersionEnum(version: 'v2' | 'v3' | 'v4'): 0 | 1 | 2 {
 }
 
 /**
- * Hook for executing swaps through OrbIdSwapRelay via MiniKit
+ * Build detailed error message from MiniKit response for debugging
  */
+function buildDetailedError(payload: any, step: string): string {
+    const errorCode = payload.error_code || 'unknown';
+    const debugUrl = payload.debug_url;
+    const transactionId = payload.transaction_id;
+
+    let errorMsg = `[${step}] Error: ${errorCode}`;
+    if (transactionId) {
+        errorMsg += `\nTx ID: ${transactionId}`;
+    }
+    if (debugUrl) {
+        errorMsg += `\nDebug: ${debugUrl}`;
+    }
+    // Full payload for debugging
+    errorMsg += `\n\nFull response:\n${JSON.stringify(payload, null, 2)}`;
+
+    return errorMsg;
+}
+
 export function useSwap({
     tokenIn,
     tokenOut,
@@ -106,34 +113,69 @@ export function useSwap({
         }
 
         try {
-            setState(s => ({ ...s, status: 'approving', quote }));
+            setState(s => ({ ...s, status: 'swapping', quote }));
 
-            // Step 1: Approve OrbIdSwapRelay to spend tokens
+            // Prepare transaction parameters
             const amountInStr = quote.amountIn.toString();
-
-            const approvalResult = await MiniKit.commandsAsync.sendTransaction({
-                transaction: [{
-                    address: tokenIn.address as `0x${string}`,
-                    abi: ERC20_APPROVE_ABI,
-                    functionName: 'approve',
-                    args: [ORBID_SWAP_RELAY_ADDRESS, amountInStr]
-                }]
-            });
-
-            if (approvalResult.finalPayload.status !== 'success') {
-                throw new Error('Approval failed');
-            }
-
-            // Wait a moment for approval to be processed
-            await new Promise(resolve => setTimeout(resolve, 2000));
-
-            setState(s => ({ ...s, status: 'swapping' }));
-
-            // Step 2: Execute swap
-            const deadline = Math.floor(Date.now() / 1000) + (SWAP_CONFIG.DEFAULT_DEADLINE_MINUTES * 60);
+            const amountOutMinStr = quote.amountOutMin.toString();
+            const nonce = Date.now().toString();
+            const deadline = Math.floor((Date.now() + SWAP_CONFIG.DEFAULT_DEADLINE_MINUTES * 60 * 1000) / 1000).toString();
             const version = getVersionEnum(quote.route.version);
             const poolFee = quote.route.pools[0]?.fee || SWAP_CONFIG.FEE_TIERS.MEDIUM;
 
+            // Token address in lowercase for Permit2
+            const tokenInLower = tokenIn.address.toLowerCase() as `0x${string}`;
+
+            // Log transaction params for debugging
+            console.log('[useSwap] Transaction params:', {
+                tokenIn: tokenInLower,
+                tokenOut: tokenOut.address,
+                amountIn: amountInStr,
+                amountOutMin: amountOutMinStr,
+                poolFee,
+                deadline,
+                version,
+                nonce,
+            });
+
+            // Step 1: Transfer tokens to contract via Permit2 signatureTransfer
+            console.log('[useSwap] Step 1: Sending Permit2 signatureTransfer...');
+            const transferResult = await MiniKit.commandsAsync.sendTransaction({
+                transaction: [{
+                    address: PERMIT2_ADDRESS as `0x${string}`,
+                    abi: PERMIT2_ABI,
+                    functionName: 'signatureTransfer',
+                    args: [
+                        [[tokenInLower, amountInStr], nonce, deadline],
+                        [ORBID_SWAP_RELAY_ADDRESS, amountInStr],
+                        'PERMIT2_SIGNATURE_PLACEHOLDER_0'
+                    ]
+                }],
+                permit2: [{
+                    permitted: {
+                        token: tokenInLower,
+                        amount: amountInStr,
+                    },
+                    spender: PERMIT2_ADDRESS as `0x${string}`,
+                    nonce: nonce,
+                    deadline: deadline,
+                }]
+            });
+
+            console.log('[useSwap] Transfer result:', JSON.stringify(transferResult.finalPayload, null, 2));
+
+            if (transferResult.finalPayload.status !== 'success') {
+                const detailedError = buildDetailedError(transferResult.finalPayload, 'Permit2 Transfer');
+                console.error('[useSwap] Transfer failed:', detailedError);
+                throw new Error(detailedError);
+            }
+
+            // Wait for transfer to be mined
+            console.log('[useSwap] Waiting for transfer to be mined...');
+            await new Promise(resolve => setTimeout(resolve, 3000));
+
+            // Step 2: Execute swap on contract
+            console.log('[useSwap] Step 2: Executing swap on contract...');
             const swapResult = await MiniKit.commandsAsync.sendTransaction({
                 transaction: [{
                     address: ORBID_SWAP_RELAY_ADDRESS as `0x${string}`,
@@ -143,13 +185,15 @@ export function useSwap({
                         tokenIn.address,
                         tokenOut.address,
                         amountInStr,
-                        quote.amountOutMin.toString(),
+                        amountOutMinStr,
                         poolFee,
-                        deadline.toString(),
+                        deadline,
                         version
                     ]]
                 }]
             });
+
+            console.log('[useSwap] Swap result:', JSON.stringify(swapResult.finalPayload, null, 2));
 
             const finalPayload = swapResult.finalPayload;
 
@@ -162,17 +206,18 @@ export function useSwap({
                     error: null,
                 });
             } else {
-                const errorCode = (finalPayload as { error_code?: string }).error_code || 'unknown';
-                throw new Error(`Swap failed: ${errorCode}`);
+                const detailedError = buildDetailedError(finalPayload, 'Swap Execution');
+                console.error('[useSwap] Swap failed:', detailedError);
+                throw new Error(detailedError);
             }
 
         } catch (error) {
-            console.error('Swap failed:', error);
+            console.error('[useSwap] Full error:', error);
             setState({
                 status: 'error',
                 quote,
                 txHash: null,
-                error: error instanceof Error ? error.message : 'Swap failed',
+                error: error instanceof Error ? error.message : String(error),
             });
         }
     }, [tokenIn, tokenOut, quote, walletAddress, slippageBps]);

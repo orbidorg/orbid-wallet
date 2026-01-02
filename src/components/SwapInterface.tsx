@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FadeIn } from './ui/Motion';
 import { useI18n } from '@/lib/i18n';
@@ -72,13 +72,16 @@ export default function SwapInterface() {
         logoURI: tokenOut.logoURI,
     } : null;
 
+    // Memoize pool preferences to prevent infinite re-renders
+    const poolPreferences = useMemo(() => ({ useV2, useV3, useV4 }), [useV2, useV3, useV4]);
+
     // Get quote
     const { quote, isLoading: isQuoteLoading, error: quoteError } = useSwapQuote({
         tokenIn: swapTokenIn,
         tokenOut: swapTokenOut,
         amountIn,
         rpcUrl: WORLD_CHAIN_RPC,
-        poolPreferences: { useV2, useV3, useV4 },
+        poolPreferences,
     });
 
     // Get balance and prices for selected tokens
@@ -124,6 +127,9 @@ export default function SwapInterface() {
         slippageBps: Math.round(slippage * 100),
     });
 
+    // State for error modal
+    const [swapErrorDetail, setSwapErrorDetail] = useState<string | null>(null);
+
     // Handle swap state changes
     useEffect(() => {
         if (swapState.status === 'success') {
@@ -133,27 +139,38 @@ export default function SwapInterface() {
                 message: `Swapped ${amountIn} ${tokenIn?.symbol} for ${tokenOut?.symbol}`,
                 txHash: swapState.txHash || undefined,
             });
-            // Reset form after successful swap
             setAmountIn('');
             resetSwap();
-        } else if (swapState.status === 'error') {
+        } else if (swapState.status === 'error' && swapState.error) {
+            // Show detailed error in modal
+            setSwapErrorDetail(swapState.error);
             showToast({
                 type: 'error',
                 title: 'Swap Failed',
-                message: swapState.error || 'Transaction failed',
+                message: 'Ver detalles del error',
             });
             resetSwap();
         }
-    }, [swapState.status, swapState.txHash, swapState.error, tokenIn, tokenOut, amountIn, showToast, resetSwap]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [swapState.status]);
 
     // Execute swap
     const handleSwap = async () => {
         if (!canSwap) return;
         setIsSwapping(true);
+        setSwapErrorDetail(null);
         try {
             await executeSwap();
         } finally {
             setIsSwapping(false);
+        }
+    };
+
+    // Copy error to clipboard
+    const copyErrorToClipboard = () => {
+        if (swapErrorDetail) {
+            navigator.clipboard.writeText(swapErrorDetail);
+            showToast({ type: 'success', title: 'Copiado', message: 'Error copiado al portapapeles' });
         }
     };
 
@@ -351,6 +368,52 @@ export default function SwapInterface() {
                     <span className="text-xs font-semibold" style={{ color: '#FF37C7' }}>Uniswap</span>
                 </div>
             </div>
+
+            {/* Error Debug Modal */}
+            <AnimatePresence>
+                {swapErrorDetail && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setSwapErrorDetail(null)}
+                            className="fixed inset-0 bg-black/70 z-[100] backdrop-blur-sm"
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="fixed inset-x-4 top-20 bottom-20 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg bg-zinc-950 border border-red-500/30 rounded-2xl z-[101] flex flex-col overflow-hidden"
+                        >
+                            <div className="p-4 border-b border-white/10 flex justify-between items-center">
+                                <h3 className="text-lg font-bold text-red-400">Error de Swap</h3>
+                                <button
+                                    onClick={() => setSwapErrorDetail(null)}
+                                    className="p-2 hover:bg-white/10 rounded-full"
+                                >
+                                    <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div className="flex-1 overflow-y-auto p-4">
+                                <pre className="text-xs text-zinc-300 whitespace-pre-wrap break-all font-mono bg-black/30 p-3 rounded-lg">
+                                    {swapErrorDetail}
+                                </pre>
+                            </div>
+                            <div className="p-4 border-t border-white/10">
+                                <button
+                                    onClick={copyErrorToClipboard}
+                                    className="w-full py-3 bg-gradient-to-r from-pink-600 to-purple-600 rounded-xl font-bold text-white active:scale-95 transition-transform"
+                                >
+                                    Copiar Error
+                                </button>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
         </motion.div>
     );
 }
