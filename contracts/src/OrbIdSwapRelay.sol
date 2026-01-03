@@ -67,6 +67,9 @@ contract OrbIdSwapRelay {
     /// @notice Address that receives the swap fees
     address public immutable feeRecipient;
 
+    /// @notice Contract owner for rescue operations
+    address public immutable owner;
+
     // ============ Enums ============
 
     enum SwapVersion {
@@ -99,11 +102,18 @@ contract OrbIdSwapRelay {
         SwapVersion version
     );
 
+    event TokensRescued(
+        address indexed token,
+        address indexed to,
+        uint256 amount
+    );
+
     // ============ Errors ============
 
     error InvalidAddress();
     error SwapFailed();
     error InsufficientOutput();
+    error Unauthorized();
 
     // ============ Constructor ============
 
@@ -123,6 +133,21 @@ contract OrbIdSwapRelay {
         swapRouterV3 = _swapRouterV3;
         universalRouterV4 = _universalRouterV4;
         feeRecipient = _feeRecipient;
+        owner = msg.sender;
+    }
+
+    // ============ Owner Functions ============
+
+    /// @notice Rescue stuck tokens from the contract
+    /// @param token The token to rescue
+    /// @param to The address to send tokens to
+    /// @param amount The amount to rescue
+    function rescueTokens(address token, address to, uint256 amount) external {
+        if (msg.sender != owner) {
+            revert Unauthorized();
+        }
+        IERC20(token).safeTransfer(to, amount);
+        emit TokensRescued(token, to, amount);
     }
 
     // ============ External Functions ============
@@ -227,13 +252,13 @@ contract OrbIdSwapRelay {
     function _permitTransferFrom(
         IPermit2.PermitTransferFrom memory permit,
         IPermit2.SignatureTransferDetails memory transferDetails,
-        address owner,
+        address tokenOwner,
         bytes calldata signature
     ) internal {
         IPermit2(permit2).permitTransferFrom(
             permit,
             transferDetails,
-            owner,
+            tokenOwner,
             signature
         );
     }

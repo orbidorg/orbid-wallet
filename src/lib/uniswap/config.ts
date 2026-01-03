@@ -40,8 +40,8 @@ export const SWAP_CONFIG = {
     },
 } as const;
 
-// OrbIdSwapRelay contract address (deployed to World Chain - V2/V3/V4 support)
-export const ORBID_SWAP_RELAY_ADDRESS = '0xf24aAb6E1cc3368589baB2450653c96B47C53795' as `0x${string}`;
+// Deployed OrbIdSwapRelay V2 contract with rescueTokens (single-transaction swap)
+export const ORBID_SWAP_RELAY_ADDRESS = '0xb738d270c6695a6cbB0757F4A79080426525b7bf' as `0x${string}`;
 
 // WETH address on World Chain
 export const WETH_ADDRESS = '0x4200000000000000000000000000000000000006';

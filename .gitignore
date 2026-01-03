@@ -69,3 +69,8 @@ Thumbs.db
 *.old
 .npm/
 .node_repl_history
+
+# Hardhat / Smart Contracts
+contracts/artifacts/
+contracts/cache/
+contracts/typechain-types/

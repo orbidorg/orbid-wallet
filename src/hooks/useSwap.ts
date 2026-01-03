@@ -4,28 +4,28 @@ import { useState, useCallback } from 'react';
 import { MiniKit } from '@worldcoin/minikit-js';
 import { SWAP_CONFIG, ORBID_SWAP_RELAY_ADDRESS } from '@/lib/uniswap/config';
 import type { Token, SwapQuote, SwapState } from '@/lib/uniswap/types';
-import PERMIT2_ABI from '@/abi/Permit2.json';
 
-// Permit2 address on World Chain (World App specific)
-const PERMIT2_ADDRESS = '0xF0882554ee924278806d708396F1a7975b732522';
-
-// Contract ABI for OrbIdSwapRelay.swap function
-const SWAP_ABI = [{
-    name: 'swap',
+// Contract ABI for OrbIdSwapRelay.swapWithPermit function (single transaction)
+const SWAP_WITH_PERMIT_ABI = [{
+    name: 'swapWithPermit',
     type: 'function',
-    inputs: [{
-        name: 'params',
-        type: 'tuple',
-        components: [
-            { name: 'tokenIn', type: 'address' },
-            { name: 'tokenOut', type: 'address' },
-            { name: 'amountIn', type: 'uint256' },
-            { name: 'amountOutMin', type: 'uint256' },
-            { name: 'poolFee', type: 'uint24' },
-            { name: 'deadline', type: 'uint256' },
-            { name: 'version', type: 'uint8' }
-        ]
-    }],
+    inputs: [
+        {
+            name: 'params',
+            type: 'tuple',
+            components: [
+                { name: 'tokenIn', type: 'address' },
+                { name: 'tokenOut', type: 'address' },
+                { name: 'amountIn', type: 'uint256' },
+                { name: 'amountOutMin', type: 'uint256' },
+                { name: 'poolFee', type: 'uint24' },
+                { name: 'deadline', type: 'uint256' },
+                { name: 'version', type: 'uint8' }
+            ]
+        },
+        { name: 'permitData', type: 'bytes' },
+        { name: 'signature', type: 'bytes' }
+    ],
     outputs: [{ name: 'amountOut', type: 'uint256' }],
     stateMutability: 'nonpayable'
 }] as const;
@@ -53,23 +53,22 @@ function getVersionEnum(version: 'v2' | 'v3' | 'v4'): 0 | 1 | 2 {
 }
 
 /**
+ * Encode permitData as bytes for the contract (nonce, deadline)
+ */
+function encodePermitData(nonce: string, deadline: string): string {
+    // ABI encode (uint256 nonce, uint256 deadline)
+    const nonceHex = BigInt(nonce).toString(16).padStart(64, '0');
+    const deadlineHex = BigInt(deadline).toString(16).padStart(64, '0');
+    return '0x' + nonceHex + deadlineHex;
+}
+
+/**
  * Build detailed error message from MiniKit response for debugging
  */
 function buildDetailedError(payload: any, step: string): string {
     const errorCode = payload.error_code || 'unknown';
-    const debugUrl = payload.debug_url;
-    const transactionId = payload.transaction_id;
-
     let errorMsg = `[${step}] Error: ${errorCode}`;
-    if (transactionId) {
-        errorMsg += `\nTx ID: ${transactionId}`;
-    }
-    if (debugUrl) {
-        errorMsg += `\nDebug: ${debugUrl}`;
-    }
-    // Full payload for debugging
     errorMsg += `\n\nFull response:\n${JSON.stringify(payload, null, 2)}`;
-
     return errorMsg;
 }
 
@@ -119,35 +118,50 @@ export function useSwap({
             const amountInStr = quote.amountIn.toString();
             const amountOutMinStr = quote.amountOutMin.toString();
             const nonce = Date.now().toString();
-            const deadline = Math.floor((Date.now() + SWAP_CONFIG.DEFAULT_DEADLINE_MINUTES * 60 * 1000) / 1000).toString();
+            const deadlineTs = Math.floor((Date.now() + SWAP_CONFIG.DEFAULT_DEADLINE_MINUTES * 60 * 1000) / 1000);
+            const deadlineStr = deadlineTs.toString();
             const version = getVersionEnum(quote.route.version);
             const poolFee = quote.route.pools[0]?.fee || SWAP_CONFIG.FEE_TIERS.MEDIUM;
 
-            // Token address in lowercase for Permit2
+            // Token address in lowercase
             const tokenInLower = tokenIn.address.toLowerCase() as `0x${string}`;
 
-            // Log transaction params for debugging
-            console.log('[useSwap] Transaction params:', {
+            // Encode permitData for the contract
+            const permitData = encodePermitData(nonce, deadlineStr);
+
+            console.log('[useSwap] Single TX swap with params:', {
                 tokenIn: tokenInLower,
                 tokenOut: tokenOut.address,
                 amountIn: amountInStr,
                 amountOutMin: amountOutMinStr,
                 poolFee,
-                deadline,
+                deadline: deadlineStr,
                 version,
                 nonce,
+                permitData,
             });
 
-            // Step 1: Transfer tokens to contract via Permit2 signatureTransfer
-            console.log('[useSwap] Step 1: Sending Permit2 signatureTransfer...');
-            const transferResult = await MiniKit.commandsAsync.sendTransaction({
+            // SINGLE TRANSACTION: Call swapWithPermit on the contract
+            // MiniKit handles Permit2 signature generation and injects it
+            const result = await MiniKit.commandsAsync.sendTransaction({
                 transaction: [{
-                    address: PERMIT2_ADDRESS as `0x${string}`,
-                    abi: PERMIT2_ABI,
-                    functionName: 'signatureTransfer',
+                    address: ORBID_SWAP_RELAY_ADDRESS as `0x${string}`,
+                    abi: SWAP_WITH_PERMIT_ABI,
+                    functionName: 'swapWithPermit',
                     args: [
-                        [[tokenInLower, amountInStr], nonce, deadline],
-                        [ORBID_SWAP_RELAY_ADDRESS, amountInStr],
+                        // SwapParams tuple
+                        [
+                            tokenInLower,
+                            tokenOut.address,
+                            amountInStr,
+                            amountOutMinStr,
+                            poolFee,
+                            deadlineStr,
+                            version
+                        ],
+                        // permitData (encoded nonce + deadline)
+                        permitData,
+                        // signature placeholder - MiniKit replaces this
                         'PERMIT2_SIGNATURE_PLACEHOLDER_0'
                     ]
                 }],
@@ -156,46 +170,15 @@ export function useSwap({
                         token: tokenInLower,
                         amount: amountInStr,
                     },
-                    spender: PERMIT2_ADDRESS as `0x${string}`,
+                    spender: ORBID_SWAP_RELAY_ADDRESS as `0x${string}`,
                     nonce: nonce,
-                    deadline: deadline,
+                    deadline: deadlineStr,
                 }]
             });
 
-            console.log('[useSwap] Transfer result:', JSON.stringify(transferResult.finalPayload, null, 2));
+            console.log('[useSwap] Result:', JSON.stringify(result.finalPayload, null, 2));
 
-            if (transferResult.finalPayload.status !== 'success') {
-                const detailedError = buildDetailedError(transferResult.finalPayload, 'Permit2 Transfer');
-                console.error('[useSwap] Transfer failed:', detailedError);
-                throw new Error(detailedError);
-            }
-
-            // Wait for transfer to be mined
-            console.log('[useSwap] Waiting for transfer to be mined...');
-            await new Promise(resolve => setTimeout(resolve, 3000));
-
-            // Step 2: Execute swap on contract
-            console.log('[useSwap] Step 2: Executing swap on contract...');
-            const swapResult = await MiniKit.commandsAsync.sendTransaction({
-                transaction: [{
-                    address: ORBID_SWAP_RELAY_ADDRESS as `0x${string}`,
-                    abi: SWAP_ABI,
-                    functionName: 'swap',
-                    args: [[
-                        tokenIn.address,
-                        tokenOut.address,
-                        amountInStr,
-                        amountOutMinStr,
-                        poolFee,
-                        deadline,
-                        version
-                    ]]
-                }]
-            });
-
-            console.log('[useSwap] Swap result:', JSON.stringify(swapResult.finalPayload, null, 2));
-
-            const finalPayload = swapResult.finalPayload;
+            const finalPayload = result.finalPayload;
 
             if (finalPayload.status === 'success') {
                 const txHash = finalPayload.transaction_id || '';
@@ -206,8 +189,8 @@ export function useSwap({
                     error: null,
                 });
             } else {
-                const detailedError = buildDetailedError(finalPayload, 'Swap Execution');
-                console.error('[useSwap] Swap failed:', detailedError);
+                const detailedError = buildDetailedError(finalPayload, 'swapWithPermit');
+                console.error('[useSwap] Failed:', detailedError);
                 throw new Error(detailedError);
             }
 
