@@ -6,8 +6,8 @@ import { SWAP_CONFIG, ORBID_SWAP_RELAY_ADDRESS } from '@/lib/uniswap/config';
 import type { Token, SwapQuote, SwapState } from '@/lib/uniswap/types';
 import PERMIT2_ABI from '@/abi/Permit2.json';
 
-// Permit2 address on World Chain
-const PERMIT2_ADDRESS = '0x000000000022D473030F116dDEE9F6B43aC78BA3';
+// Permit2 address on World Chain (World App specific)
+const PERMIT2_ADDRESS = '0xF0882554ee924278806d708396F1a7975b732522';
 
 // Contract ABI for OrbIdSwapRelay.swap function
 const SWAP_ABI = [{
