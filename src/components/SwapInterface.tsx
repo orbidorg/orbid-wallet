@@ -192,7 +192,7 @@ export default function SwapInterface() {
                     className="bg-zinc-900/50 rounded-2xl p-3 hover:bg-zinc-900/70 transition-colors"
                 >
                     <div className="flex justify-between items-center mb-1 h-6">
-                        <span className="text-sm font-semibold text-zinc-500">Sell</span>
+                        <span className="text-sm font-semibold text-zinc-500">{t.swap.sell}</span>
 
                         <AnimatePresence>
                             {(isInputHovered || isMobile) && tokenIn && (
@@ -228,7 +228,7 @@ export default function SwapInterface() {
                             value={amountIn}
                             onChange={setAmountIn}
                             fiatValue={fiatValueIn}
-                            label="Sell"
+                            label={t.swap.sell}
                         />
                         <TokenSelector
                             selectedToken={tokenIn}
@@ -260,7 +260,7 @@ export default function SwapInterface() {
 
                 <div className="bg-zinc-900/50 rounded-2xl p-3 hover:bg-zinc-900/70 transition-colors">
                     <div className="flex justify-between items-center mb-1 h-6">
-                        <span className="text-sm font-semibold text-zinc-500">Buy</span>
+                        <span className="text-sm font-semibold text-zinc-500">{t.swap.buy}</span>
                     </div>
 
                     <div className="flex items-center gap-3 py-1">
@@ -268,7 +268,7 @@ export default function SwapInterface() {
                             value={amountOut}
                             onChange={() => { }}
                             fiatValue={fiatValueOut}
-                            label="Buy"
+                            label={t.swap.buy}
                             readOnly
                         />
                         <TokenSelector
@@ -342,7 +342,7 @@ export default function SwapInterface() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <span className="text-[10px] text-zinc-500 font-medium tracking-wide flex items-center gap-1 italic">
-                        Manual validation active
+                        {t.swap.manualValidation}
                     </span>
 
                     <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-64 p-4 bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 pointer-events-none backdrop-blur-xl">
@@ -350,7 +350,7 @@ export default function SwapInterface() {
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
-                            <span className="text-[10px] font-bold uppercase tracking-wider">Security Notice</span>
+                            <span className="text-[10px] font-bold uppercase tracking-wider">{t.swap.securityNotice}</span>
                         </div>
                         <div className="text-[10px] text-zinc-400 leading-relaxed font-medium">
                             {t.swap.poolSafety}
@@ -361,7 +361,7 @@ export default function SwapInterface() {
             </div>
 
             <div className="mt-6 flex justify-center items-center gap-2">
-                <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Powered by</span>
+                <span className="text-[10px] text-zinc-500 uppercase tracking-wider">{t.swap.poweredBy}</span>
                 <div className="flex items-center gap-1.5">
                     <svg className="w-4 h-4" viewBox="0 0 41 41" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M17.2884 17.0901C17.2286 17.3208 17.1243 17.5374 16.9813 17.7277C16.7151 18.0747 16.3628 18.3453 15.9597 18.5125C15.5972 18.6694 15.2132 18.7709 14.8207 18.8134C14.7417 18.8234 14.6599 18.8297 14.5804 18.8358L14.5621 18.8372C14.3135 18.8467 14.0745 18.9359 13.88 19.0917C13.6855 19.2476 13.5458 19.4619 13.4813 19.7032C13.4518 19.8233 13.4298 19.9451 13.4156 20.068C13.3931 20.2525 13.3815 20.4413 13.3689 20.6455L13.3688 20.6482C13.3598 20.7954 13.3502 20.9507 13.3358 21.118C13.2514 21.7996 13.0551 22.4624 12.755 23.0795C12.6937 23.2092 12.6312 23.335 12.5697 23.4585C12.2408 24.1203 11.9434 24.7186 12.0287 25.5194C12.0955 26.1365 12.4102 26.55 12.8283 26.9765C13.0267 27.1802 13.2896 27.3544 13.5626 27.5352L13.5635 27.5358C14.3285 28.0422 15.1719 28.6006 14.894 30.0074C14.6666 31.1473 12.7852 32.3435 10.1408 32.7613C10.3971 32.7222 9.83296 31.755 9.76966 31.6465L9.76576 31.6398C9.69456 31.5277 9.62156 31.4173 9.54876 31.3071L9.54066 31.2948C9.32646 30.9705 9.11326 30.6477 8.94686 30.29C8.50506 29.3515 8.30026 28.2657 8.48126 27.2373C8.64516 26.3068 9.25746 25.5635 9.84706 24.8478C9.94326 24.7311 10.0393 24.6146 10.1322 24.4987C10.921 23.5147 11.7486 22.2254 11.9317 20.9481C11.9472 20.8371 11.961 20.7161 11.9755 20.5888L11.976 20.5844C12.0018 20.3577 12.03 20.1112 12.074 19.8656C12.1397 19.4387 12.2729 19.025 12.4684 18.6402C12.6018 18.3879 12.7775 18.1605 12.9878 17.968C13.0974 17.8658 13.1697 17.7296 13.1932 17.5812C13.2166 17.4329 13.1898 17.2809 13.1171 17.1496L8.90156 9.53322L14.9565 17.0392C15.0255 17.1262 15.1126 17.1969 15.2118 17.2462C15.311 17.2955 15.4198 17.3223 15.5304 17.3247C15.6411 17.3271 15.7509 17.305 15.8521 17.2599C15.9533 17.2149 16.0434 17.148 16.116 17.0641C16.1927 16.9743 16.2362 16.8606 16.2391 16.7422C16.2421 16.6239 16.2043 16.5082 16.1321 16.4146C15.855 16.0589 15.5668 15.6984 15.2797 15.3394L15.266 15.3222C15.148 15.1747 15.0301 15.0272 14.9134 14.8807L13.3897 12.9864L10.3315 9.20412L6.93576 5.16588L10.7238 8.86532L13.9791 12.4808L15.6031 14.2929C15.7511 14.4603 15.899 14.6262 16.0469 14.7921L16.0506 14.7962C16.4402 15.2329 16.8298 15.6698 17.2194 16.1332L17.3078 16.2414L17.3272 16.4092C17.3534 16.6367 17.3403 16.8671 17.2884 17.0901Z" fill="#FF37C7" />
@@ -390,7 +390,7 @@ export default function SwapInterface() {
                             className="fixed inset-x-4 top-20 bottom-20 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg bg-zinc-950 border border-red-500/30 rounded-2xl z-[101] flex flex-col overflow-hidden"
                         >
                             <div className="p-4 border-b border-white/10 flex justify-between items-center">
-                                <h3 className="text-lg font-bold text-red-400">Error de Swap</h3>
+                                <h3 className="text-lg font-bold text-red-400">{t.swap.errorSwap}</h3>
                                 <button
                                     onClick={() => setSwapErrorDetail(null)}
                                     className="p-2 hover:bg-white/10 rounded-full"

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useI18n } from '@/lib/i18n';
 
 interface SwapSettingsProps {
     slippage: number;
@@ -32,6 +33,7 @@ export default function SwapSettings({
     const [showTradeOptions, setShowTradeOptions] = useState(false);
     const [useUniswapDefault, setUseUniswapDefault] = useState(true);
     const [showDefaultInfo, setShowDefaultInfo] = useState(false);
+    const { t } = useI18n();
 
     const handleDefaultToggle = () => {
         const newDefault = !useUniswapDefault;
@@ -122,14 +124,14 @@ export default function SwapSettings({
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                                             </svg>
                                         </button>
-                                        <span className="text-sm font-semibold text-zinc-100">Trade options</span>
+                                        <span className="text-sm font-semibold text-zinc-100">{t.swapSettings.tradeOptions}</span>
                                     </div>
 
 
                                     <div className="mb-3">
                                         <div className="flex items-center justify-between mb-2">
                                             <div className="flex items-center gap-1 relative">
-                                                <span className="text-xs sm:text-sm font-medium text-zinc-200">Default</span>
+                                                <span className="text-xs sm:text-sm font-medium text-zinc-200">{t.swapSettings.default}</span>
                                                 <button
                                                     className="text-zinc-500 hover:text-zinc-400"
                                                     onClick={() => setShowDefaultInfo(!showDefaultInfo)}
@@ -148,7 +150,7 @@ export default function SwapSettings({
                                                             exit={{ opacity: 0, y: 5 }}
                                                             className="absolute left-0 top-5 z-50 w-48 sm:w-56 p-2 sm:p-3 bg-zinc-800 border border-white/10 rounded-lg shadow-xl text-[10px] sm:text-xs text-zinc-300 leading-relaxed"
                                                         >
-                                                            A route is identified considering V2, V3, and V4 pools, factoring in estimated price impact and network costs.
+                                                            {t.swapSettings.defaultTooltip}
                                                         </motion.div>
                                                     )}
                                                 </AnimatePresence>
@@ -161,7 +163,7 @@ export default function SwapSettings({
                                             </button>
                                         </div>
                                         <p className="text-[10px] sm:text-xs text-zinc-400 leading-relaxed">
-                                            Selecting this option identifies the most efficient route for your swap.
+                                            {t.swapSettings.defaultDescription}
                                         </p>
                                     </div>
 
@@ -177,7 +179,7 @@ export default function SwapSettings({
                                             >
                                                 {/* V2 Toggle */}
                                                 <div className="flex items-center justify-between py-1.5">
-                                                    <span className="text-xs sm:text-sm font-medium text-zinc-300">Enable V2 pools</span>
+                                                    <span className="text-xs sm:text-sm font-medium text-zinc-300">{t.swapSettings.enableV2}</span>
                                                     <button
                                                         onClick={() => onPoolSettingsChange(!useV2, useV3, useV4)}
                                                         disabled={!useV3 && !useV4 && useV2}
@@ -188,7 +190,7 @@ export default function SwapSettings({
                                                 </div>
                                                 {/* V3 Toggle */}
                                                 <div className="flex items-center justify-between py-1.5">
-                                                    <span className="text-xs sm:text-sm font-medium text-zinc-300">Enable V3 pools</span>
+                                                    <span className="text-xs sm:text-sm font-medium text-zinc-300">{t.swapSettings.enableV3}</span>
                                                     <button
                                                         onClick={() => onPoolSettingsChange(useV2, !useV3, useV4)}
                                                         disabled={!useV2 && !useV4 && useV3}
@@ -199,7 +201,7 @@ export default function SwapSettings({
                                                 </div>
                                                 {/* V4 Toggle */}
                                                 <div className="flex items-center justify-between py-1.5">
-                                                    <span className="text-xs sm:text-sm font-medium text-zinc-300">Enable V4 pools</span>
+                                                    <span className="text-xs sm:text-sm font-medium text-zinc-300">{t.swapSettings.enableV4}</span>
                                                     <button
                                                         onClick={() => onPoolSettingsChange(useV2, useV3, !useV4)}
                                                         disabled={!useV2 && !useV3 && useV4}
@@ -215,7 +217,7 @@ export default function SwapSettings({
                                     {/* Powered by Section */}
                                     <div className="pt-3 border-t border-white/5">
                                         <div className="flex items-center gap-2">
-                                            <span className="text-[10px] sm:text-xs text-zinc-500">Powered by</span>
+                                            <span className="text-[10px] sm:text-xs text-zinc-500">{t.swap.poweredBy}</span>
                                             <div className="flex items-center gap-1.5">
                                                 <svg className="w-4 h-4" viewBox="0 0 41 41" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                     <path d="M17.2884 17.0901C17.2286 17.3208 17.1243 17.5374 16.9813 17.7277C16.7151 18.0747 16.3628 18.3453 15.9597 18.5125C15.5972 18.6694 15.2132 18.7709 14.8207 18.8134C14.7417 18.8234 14.6599 18.8297 14.5804 18.8358L14.5621 18.8372C14.3135 18.8467 14.0745 18.9359 13.88 19.0917C13.6855 19.2476 13.5458 19.4619 13.4813 19.7032C13.4518 19.8233 13.4298 19.9451 13.4156 20.068C13.3931 20.2525 13.3815 20.4413 13.3689 20.6455L13.3688 20.6482C13.3598 20.7954 13.3502 20.9507 13.3358 21.118C13.2514 21.7996 13.0551 22.4624 12.755 23.0795C12.6937 23.2092 12.6312 23.335 12.5697 23.4585C12.2408 24.1203 11.9434 24.7186 12.0287 25.5194C12.0955 26.1365 12.4102 26.55 12.8283 26.9765C13.0267 27.1802 13.2896 27.3544 13.5626 27.5352L13.5635 27.5358C14.3285 28.0422 15.1719 28.6006 14.894 30.0074C14.6666 31.1473 12.7852 32.3435 10.1408 32.7613C10.3971 32.7222 9.83296 31.755 9.76966 31.6465L9.76576 31.6398C9.69456 31.5277 9.62156 31.4173 9.54876 31.3071L9.54066 31.2948C9.32646 30.9705 9.11326 30.6477 8.94686 30.29C8.50506 29.3515 8.30026 28.2657 8.48126 27.2373C8.64516 26.3068 9.25746 25.5635 9.84706 24.8478C9.94326 24.7311 10.0393 24.6146 10.1322 24.4987C10.921 23.5147 11.7486 22.2254 11.9317 20.9481C11.9472 20.8371 11.961 20.7161 11.9755 20.5888L11.976 20.5844C12.0018 20.3577 12.03 20.1112 12.074 19.8656C12.1397 19.4387 12.2729 19.025 12.4684 18.6402C12.6018 18.3879 12.7775 18.1605 12.9878 17.968C13.0974 17.8658 13.1697 17.7296 13.1932 17.5812C13.2166 17.4329 13.1898 17.2809 13.1171 17.1496L8.90156 9.53322L14.9565 17.0392C15.0255 17.1262 15.1126 17.1969 15.2118 17.2462C15.311 17.2955 15.4198 17.3223 15.5304 17.3247C15.6411 17.3271 15.7509 17.305 15.8521 17.2599C15.9533 17.2149 16.0434 17.148 16.116 17.0641C16.1927 16.9743 16.2362 16.8606 16.2391 16.7422C16.2421 16.6239 16.2043 16.5082 16.1321 16.4146C15.855 16.0589 15.5668 15.6984 15.2797 15.3394L15.266 15.3222C15.148 15.1747 15.0301 15.0272 14.9134 14.8807L13.3897 12.9864L10.3315 9.20412L6.93576 5.16588L10.7238 8.86532L13.9791 12.4808L15.6031 14.2929C15.7511 14.4603 15.899 14.6262 16.0469 14.7921L16.0506 14.7962C16.4402 15.2329 16.8298 15.6698 17.2194 16.1332L17.3078 16.2414L17.3272 16.4092C17.3534 16.6367 17.3403 16.8671 17.2884 17.0901Z" fill="#FF37C7" />
@@ -233,7 +235,7 @@ export default function SwapSettings({
 
                                     <div className="mb-3 sm:mb-4">
                                         <div className="flex items-center gap-1 mb-1.5 sm:mb-2 relative">
-                                            <span className="text-xs sm:text-sm font-medium text-zinc-300">Max slippage</span>
+                                            <span className="text-xs sm:text-sm font-medium text-zinc-300">{t.swapSettings.maxSlippage}</span>
                                             <button
                                                 className="text-zinc-500 hover:text-zinc-400"
                                                 onClick={() => setShowSlippageInfo(!showSlippageInfo)}
@@ -253,8 +255,8 @@ export default function SwapSettings({
                                                         exit={{ opacity: 0, y: 5 }}
                                                         className="absolute left-0 top-6 z-50 w-56 sm:w-64 p-2 sm:p-3 bg-zinc-800 border border-white/10 rounded-lg shadow-xl text-[10px] sm:text-xs text-zinc-300 leading-relaxed"
                                                     >
-                                                        <strong className="text-zinc-100">Slippage tolerance</strong>
-                                                        <p className="mt-1">Maximum price change you're willing to accept. If the price changes by more than this %, your swap will revert to protect you from unfavorable rates.</p>
+                                                        <strong className="text-zinc-100">{t.swapSettings.slippageTolerance}</strong>
+                                                        <p className="mt-1">{t.swapSettings.slippageDescription}</p>
                                                     </motion.div>
                                                 )}
                                             </AnimatePresence>
@@ -286,7 +288,7 @@ export default function SwapSettings({
 
                                     <div className="mb-3 sm:mb-4">
                                         <div className="flex items-center gap-1 mb-1.5 sm:mb-2 relative">
-                                            <span className="text-xs sm:text-sm font-medium text-zinc-300">Swap deadline</span>
+                                            <span className="text-xs sm:text-sm font-medium text-zinc-300">{t.swapSettings.swapDeadline}</span>
                                             <button
                                                 className="text-zinc-500 hover:text-zinc-400"
                                                 onClick={() => setShowDeadlineInfo(!showDeadlineInfo)}
@@ -306,8 +308,8 @@ export default function SwapSettings({
                                                         exit={{ opacity: 0, y: 5 }}
                                                         className="absolute left-0 top-6 z-50 w-56 sm:w-64 p-2 sm:p-3 bg-zinc-800 border border-white/10 rounded-lg shadow-xl text-[10px] sm:text-xs text-zinc-300 leading-relaxed"
                                                     >
-                                                        <strong className="text-zinc-100">Transaction deadline</strong>
-                                                        <p className="mt-1">Your swap will expire and revert if it is pending for longer than this time. This protects you from market movements during network delays.</p>
+                                                        <strong className="text-zinc-100">{t.swapSettings.transactionDeadline}</strong>
+                                                        <p className="mt-1">{t.swapSettings.deadlineDescription}</p>
                                                     </motion.div>
                                                 )}
                                             </AnimatePresence>
@@ -334,9 +336,9 @@ export default function SwapSettings({
                                             onClick={() => setShowTradeOptions(true)}
                                             className="w-full flex items-center justify-between py-1.5 sm:py-2 text-xs sm:text-sm hover:bg-white/5 rounded-lg transition-colors"
                                         >
-                                            <span className="font-medium text-zinc-300">Trade options</span>
+                                            <span className="font-medium text-zinc-300">{t.swapSettings.tradeOptions}</span>
                                             <div className="flex items-center gap-0.5 sm:gap-1 text-zinc-400">
-                                                <span className="text-xs sm:text-sm">Default</span>
+                                                <span className="text-xs sm:text-sm">{t.swapSettings.default}</span>
                                                 <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                                 </svg>

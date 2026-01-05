@@ -106,7 +106,7 @@ export default function TokenSelector({ selectedToken, onSelect, excludeToken, b
 
 
                                 <div className="px-4 pb-2 flex justify-between items-center">
-                                    <h3 className="text-lg font-bold text-white px-2">Select a token</h3>
+                                    <h3 className="text-lg font-bold text-white px-2">{t.tokenSelector.selectToken}</h3>
                                     <button
                                         onClick={() => setIsOpen(false)}
                                         className="p-2 hover:bg-white/5 rounded-full text-zinc-400 transition-colors"
@@ -127,7 +127,7 @@ export default function TokenSelector({ selectedToken, onSelect, excludeToken, b
                                         </div>
                                         <input
                                             type="text"
-                                            placeholder="Search tokens or paste address"
+                                            placeholder={t.tokenSelector.searchPlaceholder}
                                             autoFocus
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -170,7 +170,7 @@ export default function TokenSelector({ selectedToken, onSelect, excludeToken, b
                                             <svg className="w-3.5 h-3.5 text-zinc-500" fill="currentColor" viewBox="0 0 20 20">
                                                 <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
                                             </svg>
-                                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.15em]">Your tokens</span>
+                                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.15em]">{t.tokenSelector.yourTokens}</span>
                                         </div>
                                         {userTokens.map((balance) => (
                                             <TokenItem
@@ -194,7 +194,7 @@ export default function TokenSelector({ selectedToken, onSelect, excludeToken, b
                                             <svg className="w-3.5 h-3.5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                                             </svg>
-                                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.15em]">Tokens by 24h volume</span>
+                                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.15em]">{t.tokenSelector.tokensByVolume}</span>
                                         </div>
                                     )}
                                     {filteredTokens.map((token) => (
@@ -210,7 +210,7 @@ export default function TokenSelector({ selectedToken, onSelect, excludeToken, b
                                     ))}
                                     {filteredTokens.length === 0 && (
                                         <div className="text-center py-12 text-zinc-600 text-sm">
-                                            No tokens found
+                                            {t.tokens.noTokens}
                                         </div>
                                     )}
                                 </div>

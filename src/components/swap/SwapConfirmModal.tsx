@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import type { Token } from '@/lib/types';
 import type { SwapQuote } from '@/lib/uniswap/types';
+import { useI18n } from '@/lib/i18n';
 
 interface SwapConfirmModalProps {
     isOpen: boolean;
@@ -72,6 +73,7 @@ export default function SwapConfirmModal({
     isSwapping,
 }: SwapConfirmModalProps) {
     const [showMore, setShowMore] = useState(false);
+    const { t } = useI18n();
 
     if (!isOpen) return null;
 
@@ -109,7 +111,7 @@ export default function SwapConfirmModal({
                 >
 
                     <div className="flex items-center justify-between p-4 pb-2">
-                        <span className="text-zinc-400 text-sm">You're swapping</span>
+                        <span className="text-zinc-400 text-sm">{t.swapConfirm.youreSwapping}</span>
                         <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -157,7 +159,7 @@ export default function SwapConfirmModal({
                             onClick={() => setShowMore(!showMore)}
                             className="px-3 text-xs text-zinc-400 hover:text-white flex items-center gap-1 transition-colors"
                         >
-                            {showMore ? 'Show less' : 'Show more'}
+                            {showMore ? t.swapConfirm.showLess : t.swapConfirm.showMore}
                             <svg className={`w-3 h-3 transition-transform ${showMore ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                             </svg>
@@ -182,7 +184,7 @@ export default function SwapConfirmModal({
 
                         <div className="flex items-center justify-between text-sm">
                             <div className="flex items-center gap-2 text-zinc-400">
-                                <span>Network cost</span>
+                                <span>{t.swapConfirm.networkCost}</span>
                                 <InfoTooltip
                                     title="Network Cost"
                                     description="The estimated gas fee required to execute this transaction on the network. This cost is paid to network validators."
@@ -211,7 +213,7 @@ export default function SwapConfirmModal({
 
                                     <div className="flex items-center justify-between text-sm">
                                         <div className="flex items-center gap-2 text-zinc-400">
-                                            <span>Max slippage</span>
+                                            <span>{t.swapConfirm.maxSlippage}</span>
                                             <InfoTooltip
                                                 title="Maximum Slippage"
                                                 description="If the price slips any further, your transaction will revert. This protects you from receiving significantly less than expected due to price movements."
@@ -226,7 +228,7 @@ export default function SwapConfirmModal({
 
                                     <div className="flex items-center justify-between text-sm">
                                         <div className="flex items-center gap-2 text-zinc-400">
-                                            <span>Order routing</span>
+                                            <span>{t.swapConfirm.orderRouting}</span>
                                             <InfoTooltip
                                                 title="Order Routing"
                                                 description={`Most efficient route is estimated to cost ~<$0.01 in network costs. This route uses Uniswap ${routeVersion} with a ${poolFee}% pool fee.`}
@@ -238,7 +240,7 @@ export default function SwapConfirmModal({
 
                                     <div className="flex items-center justify-between text-sm">
                                         <div className="flex items-center gap-2 text-zinc-400">
-                                            <span>Price impact</span>
+                                            <span>{t.swapConfirm.priceImpact}</span>
                                             <InfoTooltip
                                                 title="Price Impact"
                                                 description="The difference between the market price and the price your trade will be executed at. Large trades may have higher price impact."
@@ -253,7 +255,7 @@ export default function SwapConfirmModal({
                                     {sellTax > 0 && (
                                         <div className="flex items-center justify-between text-sm">
                                             <div className="flex items-center gap-2 text-zinc-400">
-                                                <span>Sell fee ({tokenIn.symbol})</span>
+                                                <span>{t.swapConfirm.sellFee} ({tokenIn.symbol})</span>
                                                 <InfoTooltip
                                                     title="Token Sell Fee"
                                                     description={`This token has a ${sellTax}% transfer fee when sending it. This is taken by the token contract itself.`}
@@ -266,7 +268,7 @@ export default function SwapConfirmModal({
                                     {buyTax > 0 && (
                                         <div className="flex items-center justify-between text-sm">
                                             <div className="flex items-center gap-2 text-zinc-400">
-                                                <span>Buy fee ({tokenOut.symbol})</span>
+                                                <span>{t.swapConfirm.buyFee} ({tokenOut.symbol})</span>
                                                 <InfoTooltip
                                                     title="Token Buy Fee"
                                                     description={`This token has a ${buyTax}% transfer fee when receiving it. This is taken by the token contract itself.`}
@@ -287,10 +289,10 @@ export default function SwapConfirmModal({
                                                     Note: Some tokens in this swap have transfer taxes
                                                 </span>
                                             ) : null}
-                                            If the price slips any further, your transaction will revert. Below is the minimum amount you are guaranteed to receive.
+                                            {t.swapConfirm.slippageTooltip}
                                         </div>
                                         <div className="flex items-center justify-between text-sm">
-                                            <span className="text-zinc-400">Receive at least</span>
+                                            <span className="text-zinc-400">{t.swapConfirm.receiveAtLeast}</span>
                                             <span className="text-white font-medium">{minReceived} {tokenOut.symbol}</span>
                                         </div>
                                     </div>
