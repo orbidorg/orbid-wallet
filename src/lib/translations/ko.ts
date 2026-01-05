@@ -116,6 +116,7 @@ export const ko: Translations = {
         minimumReceived: '최소 수령액',
         priceImpact: '가격 영향',
         route: '경로',
+        poolSafety: '귀하의 안전을 위해 수동으로 풀을 확인합니다. $100 USD 이상의 유동성이 있는 풀만 표시합니다. 주의하세요: 일부 토큰은 부당한 수수료(10%-99%)가 있거나 자금을 훔치기 위해 만들어졌습니다. 거래 전에 항상 조사하세요.',
     },
     ads: {
         showAnnouncements: '공지사항 표시',
@@ -261,6 +262,7 @@ export const ko: Translations = {
         volume24h: '24시간 거래량',
         high24h: '24시간 최고가',
         fdv: 'FDV',
+        tvl: 'TVL',
         noChartData: '차트 데이터 없음',
         noMarketData: '시장 데이터 없음',
         now: '현재',

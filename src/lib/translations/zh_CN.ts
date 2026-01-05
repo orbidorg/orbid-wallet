@@ -115,6 +115,7 @@ export const zh_CN: Translations = {
         minimumReceived: '最低收到',
         priceImpact: '价格影响',
         route: '路径',
+        poolSafety: '我们会手动验证池以确保您的安全。我们只展示流动性超过100美元的池。请注意：一些代币有滥用费用（10%-99%）或被创建用于窃取资金。交易前请务必进行研究。',
     },
     ads: {
         showAnnouncements: '显示公告',
@@ -259,6 +260,7 @@ export const zh_CN: Translations = {
         volume24h: '24小时成交量',
         high24h: '24小时最高',
         fdv: '全稀释估值',
+        tvl: 'TVL',
         noChartData: '图表数据不可用',
         noMarketData: '市场数据不可用',
         now: '现在',

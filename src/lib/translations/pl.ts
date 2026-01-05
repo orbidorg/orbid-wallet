@@ -115,6 +115,7 @@ export const pl: Translations = {
         minimumReceived: 'Minimum otrzymane',
         priceImpact: 'Wpływ na cenę',
         route: 'Trasa',
+        poolSafety: 'Weryfikujemy pule ręcznie dla Twojego bezpieczeństwa. Pokazujemy tylko pule z ponad $100 USD płynności. Bądź ostrożny: niektóre tokeny mają nadużywające opłaty (10%-99%) lub są tworzone w celu kradzieży środków. Zawsze badaj przed handlem.',
     },
     ads: {
         showAnnouncements: 'Pokaż Ogłoszenia',
@@ -259,6 +260,7 @@ export const pl: Translations = {
         volume24h: 'Wolumen 24h',
         high24h: 'Maks. 24h',
         fdv: 'FDV',
+        tvl: 'TVL',
         noChartData: 'Brak danych wykresu',
         noMarketData: 'Brak danych rynkowych',
         now: 'Teraz',

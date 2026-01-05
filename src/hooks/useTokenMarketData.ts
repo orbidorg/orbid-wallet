@@ -58,6 +58,53 @@ async function fetchMarketData(symbol: string, period: ChartPeriod): Promise<Tok
     }
 
     try {
+        let price = 0;
+        let change24h = 0;
+        let volume24h = 0;
+        let marketCap = 0;
+        let fdv = 0;
+        let tvl = 0;
+
+        try {
+            const uniswapRes = await fetch('/api/market/uniswap', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ address: token.address })
+            });
+
+            if (uniswapRes.ok) {
+                const uniswapData = await uniswapRes.json();
+                const tokenData = uniswapData.data?.token;
+
+                if (tokenData) {
+                    const market = tokenData.market;
+                    const projectMarket = tokenData.project?.markets?.[0];
+
+                    if (market?.price?.value) {
+                        price = market.price.value;
+                    }
+                    if (market?.totalValueLocked?.value) {
+                        tvl = market.totalValueLocked.value;
+                    }
+                    if (market?.volume24H?.value) {
+                        volume24h = market.volume24H.value;
+                    }
+                    if (projectMarket?.marketCap?.value) {
+                        marketCap = projectMarket.marketCap.value;
+                    }
+                    if (projectMarket?.fullyDilutedValuation?.value) {
+                        fdv = projectMarket.fullyDilutedValuation.value;
+                    }
+
+                    console.log(`[MarketData] Uniswap data for ${symbol}:`, {
+                        price, tvl, volume24h, marketCap, fdv
+                    });
+                }
+            }
+        } catch (e) {
+            console.warn('[MarketData] Uniswap proxy failed, falling back to DEX Screener', e);
+        }
+
 
         const dexResponse = await fetch(`https://api.dexscreener.com/tokens/v1/worldchain/${token.address}`, {
             headers: { Accept: "application/json" },
@@ -89,6 +136,7 @@ async function fetchMarketData(symbol: string, period: ChartPeriod): Promise<Tok
 
         }
 
+
         const safePairs = Array.isArray(pairs) ? pairs : [];
 
         let bestPair = safePairs
@@ -97,20 +145,14 @@ async function fetchMarketData(symbol: string, period: ChartPeriod): Promise<Tok
                 (a: any, b: any) => Number.parseFloat(b.liquidity?.usd || "0") - Number.parseFloat(a.liquidity?.usd || "0"),
             )[0];
 
-        let price = 0;
-        let change24h = 0;
-        let volume24h = 0;
-        let marketCap = 0;
-        let fdv = 0;
-        let tvl = 0;
         let pairAddress = "";
 
         if (bestPair) {
-            price = Number.parseFloat(bestPair.priceUsd || "0");
-            change24h = bestPair.priceChange?.h24 || 0;
-            volume24h = Number.parseFloat(bestPair.volume?.h24 || "0");
-            marketCap = Number.parseFloat(bestPair.marketCap || "0");
-            fdv = Number.parseFloat(bestPair.fdv || "0");
+            if (!price) price = Number.parseFloat(bestPair.priceUsd || "0");
+            if (!change24h) change24h = bestPair.priceChange?.h24 || 0;
+            if (!volume24h) volume24h = Number.parseFloat(bestPair.volume?.h24 || "0");
+            if (!marketCap) marketCap = Number.parseFloat(bestPair.marketCap || "0");
+            if (!fdv) fdv = Number.parseFloat(bestPair.fdv || "0");
             pairAddress = bestPair.pairAddress || "";
         } else {
             bestPair = safePairs
@@ -123,14 +165,15 @@ async function fetchMarketData(symbol: string, period: ChartPeriod): Promise<Tok
                 const basePriceUsd = Number.parseFloat(bestPair.priceUsd || "0");
                 const priceNative = Number.parseFloat(bestPair.priceNative || "0");
 
-                if (priceNative > 0 && basePriceUsd > 0) {
+                if (priceNative > 0 && basePriceUsd > 0 && !price) {
                     price = basePriceUsd / priceNative;
                 }
-                change24h = -(bestPair.priceChange?.h24 || 0);
-                volume24h = Number.parseFloat(bestPair.volume?.h24 || "0");
+                if (!change24h) change24h = -(bestPair.priceChange?.h24 || 0);
+                if (!volume24h) volume24h = Number.parseFloat(bestPair.volume?.h24 || "0");
                 pairAddress = bestPair.pairAddress || "";
             }
         }
+
 
         try {
             const geckoTokenRes = await fetch(
@@ -141,14 +184,15 @@ async function fetchMarketData(symbol: string, period: ChartPeriod): Promise<Tok
                 const geckoTokenData = await geckoTokenRes.json();
                 const attrs = geckoTokenData.data?.attributes;
                 if (attrs) {
-                    if (marketCap === 0) marketCap = Number.parseFloat(attrs.market_cap_usd || "0");
-                    if (fdv === 0) fdv = Number.parseFloat(attrs.fdv_usd || "0");
-                    tvl = Number.parseFloat(attrs.total_reserve_in_usd || "0");
+                    if (!marketCap) marketCap = Number.parseFloat(attrs.market_cap_usd || "0");
+                    if (!fdv) fdv = Number.parseFloat(attrs.fdv_usd || "0");
+                    if (!tvl) tvl = Number.parseFloat(attrs.total_reserve_in_usd || "0");
                 }
             }
         } catch (e) {
             console.warn("[MarketData] Failed to fetch token stats from GeckoTerminal", e);
         }
+
 
         let priceHistory: PricePoint[] = [];
         try {

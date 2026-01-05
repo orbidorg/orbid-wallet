@@ -115,6 +115,7 @@ export const es_419: Translations = {
         minimumReceived: 'Mínimo recibido',
         priceImpact: 'Impacto en precio',
         route: 'Ruta',
+        poolSafety: 'Verificamos los pools manualmente para tu seguridad. Solo mostramos pools con más de $100 USD de liquidez. Ten precaución: existen tokens con tarifas de venta abusivas (10%-99%) o pools creados para robar fondos. Investiga siempre antes de operar.',
     },
     ads: {
         showAnnouncements: 'Mostrar Anuncios',
@@ -259,6 +260,7 @@ export const es_419: Translations = {
         volume24h: 'Volumen 24h',
         high24h: 'Máximo 24h',
         fdv: 'FDV',
+        tvl: 'TVL',
         noChartData: 'Datos del gráfico no disponibles',
         noMarketData: 'Datos de mercado no disponibles',
         now: 'Ahora',

@@ -116,6 +116,7 @@ export const ja: Translations = {
         minimumReceived: '最低受取額',
         priceImpact: '価格影響',
         route: 'ルート',
+        poolSafety: 'あなたの安全のために手動でプールを確認しています。100 USD以上の流動性を持つプールのみを表示しています。注意してください：一部のトークンには不当な手数料（10%-99%）があるか、資金を盗むために作成されています。取引前に必ず調査してください。',
     },
     ads: {
         showAnnouncements: 'お知らせを表示',
@@ -261,6 +262,7 @@ export const ja: Translations = {
         volume24h: '24時間取引量',
         high24h: '24時間高値',
         fdv: 'FDV',
+        tvl: 'TVL',
         noChartData: 'チャートデータがありません',
         noMarketData: '市場データがありません',
         now: '現在',

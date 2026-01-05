@@ -115,6 +115,7 @@ export const ms: Translations = {
         minimumReceived: 'Minimum diterima',
         priceImpact: 'Kesan harga',
         route: 'Laluan',
+        poolSafety: 'Kami mengesahkan pool secara manual untuk keselamatan anda. Kami hanya menunjukkan pool dengan lebih daripada $100 USD kecairan. Berhati-hati: sesetengah token mempunyai yuran yang tidak munasabah (10%-99%) atau dicipta untuk mencuri dana. Sentiasa kaji sebelum berdagang.',
     },
     ads: {
         showAnnouncements: 'Tunjukkan Pengumuman',
@@ -259,6 +260,7 @@ export const ms: Translations = {
         volume24h: 'Volume 24j',
         high24h: 'Tertinggi 24j',
         fdv: 'FDV',
+        tvl: 'TVL',
         noChartData: 'Tiada data carta tersedia',
         noMarketData: 'Data pasaran tidak tersedia',
         now: 'Sekarang',

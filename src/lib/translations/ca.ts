@@ -115,6 +115,7 @@ export const ca: Translations = {
         minimumReceived: 'Mínim rebut',
         priceImpact: 'Impacte de preu',
         route: 'Ruta',
+        poolSafety: 'Verifiquem els pools manualment per a la teva seguretat. Només mostrem pools amb més de 100 USD de liquiditat. Tingues precaució: alguns tokens tenen comissions abusives (10%-99%) o són creats per robar fons. Investiga sempre abans d\'operar.',
     },
     ads: {
         showAnnouncements: 'Mostrar Anuncis',
@@ -259,6 +260,7 @@ export const ca: Translations = {
         volume24h: 'Volum 24h',
         high24h: 'Màxim 24h',
         fdv: 'FDV',
+        tvl: 'TVL',
         noChartData: 'Dades del gràfic no disponibles',
         noMarketData: 'Dades de mercat no disponibles',
         now: 'Ara',

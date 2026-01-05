@@ -115,6 +115,7 @@ export const de: Translations = {
         minimumReceived: 'Mindestempfang',
         priceImpact: 'Preiseinfluss',
         route: 'Route',
+        poolSafety: 'Wir überprüfen Pools manuell für Ihre Sicherheit. Wir zeigen nur Pools mit mehr als 100 USD Liquidität. Seien Sie vorsichtig: Einige Token haben missbräuchliche Gebühren (10%-99%) oder werden erstellt, um Gelder zu stehlen. Recherchieren Sie immer vor dem Handel.',
     },
     ads: {
         showAnnouncements: 'Ankündigungen anzeigen',
@@ -259,6 +260,7 @@ export const de: Translations = {
         volume24h: 'Volumen 24h',
         high24h: '24h Hoch',
         fdv: 'FDV',
+        tvl: 'TVL',
         noChartData: 'Keine Chartdaten verfügbar',
         noMarketData: 'Marktdaten nicht verfügbar',
         now: 'Jetzt',

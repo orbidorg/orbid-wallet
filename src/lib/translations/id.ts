@@ -115,6 +115,7 @@ export const id: Translations = {
         minimumReceived: 'Minimum diterima',
         priceImpact: 'Dampak harga',
         route: 'Rute',
+        poolSafety: 'Kami memverifikasi pool secara manual untuk keamanan Anda. Kami hanya menampilkan pool dengan lebih dari $100 USD likuiditas. Berhati-hatilah: beberapa token memiliki biaya yang tidak wajar (10%-99%) atau dibuat untuk mencuri dana. Selalu teliti sebelum trading.',
     },
     ads: {
         showAnnouncements: 'Tampilkan Pengumuman',
@@ -259,6 +260,7 @@ export const id: Translations = {
         volume24h: 'Volume 24j',
         high24h: 'Tertinggi 24j',
         fdv: 'FDV',
+        tvl: 'TVL',
         noChartData: 'Data grafik tidak tersedia',
         noMarketData: 'Data pasar tidak tersedia',
         now: 'Sekarang',
