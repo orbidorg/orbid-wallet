@@ -103,15 +103,19 @@ export function useSwap({
             return;
         }
 
+        let version: 'v2' | 'v3' | 'v4' | undefined;
+        let router: string | undefined;
+        let amountIn: string | undefined;
+
         try {
             setState(s => ({ ...s, status: 'swapping', quote }));
 
-            const amountIn = quote.amountIn.toString();
+            amountIn = quote.amountIn.toString();
             const amountOutMin = quote.amountOutMin.toString();
             const deadline = Math.floor(Date.now() / 1000) + (SWAP_CONFIG.DEFAULT_DEADLINE_MINUTES * 60);
             const poolFee = quote.route.pools[0]?.fee || SWAP_CONFIG.FEE_TIERS.MEDIUM;
-            const version = quote.route.version;
-            const router = getVersionRouter(version);
+            version = quote.route.version;
+            router = getVersionRouter(version);
             const tokenInLower = tokenIn.address.toLowerCase() as `0x${string}`;
             const nonce = Date.now().toString();
 
@@ -197,11 +201,22 @@ export function useSwap({
 
         } catch (error) {
             console.error('Swap failed:', error);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            const context = JSON.stringify({
+                version,
+                router,
+                tokenIn: tokenIn.address,
+                tokenOut: tokenOut.address,
+                amountIn,
+                method: version === 'v3' ? 'exactInputSingle' : 'swapExactTokensForTokens',
+                isMiniKitInstalled: MiniKit.isInstalled()
+            }, null, 2);
+
             setState({
                 status: 'error',
                 quote,
                 txHash: null,
-                error: error instanceof Error ? error.message : String(error),
+                error: `Error: ${errorMessage}\n\nContext:\n${context}`,
             });
         }
     }, [tokenIn, tokenOut, quote, walletAddress]);
