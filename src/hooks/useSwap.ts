@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from 'react';
 import { MiniKit } from '@worldcoin/minikit-js';
-import { parseUnits } from 'viem';
 import { SWAP_CONFIG, UNISWAP_ADDRESSES } from '@/lib/uniswap/config';
 import { PERMIT2_ABI } from '@/lib/uniswap/permit2-abi';
 import type { Token, SwapQuote, SwapState } from '@/lib/uniswap/types';
@@ -52,12 +51,8 @@ export function useSwap({
             setState(s => ({ ...s, status: 'swapping', quote }));
 
             const amountIn = quote.amountIn.toString();
-            const amountOutMin = quote.amountOutMin.toString();
-
             const deadline = Math.floor((Date.now() + SWAP_CONFIG.DEFAULT_DEADLINE_MINUTES * 60 * 1000) / 1000);
-
             const nonce = Date.now().toString();
-
             const tokenInLower = tokenIn.address.toLowerCase() as `0x${string}`;
 
             const permitData = [
@@ -71,25 +66,23 @@ export function useSwap({
                 amountIn,
             ];
 
-            console.log('Executing swap via Permit2:', {
+            console.log('Executing swap via Permit2 signatureTransfer:', {
                 permit2Address: UNISWAP_ADDRESSES.PERMIT2,
                 universalRouter: UNISWAP_ADDRESSES.UNIVERSAL_ROUTER,
                 tokenIn: tokenInLower,
                 tokenOut: tokenOut.address,
                 amountIn,
-                amountOutMin,
-                method: 'permitTransferFrom',
+                method: 'signatureTransfer',
             });
 
             const result = await MiniKit.commandsAsync.sendTransaction({
                 transaction: [{
                     address: UNISWAP_ADDRESSES.PERMIT2 as `0x${string}`,
                     abi: PERMIT2_ABI,
-                    functionName: 'permitTransferFrom',
+                    functionName: 'signatureTransfer',
                     args: [
                         permitData,
                         transferDetails,
-                        walletAddress,
                         'PERMIT2_SIGNATURE_PLACEHOLDER_0',
                     ],
                 }],
@@ -136,7 +129,7 @@ export function useSwap({
                 universalRouter: UNISWAP_ADDRESSES.UNIVERSAL_ROUTER,
                 tokenIn: tokenIn.address,
                 tokenOut: tokenOut.address,
-                method: 'permitTransferFrom',
+                method: 'signatureTransfer',
                 isMiniKitInstalled: MiniKit.isInstalled()
             }, null, 2);
 
