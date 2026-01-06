@@ -8,7 +8,7 @@ export const UNISWAP_ADDRESSES = {
     POOL_MANAGER: '0xb1860d529182ac3bc1f51fa2abd56662b7d13f33'.toLowerCase(),
     QUOTER_V4: '0x55d235b3ff2daf7c3ede0defc9521f1d6fe6c5c0'.toLowerCase(),
     STATE_VIEW: '0x51d394718bc09297262e368c1a481217fdeb71eb'.toLowerCase(),
-    UNIVERSAL_ROUTER: '0x8ac7bee993bb44dab564ea4bc9ea67bf9eb5e743'.toLowerCase(),
+    UNIVERSAL_ROUTER: '0x38869bf66a61cF6bDB996A6aE40D5853Fd43B526'.toLowerCase(),
 } as const;
 
 export const SWAP_CONFIG = {
