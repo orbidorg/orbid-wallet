@@ -20,6 +20,19 @@ const UNIVERSAL_ROUTER_ABI = [
     }
 ] as const;
 
+const ERC20_ABI = [
+    {
+        inputs: [
+            { name: 'spender', type: 'address' },
+            { name: 'amount', type: 'uint256' }
+        ],
+        name: 'approve',
+        outputs: [{ name: '', type: 'bool' }],
+        stateMutability: 'nonpayable',
+        type: 'function'
+    }
+] as const;
+
 const COMMANDS = {
     V3_SWAP_EXACT_IN: 0x00,
     V3_SWAP_EXACT_OUT: 0x01,
@@ -68,11 +81,10 @@ export function useSwap({ tokenIn, tokenOut, quote, walletAddress }: UseSwapPara
             const tokenInAddress = getAddress(tokenIn.address);
             const tokenOutAddress = getAddress(tokenOut.address);
             const recipientAddress = getAddress(walletAddress);
-            const routerAddress = getAddress(UNISWAP_ADDRESSES.UNIVERSAL_ROUTER);
+            const universalRouter = getAddress(UNISWAP_ADDRESSES.UNIVERSAL_ROUTER);
 
             const amountIn = quote.amountIn.toString();
             const deadline = Math.floor((Date.now() + SWAP_CONFIG.DEFAULT_DEADLINE_MINUTES * 60 * 1000) / 1000);
-            const nonce = Date.now().toString();
 
             const { commands, inputs } = encodeSwapForVersion({
                 tokenIn: tokenInAddress,
@@ -84,32 +96,50 @@ export function useSwap({ tokenIn, tokenOut, quote, walletAddress }: UseSwapPara
                 fee: quote.route.pools[0]?.fee || 3000,
             });
 
-            console.log('Executing swap via Universal Router:', {
-                universalRouter: routerAddress,
-                version: quote.route.version,
-                tokenIn: tokenInAddress,
-                tokenOut: tokenOutAddress,
-                amountIn,
-                commands: commands,
-            });
+            let result;
 
-            const result = await MiniKit.commandsAsync.sendTransaction({
-                transaction: [{
-                    address: routerAddress,
-                    abi: UNIVERSAL_ROUTER_ABI,
-                    functionName: 'execute',
-                    args: [commands, inputs, BigInt(deadline)],
-                }],
-                permit2: [{
-                    permitted: {
-                        token: tokenInAddress,
-                        amount: amountIn,
-                    },
-                    nonce,
-                    deadline: deadline.toString(),
-                    spender: routerAddress,
-                }],
-            });
+            if (tokenIn.isNative) {
+                console.log('Using direct approval flow for:', tokenIn.symbol);
+
+                result = await MiniKit.commandsAsync.sendTransaction({
+                    transaction: [
+                        {
+                            address: tokenInAddress,
+                            abi: ERC20_ABI,
+                            functionName: 'approve',
+                            args: [universalRouter, BigInt(amountIn)],
+                        },
+                        {
+                            address: universalRouter,
+                            abi: UNIVERSAL_ROUTER_ABI,
+                            functionName: 'execute',
+                            args: [commands, inputs, BigInt(deadline)],
+                        },
+                    ],
+                });
+            } else {
+                console.log('Using Permit2 flow for:', tokenIn.symbol);
+
+                const nonce = Date.now().toString();
+
+                result = await MiniKit.commandsAsync.sendTransaction({
+                    transaction: [{
+                        address: universalRouter,
+                        abi: UNIVERSAL_ROUTER_ABI,
+                        functionName: 'execute',
+                        args: [commands, inputs, BigInt(deadline)],
+                    }],
+                    permit2: [{
+                        permitted: {
+                            token: tokenInAddress,
+                            amount: amountIn,
+                        },
+                        nonce,
+                        deadline: deadline.toString(),
+                        spender: universalRouter,
+                    }],
+                });
+            }
 
             if (!result) {
                 throw new Error('Transaction request failed');
@@ -148,31 +178,25 @@ function encodeSwapForVersion(params: {
     version: 'v2' | 'v3' | 'v4';
     fee: number;
 }): { commands: `0x${string}`; inputs: `0x${string}`[] } {
-    const { tokenIn, tokenOut, amountIn, amountOutMin, recipient, version, fee } = params;
+    const { version } = params;
 
-    if (version === 'v3') {
-        return encodeV3Swap(tokenIn, tokenOut, amountIn, amountOutMin, recipient, fee);
-    }
-
-    if (version === 'v2') {
-        return encodeV2Swap(tokenIn, tokenOut, amountIn, amountOutMin, recipient);
-    }
-
-    if (version === 'v4') {
-        return encodeV4Swap(tokenIn, tokenOut, amountIn, amountOutMin, recipient, fee);
-    }
+    if (version === 'v3') return encodeV3Swap(params);
+    if (version === 'v2') return encodeV2Swap(params);
+    if (version === 'v4') return encodeV4Swap(params);
 
     throw new Error(`Unsupported version: ${version}`);
 }
 
-function encodeV3Swap(
-    tokenIn: string,
-    tokenOut: string,
-    amountIn: bigint,
-    amountOutMin: bigint,
-    recipient: string,
-    fee: number
-): { commands: `0x${string}`; inputs: `0x${string}`[] } {
+function encodeV3Swap({
+    tokenIn, tokenOut, amountIn, amountOutMin, recipient, fee
+}: {
+    tokenIn: string;
+    tokenOut: string;
+    amountIn: bigint;
+    amountOutMin: bigint;
+    recipient: string;
+    fee: number;
+}): { commands: `0x${string}`; inputs: `0x${string}`[] } {
     const path = encodePacked(
         ['address', 'uint24', 'address'],
         [tokenIn as `0x${string}`, fee, tokenOut as `0x${string}`]
@@ -195,13 +219,16 @@ function encodeV3Swap(
     };
 }
 
-function encodeV2Swap(
-    tokenIn: string,
-    tokenOut: string,
-    amountIn: bigint,
-    amountOutMin: bigint,
-    recipient: string
-): { commands: `0x${string}`; inputs: `0x${string}`[] } {
+function encodeV2Swap({
+    tokenIn, tokenOut, amountIn, amountOutMin, recipient
+}: {
+    tokenIn: string;
+    tokenOut: string;
+    amountIn: bigint;
+    amountOutMin: bigint;
+    recipient: string;
+    fee?: number;
+}): { commands: `0x${string}`; inputs: `0x${string}`[] } {
     const input = encodeAbiParameters(
         [
             { type: 'address', name: 'recipient' },
@@ -225,17 +252,21 @@ function encodeV2Swap(
     };
 }
 
-function encodeV4Swap(
-    tokenIn: string,
-    tokenOut: string,
-    amountIn: bigint,
-    amountOutMin: bigint,
-    recipient: string,
-    fee: number
-): { commands: `0x${string}`; inputs: `0x${string}`[] } {
+function encodeV4Swap({
+    tokenIn, tokenOut, amountIn, amountOutMin, fee
+}: {
+    tokenIn: string;
+    tokenOut: string;
+    amountIn: bigint;
+    amountOutMin: bigint;
+    recipient: string;
+    fee: number;
+}): { commands: `0x${string}`; inputs: `0x${string}`[] } {
     const t0 = tokenIn.toLowerCase() < tokenOut.toLowerCase() ? tokenIn : tokenOut;
     const t1 = tokenIn.toLowerCase() < tokenOut.toLowerCase() ? tokenOut : tokenIn;
     const zeroForOne = tokenIn.toLowerCase() === t0.toLowerCase();
+
+    const tickSpacing = fee === 100 ? 1 : fee === 500 ? 10 : fee === 3000 ? 60 : 200;
 
     const poolKey = encodeAbiParameters(
         [
@@ -249,7 +280,7 @@ function encodeV4Swap(
             t0 as `0x${string}`,
             t1 as `0x${string}`,
             fee,
-            fee === 100 ? 1 : fee === 500 ? 10 : fee === 3000 ? 60 : 200,
+            tickSpacing,
             '0x0000000000000000000000000000000000000000' as `0x${string}`,
         ]
     );

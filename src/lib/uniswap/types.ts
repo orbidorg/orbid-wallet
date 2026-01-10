@@ -6,6 +6,7 @@ export interface Token {
     name: string;
     decimals: number;
     logoURI?: string;
+    isNative?: boolean;
     buyTax?: number;
     sellTax?: number;
 }
