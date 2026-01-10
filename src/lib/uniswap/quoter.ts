@@ -327,7 +327,7 @@ async function quoteSingleV2(params: QuoteSingleV2Params): Promise<QuoteResult |
                 method: 'eth_call',
                 params: [
                     {
-                        to: UNISWAP_ADDRESSES.SWAP_ROUTER_V2,
+                        to: UNISWAP_ADDRESSES.SWAP_ROUTER,
                         data: callData,
                     },
                     'latest',
